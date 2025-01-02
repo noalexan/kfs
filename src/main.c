@@ -57,7 +57,7 @@ static vga_entry *const vga_buffer = (void *)0xb8000;
 static void *memcpy(void *dest, void *src, int length)
 {
 	for (int i = 0; i < length; i++)
-		*((u8 *)dest) = *((u8 *)src);
+		((u8 *)dest)[i] = ((u8 *)src)[i];
 	return dest;
 }
 
