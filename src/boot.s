@@ -1,28 +1,36 @@
 .intel_syntax noprefix
-.global _start
 
-.equ MAGIC_NUMBER, 0x1BADB002
-.equ FLAGS,        0x00000003  # Align modules on page boundaries and provide memory map
-.equ CHECKSUM,    -(MAGIC_NUMBER + FLAGS)
-.equ VGA_MODE,    0x0314       # 800x600 16-bit color
+# Multiboot2 header constants
+.set MAGIC,         0xE85250D6
+.set ARCHITECTURE,  0
+.set HEADER_LENGTH, header_end - header_start
+.set CHECKSUM,      -(MAGIC + ARCHITECTURE + HEADER_LENGTH)
 
+# Multiboot2 header
 .section .multiboot
-.align 4
-    .long MAGIC_NUMBER
-    .long FLAGS
-    .long CHECKSUM
-    .long 0, 0, 0, 0, 0        # Reserved fields
-    .long 0                    # Graphics mode (0 = text mode)
-    .long 800, 600, 16         # Width, height, depth
+.align 8
+header_start:
+	.long MAGIC
+	.long ARCHITECTURE
+	.long HEADER_LENGTH
+	.long CHECKSUM
 
+	# EFI boot services tag
+	.short 7    # type
+	.short 0    # flags
+	.long 8     # size
+	
+	# End tag
+	.short 0    # type
+	.short 0    # flags
+	.long 8     # size
+header_end:
+
+# The kernel entry point
 .section .text
+.global _start
+.extern kernel_main
+
 _start:
-    # Set VGA mode
-    mov ax, 0x4F02
-    mov bx, VGA_MODE
-    int 0x10
-
-    # Your code here
-
-.loop:
-    jmp .loop
+	call kernel_main
+	hlt
