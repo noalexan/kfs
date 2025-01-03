@@ -4,17 +4,20 @@ AS=./tools/bin/i386-linux-gnu-as
 ASFLAGS=
 
 CC=./tools/bin/i386-linux-gnu-gcc
-CFLAGS=-fno-builtin -fno-exceptions -fno-stack-protector -O3 -Wall -Wextra -Werror
+CFLAGS=-fno-builtin -fno-exceptions -fno-stack-protector -O3 -Wall -Wextra -Werror -I./include
 
 LD=./tools/bin/i386-linux-gnu-ld
-LDFLAGS=-T linker.ld
+LDFLAGS=-z noexecstack -T linker.ld
+LDLIBS=
 
 QEMU=qemu-system-i386
 QEMUFLAGS=-monitor stdio # -vga virtio -full-screen
 
 OBJ= \
 	build/boot.o \
-	build/main.o
+	build/main.o \
+	build/vga.o \
+	build/printk.o
 
 .PHONY: all
 all: $(BUILDDIR)/boot.iso
