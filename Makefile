@@ -17,7 +17,8 @@ OBJ= \
 	build/boot.o \
 	build/main.o \
 	build/vga.o \
-	build/printk.o
+	build/printk.o \
+	build/io.o
 
 .PHONY: all
 all: $(BUILDDIR)/boot.iso

@@ -1,5 +1,4 @@
-#ifndef VGA_H
-# define VGA_H
+#pragma once
 
 #include <types.h>
 
@@ -51,9 +50,9 @@ typedef struct __attribute__((packed)) s_vga_entry {
 extern vga_entry *const vga_buffer;
 extern u8 vga_screen_mode;
 
+void vga_update_cursor(int x, int y);
+void vga_enable_cursor(u8 cursor_start, u8 cursor_end);
 void vga_put_char(int x, int y, char c);
 void scroll_down(void);
 void set_screen_mode(u8 mode);
 void clear_screen(void);
-
-#endif
