@@ -11,7 +11,7 @@ LDFLAGS=-z noexecstack -T linker.ld
 LDLIBS=
 
 QEMU=qemu-system-i386
-QEMUFLAGS=-monitor stdio # -vga virtio -full-screen
+QEMUFLAGS=# -monitor stdio -vga virtio -full-screen
 
 OBJ= \
 	build/boot.o \

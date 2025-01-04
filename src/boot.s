@@ -9,60 +9,29 @@
 .align 8
 
 header_start:
-	.long MAGIC
-	.long ARCHITECTURE
-	.long HEADER_LENGTH
-	.long CHECKSUM
 
-	.short 7
-	.short 0
-	.long 8
+.long MAGIC
+.long ARCHITECTURE
+.long HEADER_LENGTH
+.long CHECKSUM
 
-	.short 0
-	.short 0
-	.long 8
+.short 7
+.short 0
+.long 8
+
+.short 0
+.short 0
+.long 8
 
 header_end:
-
-.section .bss
-.align 16
-.skip 16384
-
-stack_top:
 
 .section .text
 .global _start
 .extern kernel_main
 
-gdt_start:
-.long 0x00
-.long 0x00
-
-gdt_code:
-.long 0xffff
-.long 0x00
-.short 0x00
-.short 0b10011010
-.short 0b11001111
-.short 0x00
-
-gdt_data:
-.long 0xffff
-.short 0x00
-.short 0x00
-.short 0b10010010
-.short 0b11001111
-.short 0x00
-
-gdt_end:
-
-gdt_descriptor:
-.long gdt_end - gdt_start - 1
-.long gdt_start
-
 _start:
-	lea esp, stack_top
 	lgdt [gdt_descriptor]
+	lea esp, [0x90000]
 
 	mov eax, 0b00000001
 	mov cr0, eax
@@ -71,3 +40,60 @@ _start:
 	call kernel_main
 
 	hlt
+
+gdt_start:
+.long 0x00
+
+gdt_code:
+.short 0xffff
+.short 0x00
+.byte 0x00
+.byte 0b10011010
+.byte 0b11001111
+.byte 0x00
+
+gdt_data:
+.short 0xffff
+.short 0x00
+.byte 0x00
+.byte 0b10010010
+.byte 0b11001111
+.byte 0x00
+
+gdt_stack:
+.short 0xffff
+.short 0x00
+.byte 0x00
+.byte 0b10010110
+.byte 0b11001111
+.byte 0x00
+
+gdt_user_code:
+.short 0xffff
+.short 0x00
+.byte 0x00
+.byte 0b11111010
+.byte 0b11001111
+.byte 0x00
+
+gdt_user_data:
+.short 0xffff
+.short 0x00
+.byte 0x00
+.byte 0b11110010
+.byte 0b11001111
+.byte 0x00
+
+gdt_user_stack:
+.short 0xffff
+.short 0x00
+.byte 0x00
+.byte 0b11110110
+.byte 0b11001111
+.byte 0x00
+
+gdt_end:
+
+gdt_descriptor:
+.short gdt_end - gdt_start - 1
+.long gdt_start
