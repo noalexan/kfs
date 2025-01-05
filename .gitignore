@@ -1,4 +1,4 @@
 build/
-tools/
+.dockerimageid
 .gdb_history
 peda-session-kernel.txt

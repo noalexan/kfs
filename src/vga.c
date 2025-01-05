@@ -1,5 +1,6 @@
 #include <io.h>
 #include <vga.h>
+#include <libft.h>
 
 vga_entry *const vga_buffer = (vga_entry *)0xb8000;
 u8 vga_screen_mode = 0x00;
@@ -24,13 +25,6 @@ void vga_enable_cursor(u8 cursor_start, u8 cursor_end)
 	outb(0x3D5, (inb(0x3D5) & 0xE0) | cursor_end);
 }
 
-static void *memcpy(void *dest, void *src, int length)
-{
-	for (int i = 0; i < length; i++)
-		((u8 *)dest)[i] = ((u8 *)src)[i];
-	return dest;
-}
-
 void vga_put_char(int x, int y, char c)
 {
 	VGA_ENTRY(x % VGA_SCREEN_WIDTH, y % VGA_SCREEN_HEIGTH)->character = c;
@@ -39,7 +33,7 @@ void vga_put_char(int x, int y, char c)
 void scroll_down(void)
 {
 	for (int y = 0; y < (VGA_SCREEN_HEIGTH - 1); y++)
-		memcpy(VGA_ENTRY(0, y), VGA_ENTRY(0, y + 1), VGA_SCREEN_WIDTH * 2);
+		ft_memcpy(VGA_ENTRY(0, y), VGA_ENTRY(0, y + 1), VGA_SCREEN_WIDTH * 2);
 	for (int x = 0; x < VGA_SCREEN_WIDTH; x++)
 		*VGA_ENTRY(x, VGA_SCREEN_HEIGTH - 1) = (vga_entry){0, vga_screen_mode};
 }

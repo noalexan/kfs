@@ -7,5 +7,8 @@ struct s_cursor {
 	u8 y;
 };
 
-void put_char(char c);
-void printk(const char *str);
+int ft_putchar(char c);
+int ft_putstr(char *str);
+int ft_putnbr(int nb);
+int ft_putunsignednbr(unsigned int nb);
+int ft_puthexa(unsigned long nb, int upper, int addr);
