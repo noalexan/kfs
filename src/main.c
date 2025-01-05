@@ -1,10 +1,8 @@
 #include <gdt.h>
 #include <io.h>
+#include <libft.h>
 #include <printk.h>
 #include <vga.h>
-#include <libft.h>
-
-#define a(a,i,b) ft_putstr(a); ft_puthexa(GDT_ENTRY(i)->b, false, true); ft_putchar('\n');
 
 void kernel_main(void)
 {
@@ -12,20 +10,33 @@ void kernel_main(void)
 	set_screen_mode(FOREGROUND_WHITE | BACKGROUND_BLACK);
 	init_gdt();
 
-	gdt_entry *ptr = GDT_ENTRY(1);
-	ft_memset(ptr, 0xff, sizeof(gdt_entry));
+	// for (int i = 0; i <= 2; i++) {
+	// 	ft_puthexa((unsigned long)GDT_ENTRY(i), false, true);
+	// 	ft_putstr(" ->\t");
+	// 	ft_puthexa(GDT_ENTRY(i)->llimit, false, true);
+	// 	ft_putchar('\n');
+	// 	a(i, lbase);
+	// 	a(i, base);
+	// 	a(i, access);
+	// 	a(i, hlimit);
+	// 	a(i, flags);
+	// 	a(i, hbase);
+	// }
 
-	for (int i = 0; i <= 2; i++) {
-		ft_puthexa((unsigned long)GDT_ENTRY(i), false, true);
-		ft_putstr(" ->\t");
-		ft_puthexa(GDT_ENTRY(i)->llimit, false, true);
-		ft_putchar('\n');
-		a("\t\t\t",i,lbase)
-		a("\t\t\t",i,base)
-		a("\t\t\t",i,access)
-		a("\t\t\t",i,hlimit)
-		a("\t\t\t",i,flags)
-		a("\t\t\t",i,hbase)
+	// Memory Dump
+	u32 addr = 0x00000800;
+	while (addr < 0x00000820) {
+		if (addr % 8 == 0) {
+			ft_puthexa(addr, false, true);
+			ft_putstr(": ");
+		}
+		if (*(u8 *)addr < 0x10)
+			ft_putchar('0');
+		ft_puthexa(*(u8 *)addr, false, false);
+		ft_putchar(' ');
+		addr++;
+		if (addr % 8 == 0)
+			ft_putchar('\n');
 	}
 
 	while (true);

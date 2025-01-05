@@ -47,8 +47,14 @@ typedef struct __attribute__((packed)) s_vga_entry {
 	u8 mode;
 } vga_entry;
 
+struct s_cursor {
+	u8 x;
+	u8 y;
+};
+
 extern vga_entry *const vga_buffer;
 extern u8 vga_screen_mode;
+extern struct s_cursor cursor;
 
 void vga_update_cursor(int x, int y);
 void vga_enable_cursor(u8 cursor_start, u8 cursor_end);

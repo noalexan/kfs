@@ -4,7 +4,7 @@ AS=/tools/bin/i386-linux-gnu-as
 ASFLAGS=
 
 CC=/tools/bin/i386-linux-gnu-gcc
-CFLAGS=-fno-builtin -fno-exceptions -fno-stack-protector -O3 -Wall -Wextra -I./include -I./lib/libft
+CFLAGS=-fno-builtin -fno-exceptions -fno-stack-protector -nostdlib -nodefaultlibs -O3 -Wall -Wextra -I./include -I./lib/libft
 
 LD=/tools/bin/i386-linux-gnu-ld
 LDFLAGS=-z noexecstack -T linker.ld

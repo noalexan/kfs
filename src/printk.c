@@ -4,8 +4,6 @@
 
 int ft_putchar(char c)
 {
-	static struct s_cursor cursor = {0, 0};
-
 	if (cursor.x >= VGA_SCREEN_WIDTH) {
 		cursor.y += cursor.x / VGA_SCREEN_WIDTH;
 		cursor.x %= VGA_SCREEN_WIDTH;
