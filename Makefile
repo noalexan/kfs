@@ -16,13 +16,16 @@ QEMUFLAGS=# -monitor stdio -vga virtio -full-screen
 DOCKERIMAGENAME=kfs-builder
 DOCKERIMAGETAG=24.04
 
-OBJ= \
-	build/boot.o \
-	build/main.o \
-	build/vga.o \
-	build/printk.o \
-	build/io.o \
-	build/gdt.o
+OBJ= $(addprefix $(BUILDDIR)/, \
+	boot.o \
+	main.o \
+	vga.o \
+	printk.o \
+	io.o \
+	gdt.o \
+	idt.o \
+	exceptions_handlers.o \
+)
 
 .PHONY: all
 ifeq ($(IN_DOCKER),1)
@@ -36,13 +39,13 @@ all: .dockerimageid
 		&& docker images -q $(DOCKERIMAGENAME):$(DOCKERIMAGETAG) > $@
 endif
 
-build/%.o: src/%.s
+$(BUILDDIR)/%.o: src/%.s
 	$(AS) $(ASFLAGS) -o $@ $<
 
-build/%.o: src/%.c
+$(BUILDDIR)/%.o: src/%.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-$(BUILDDIR)/boot.iso: $(BUILDDIR) $(BUILDDIR)/iso $(BUILDDIR)/iso/boot/grub/grub.cfg $(BUILDDIR)/iso/boot/kernel
+$(BUILDDIR)/boot.iso: $(BUILDDIR)/iso/boot/kernel $(BUILDDIR)/iso/boot/grub/grub.cfg
 	/tools/bin/grub-mkrescue -o $@ $(BUILDDIR)/iso
 
 $(BUILDDIR)/iso/boot/grub/grub.cfg: grub.cfg $(BUILDDIR)/iso/boot/grub

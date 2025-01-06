@@ -1,34 +1,16 @@
-#include <gdt.h>
-#include <io.h>
-#include <libft.h>
 #include <printk.h>
 #include <vga.h>
 
-void kernel_main(void)
+#include <gdt.h>
+#include <idt.h>
+
+static void memory_dump(u32 addr_start, u32 addr_end)
 {
-	clear_screen();
-	set_screen_mode(FOREGROUND_WHITE | BACKGROUND_BLACK);
-	init_gdt();
-
-	// for (int i = 0; i <= 2; i++) {
-	// 	ft_puthexa((unsigned long)GDT_ENTRY(i), false, true);
-	// 	ft_putstr(" ->\t");
-	// 	ft_puthexa(GDT_ENTRY(i)->llimit, false, true);
-	// 	ft_putchar('\n');
-	// 	a(i, lbase);
-	// 	a(i, base);
-	// 	a(i, access);
-	// 	a(i, hlimit);
-	// 	a(i, flags);
-	// 	a(i, hbase);
-	// }
-
-	// Memory Dump
-	u32 addr = 0x00000800;
-	while (addr < 0x00000820) {
-		if (addr % 8 == 0) {
+	u32 addr = addr_start;
+	while (addr < addr_end) {
+		if (addr % 8 == 0 || addr == addr_start) {
 			ft_puthexa(addr, false, true);
-			ft_putstr(": ");
+			ft_putstr(":  \t");
 		}
 		if (*(u8 *)addr < 0x10)
 			ft_putchar('0');
@@ -38,6 +20,16 @@ void kernel_main(void)
 		if (addr % 8 == 0)
 			ft_putchar('\n');
 	}
+	if (addr % 8)
+		ft_putchar('\n');
+}
+
+void kernel_main()
+{
+	// clear_screen();
+	// set_screen_mode(FOREGROUND_WHITE | BACKGROUND_BLACK);
+
+	// ft_putstr("Hello, World!\n");
 
 	while (true);
 }

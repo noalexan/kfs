@@ -1,7 +1,7 @@
 #include <gdt.h>
 #include <libft.h>
 
-static void set_gdt_entry(gdt_entry *entry, u32 base, u32 limit, u8 flags, u8 access)  //, flag, limit, access)
+static void set_gdt_entry(gdt_entry *entry, u32 base, u32 limit, u8 flags, u8 access)
 {
 	entry->lbase = base;
 	entry->base = base >> 16;
@@ -75,9 +75,9 @@ void init_gdt()
 	// .short gdt_end - gdt_start - 1
 	// .long gdt_start
 
-	struct gdt_descriptor *gdt_descriptor = (struct gdt_descriptor *)GDT_ENTRY(index);
+	struct gdt_descriptor *gdt_descriptor = (struct gdt_descriptor *)0x00001000;
 	gdt_descriptor->address = (u32)GDT_BASE;
-	gdt_descriptor->size = (u32)gdt_descriptor - (u32)GDT_BASE;
+	gdt_descriptor->size = index * 8;
 
-	asm volatile("lgdt %0" : : "m"(gdt_descriptor));
+	asm volatile ("lgdt [0x00001000]");
 }

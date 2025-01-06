@@ -3,7 +3,7 @@
 #include <types.h>
 
 #define GDT_BASE (gdt_entry *)0x00000800
-#define GDT_ENTRY(index) (GDT_BASE + index)
+#define GDT_ENTRY(index) (GDT_BASE + index % 256)
 
 enum GDT_ACCESS {
 	DPL_KERNEL = 0,

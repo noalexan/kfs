@@ -27,15 +27,17 @@ header_end:
 
 .section .text
 .global _start
+.extern init_gdt
+.extern init_idt
 .extern kernel_main
 
 _start:
 	lea esp, [0x00090000]
 
-	mov eax, 0b00000001
-	mov cr0, eax
-	cli
+	call init_gdt
+	call init_idt
 
-	call kernel_main
+	jmp $
+	// call kernel_main
 
 	hlt
