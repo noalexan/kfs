@@ -5,12 +5,16 @@
 .global inb
 
 outb:
-	mov edx, [esp+4]
-	mov eax, [esp+8]
+	push edx
+	mov edx, [esp+8]
+	mov al, [esp+12]
 	out dx, al
+	pop edx
 	ret
 
 inb:
-	mov edx, word [esp+4]
-	in eax, edx
+	push edx
+	mov dx, [esp+8]
+	in al, dx
+	pop edx
 	ret

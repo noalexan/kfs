@@ -1,8 +1,6 @@
+#include <io.h>
 #include <printk.h>
 #include <vga.h>
-
-#include <gdt.h>
-#include <idt.h>
 
 static void memory_dump(u32 addr_start, u32 addr_end)
 {
@@ -24,12 +22,48 @@ static void memory_dump(u32 addr_start, u32 addr_end)
 		ft_putchar('\n');
 }
 
+u8 read_status()
+{
+	return inb(0x64);
+}
+
+u8 read_data()
+{
+	return inb(0x60);
+}
+
 void kernel_main()
 {
-	// clear_screen();
-	// set_screen_mode(FOREGROUND_WHITE | BACKGROUND_BLACK);
+	clear_screen();
+	set_screen_mode(FOREGROUND_WHITE | BACKGROUND_BLACK);
+	vga_update_cursor_position(0, 0);
 
-	// ft_putstr("Hello, World!\n");
+	while (true) {
+		if (read_status() & 0x01) {
+			u8 scancode = read_data();
 
-	while (true);
+			if (false) {
+				ft_puthexa(scancode, false, false);
+				ft_putchar('\n');
+			}
+
+			else {
+				switch (scancode) {
+				case 0x39:
+					ft_putchar(' ');
+					break;
+
+				case 0x31:
+					ft_putchar('n');
+					break;
+
+				default:
+					break;
+				}
+			}
+		}
+
+		for (int i = 0; i < 100000; i++)
+			asm volatile("nop\n\t");
+	}
 }

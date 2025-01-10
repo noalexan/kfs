@@ -56,8 +56,8 @@ extern vga_entry *const vga_buffer;
 extern u8 vga_screen_mode;
 extern struct s_cursor cursor;
 
-void vga_update_cursor(int x, int y);
-void vga_enable_cursor(u8 cursor_start, u8 cursor_end);
+void vga_update_cursor_position(int x, int y);
+void vga_init_cursor_position(void);
 void vga_put_char(int x, int y, char c);
 void scroll_down(void);
 void set_screen_mode(u8 mode);

@@ -13,7 +13,7 @@ LDLIBS=-L./lib/libft -lft
 QEMU=qemu-system-i386
 QEMUFLAGS=# -monitor stdio -vga virtio -full-screen
 
-DOCKERIMAGENAME=kfs-builder
+DOCKERIMAGENAME=noalexan/kfs-builder
 DOCKERIMAGETAG=24.04
 
 OBJ= $(addprefix $(BUILDDIR)/, \
@@ -31,18 +31,14 @@ OBJ= $(addprefix $(BUILDDIR)/, \
 ifeq ($(IN_DOCKER),1)
 all: $(BUILDDIR)/boot.iso
 else
-all: .dockerimageid
+all:
 	docker run --rm -t -v .:/kfs $(DOCKERIMAGENAME):$(DOCKERIMAGETAG)
-
-.dockerimageid:
-	docker build -t $(DOCKERIMAGENAME):$(DOCKERIMAGETAG) . \
-		&& docker images -q $(DOCKERIMAGENAME):$(DOCKERIMAGETAG) > $@
 endif
 
-$(BUILDDIR)/%.o: src/%.s
+$(BUILDDIR)/%.o: src/%.s $(BUILDDIR)
 	$(AS) $(ASFLAGS) -o $@ $<
 
-$(BUILDDIR)/%.o: src/%.c
+$(BUILDDIR)/%.o: src/%.c $(BUILDDIR)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 $(BUILDDIR)/boot.iso: $(BUILDDIR)/iso/boot/kernel $(BUILDDIR)/iso/boot/grub/grub.cfg

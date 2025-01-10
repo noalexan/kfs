@@ -34,10 +34,9 @@ header_end:
 _start:
 	lea esp, [0x00090000]
 
-	call init_gdt
-	call init_idt
+	// call init_gdt
+	// call init_idt
 
-	jmp $
-	// call kernel_main
+	call kernel_main
 
 	hlt

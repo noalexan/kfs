@@ -4,18 +4,9 @@
 
 int ft_putchar(char c)
 {
-	if (cursor.x >= VGA_SCREEN_WIDTH) {
-		cursor.y += cursor.x / VGA_SCREEN_WIDTH;
-		cursor.x %= VGA_SCREEN_WIDTH;
-	}
-
-	for (; cursor.y >= VGA_SCREEN_HEIGTH; cursor.y--)
-		scroll_down();
-
 	switch (c) {
 	case '\n':
-		if (++cursor.y >= VGA_SCREEN_HEIGTH)
-			scroll_down();
+		++cursor.y;
 		fallthrough;
 
 	case '\r':
@@ -32,7 +23,7 @@ int ft_putchar(char c)
 		vga_put_char(cursor.x++, cursor.y, c);
 	}
 
-	vga_update_cursor(cursor.x, cursor.y);
+	vga_update_cursor_position(cursor.x, cursor.y);
 	return 1;
 }
 
