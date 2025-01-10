@@ -32,11 +32,25 @@ u8 read_data()
 	return inb(0x60);
 }
 
+char buffer[4096];
+int input_length = 0;
+
+void add_char_to_buffer(char c)
+{
+	ft_putchar(c);
+	buffer[input_length++] = c;
+	buffer[input_length] = 0;
+}
+
 void kernel_main()
 {
 	clear_screen();
 	set_screen_mode(FOREGROUND_WHITE | BACKGROUND_BLACK);
 	vga_update_cursor_position(0, 0);
+
+	int caps_lock = false;
+	int left_shift = false;
+	int right_shift = false;
 
 	while (true) {
 		if (read_status() & 0x01) {
@@ -49,12 +63,338 @@ void kernel_main()
 
 			else {
 				switch (scancode) {
-				case 0x39:
-					ft_putchar(' ');
+				case 0x01:
+					// escape pressed
+					break;
+
+				case 0x02:
+				case 0x03:
+				case 0x04:
+				case 0x05:
+				case 0x06:
+				case 0x07:
+				case 0x08:
+				case 0x09:
+				case 0x0A:
+					add_char_to_buffer(0x47 + scancode);
+
+				case 0x0B:
+					add_char_to_buffer('0');
+					break;
+
+				case 0x0C:
+					add_char_to_buffer('-');
+					break;
+
+				case 0x0D:
+					add_char_to_buffer('=');
+					break;
+
+				case 0x0E:
+					// backspace pressed
+					break;
+
+				case 0x0F:
+					add_char_to_buffer('\t');
+					break;
+
+				case 0x10:
+					add_char_to_buffer((caps_lock || left_shift || right_shift) ? 'Q' : 'Q' + 0x20);
+					break;
+
+				case 0x11:
+					add_char_to_buffer((caps_lock || left_shift || right_shift) ? 'W' : 'W' + 0x20);
+					break;
+
+				case 0x12:
+					add_char_to_buffer((caps_lock || left_shift || right_shift) ? 'E' : 'E' + 0x20);
+					break;
+
+				case 0x13:
+					add_char_to_buffer((caps_lock || left_shift || right_shift) ? 'R' : 'R' + 0x20);
+					break;
+
+				case 0x14:
+					add_char_to_buffer((caps_lock || left_shift || right_shift) ? 'T' : 'T' + 0x20);
+					break;
+
+				case 0x15:
+					add_char_to_buffer((caps_lock || left_shift || right_shift) ? 'Y' : 'Y' + 0x20);
+					break;
+
+				case 0x16:
+					add_char_to_buffer((caps_lock || left_shift || right_shift) ? 'U' : 'U' + 0x20);
+					break;
+
+				case 0x17:
+					add_char_to_buffer((caps_lock || left_shift || right_shift) ? 'I' : 'I' + 0x20);
+					break;
+
+				case 0x18:
+					add_char_to_buffer((caps_lock || left_shift || right_shift) ? 'O' : 'O' + 0x20);
+					break;
+
+				case 0x19:
+					add_char_to_buffer((caps_lock || left_shift || right_shift) ? 'P' : 'P' + 0x20);
+					break;
+
+				case 0x1A:
+					add_char_to_buffer('[');
+					break;
+
+				case 0x1B:
+					add_char_to_buffer(']');
+					break;
+
+				case 0x1C:
+					ft_putchar('\n');
+					ft_putstr(buffer);
+					input_length = 0;
+					buffer[input_length] = 0;
+					ft_putchar('\n');
+					break;
+
+				case 0x1D:
+					// left control pressed
+					break;
+
+				case 0x1E:
+					add_char_to_buffer((caps_lock || left_shift || right_shift) ? 'A' : 'A' + 0x20);
+					break;
+
+				case 0x1F:
+					add_char_to_buffer((caps_lock || left_shift || right_shift) ? 'S' : 'S' + 0x20);
+					break;
+
+				case 0x20:
+					add_char_to_buffer((caps_lock || left_shift || right_shift) ? 'D' : 'D' + 0x20);
+					break;
+
+				case 0x21:
+					add_char_to_buffer((caps_lock || left_shift || right_shift) ? 'F' : 'F' + 0x20);
+					break;
+
+				case 0x22:
+					add_char_to_buffer((caps_lock || left_shift || right_shift) ? 'G' : 'G' + 0x20);
+					break;
+
+				case 0x23:
+					add_char_to_buffer((caps_lock || left_shift || right_shift) ? 'H' : 'H' + 0x20);
+					break;
+
+				case 0x24:
+					add_char_to_buffer((caps_lock || left_shift || right_shift) ? 'J' : 'J' + 0x20);
+					break;
+
+				case 0x25:
+					add_char_to_buffer((caps_lock || left_shift || right_shift) ? 'K' : 'K' + 0x20);
+					break;
+
+				case 0x26:
+					add_char_to_buffer((caps_lock || left_shift || right_shift) ? 'L' : 'L' + 0x20);
+					break;
+
+				case 0x27:
+					add_char_to_buffer(';');
+					break;
+
+				case 0x28:
+					add_char_to_buffer('\'');
+					break;
+
+				case 0x29:
+					add_char_to_buffer('`');
+					break;
+
+				case 0x2B:
+					add_char_to_buffer('\\');
+					break;
+
+				case 0x2C:
+					add_char_to_buffer((caps_lock || left_shift || right_shift) ? 'Z' : 'Z' + 0x20);
+					break;
+
+				case 0x2D:
+					add_char_to_buffer((caps_lock || left_shift || right_shift) ? 'X' : 'X' + 0x20);
+					break;
+
+				case 0x2E:
+					add_char_to_buffer((caps_lock || left_shift || right_shift) ? 'C' : 'C' + 0x20);
+					break;
+
+				case 0x2F:
+					add_char_to_buffer((caps_lock || left_shift || right_shift) ? 'V' : 'V' + 0x20);
+					break;
+
+				case 0x30:
+					add_char_to_buffer((caps_lock || left_shift || right_shift) ? 'B' : 'B' + 0x20);
 					break;
 
 				case 0x31:
-					ft_putchar('n');
+					add_char_to_buffer((caps_lock || left_shift || right_shift) ? 'N' : 'N' + 0x20);
+					break;
+
+				case 0x32:
+					add_char_to_buffer((caps_lock || left_shift || right_shift) ? 'M' : 'M' + 0x20);
+					break;
+
+				case 0x33:
+					add_char_to_buffer(',');
+					break;
+
+				case 0x34:
+					add_char_to_buffer('.');
+					break;
+
+				case 0x35:
+					add_char_to_buffer('/');
+					break;
+
+				case 0x37:
+					add_char_to_buffer('*');
+					break;
+
+				case 0x39:
+					add_char_to_buffer(' ');
+					break;
+
+				case 0x2A:
+					// left shift pressed
+					left_shift = true;
+					break;
+
+				case 0x36:
+					// right shift pressed
+					right_shift = true;
+					break;
+
+				case 0xAA:
+					// left shift pressed
+					left_shift = false;
+					break;
+
+				case 0xB6:
+					// right shift pressed
+					right_shift = false;
+					break;
+
+				case 0x38:
+					// left alt pressed
+					break;
+
+				case 0x3B:
+					// F1 pressed
+					break;
+
+				case 0x3C:
+					// F2 pressed
+					break;
+
+				case 0x3D:
+					// F3 pressed
+					break;
+
+				case 0x3E:
+					// F4 pressed
+					break;
+
+				case 0x3F:
+					// F5 pressed
+					break;
+
+				case 0x40:
+					// F6 pressed
+					break;
+
+				case 0x41:
+					// F7 pressed
+					break;
+
+				case 0x42:
+					// F8 pressed
+					break;
+
+				case 0x43:
+					// F9 pressed
+					break;
+
+				case 0x44:
+					// F10 pressed
+					break;
+
+				case 0x57:
+					// F11 pressed
+					break;
+
+				case 0x58:
+					// F12 pressed
+					break;
+
+				case 0x3A:
+					// CapsLock pressed
+					caps_lock = !caps_lock;
+					break;
+
+				case 0x45:
+					// NumberLock pressed
+					break;
+
+				case 0x46:
+					// ScrollLock pressed
+					break;
+
+					// -- Keypad --
+
+				case 0x47:
+					add_char_to_buffer('7');
+					break;
+
+				case 0x48:
+					add_char_to_buffer('8');
+					break;
+
+				case 0x49:
+					add_char_to_buffer('9');
+					break;
+
+				case 0x4A:
+					add_char_to_buffer('-');
+					break;
+
+				case 0x4B:
+					add_char_to_buffer('4');
+					break;
+
+				case 0x4C:
+					add_char_to_buffer('5');
+					break;
+
+				case 0x4D:
+					add_char_to_buffer('6');
+					break;
+
+				case 0x4E:
+					add_char_to_buffer('+');
+					break;
+
+				case 0x4F:
+					add_char_to_buffer('1');
+					break;
+
+				case 0x50:
+					add_char_to_buffer('2');
+					break;
+
+				case 0x51:
+					add_char_to_buffer('3');
+					break;
+
+				case 0x52:
+					add_char_to_buffer('0');
+					break;
+
+				case 0x53:
+					add_char_to_buffer('.');
 					break;
 
 				default:
