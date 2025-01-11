@@ -6,10 +6,8 @@ static void memory_dump(u32 addr_start, u32 addr_end)
 {
 	u32 addr = addr_start;
 	while (addr < addr_end) {
-		if (addr % 8 == 0 || addr == addr_start) {
-			ft_puthexa(addr, false, true);
-			ft_putstr(":  \t");
-		}
+		if (addr % 8 == 0 || addr == addr_start)
+			printk("%p:  \t", addr);
 		if (*(u8 *)addr < 0x10)
 			ft_putchar('0');
 		ft_puthexa(*(u8 *)addr, false, false);
@@ -22,12 +20,12 @@ static void memory_dump(u32 addr_start, u32 addr_end)
 		ft_putchar('\n');
 }
 
-u8 read_status()
+static u8 read_status()
 {
 	return inb(0x64);
 }
 
-u8 read_data()
+static u8 read_data()
 {
 	return inb(0x60);
 }
@@ -35,7 +33,7 @@ u8 read_data()
 char buffer[4096];
 int input_length = 0;
 
-void add_char_to_buffer(char c)
+static void add_char_to_buffer(char c)
 {
 	ft_putchar(c);
 	buffer[input_length++] = c;
@@ -77,6 +75,7 @@ void kernel_main()
 				case 0x09:
 				case 0x0A:
 					add_char_to_buffer(0x47 + scancode);
+					break;
 
 				case 0x0B:
 					add_char_to_buffer('0');

@@ -9,7 +9,7 @@ struct s_cursor cursor;
 
 void vga_update_cursor_position(int x, int y)
 {
-	cursor = (struct s_cursor){x, y};
+	cursor = (struct s_cursor){x % VGA_SCREEN_WIDTH, y % VGA_SCREEN_HEIGTH};
 
 	if (cursor.x >= VGA_SCREEN_WIDTH) {
 		cursor.y += cursor.x / VGA_SCREEN_WIDTH;
@@ -19,7 +19,7 @@ void vga_update_cursor_position(int x, int y)
 	while (cursor.y >= VGA_SCREEN_HEIGTH)
 		scroll_down();
 
-	u16 pos = y * VGA_SCREEN_WIDTH + x;
+	u16 pos = cursor.y * VGA_SCREEN_WIDTH + cursor.x;
 
 	outb(0x3D4, 0x0F);
 	outb(0x3D5, pos);

@@ -1,6 +1,6 @@
-#include <printk.h>
 #include <utils.h>
 #include <vga.h>
+#include <stdarg.h>
 
 int ft_putchar(char c)
 {
@@ -68,4 +68,46 @@ int ft_puthexa(unsigned long nb, int upper, int addr)
 		return (ft_putchar(dict[nb]));
 	else
 		return (ft_puthexa(nb / 16, upper, 0) + ft_puthexa(nb % 16, upper, 0));
+}
+
+void printk(const char *fmt, ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+
+	for (unsigned long i = 0; fmt[i]; i++) {
+		if (fmt[i] == '%') {
+			switch (fmt[++i]) {
+			case 's':
+				ft_putstr(va_arg(ap, char *));
+				break;
+
+			case 'i':
+			case 'd':
+				ft_putnbr(va_arg(ap, int));
+				break;
+
+			case 'u':
+				ft_putunsignednbr(va_arg(ap, unsigned int));
+				break;
+
+			case 'x':
+				ft_puthexa(va_arg(ap, unsigned int), false, false);
+				break;
+
+			case 'X':
+				ft_puthexa(va_arg(ap, unsigned int), true, false);
+				break;
+
+			case 'p':
+				ft_puthexa(va_arg(ap, u32), false, true);
+				break;
+
+			default:
+				break;
+			}
+		}
+		else
+			ft_putchar(fmt[i]);
+	}
 }

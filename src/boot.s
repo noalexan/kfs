@@ -36,7 +36,6 @@ _start:
 
 	// call init_gdt
 	// call init_idt
-
 	call kernel_main
 
 	hlt

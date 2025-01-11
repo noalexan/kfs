@@ -9,7 +9,7 @@ static void set_gdt_entry(gdt_entry *entry, u32 base, u32 limit, u8 flags, u8 ac
 	entry->llimit = limit;
 	entry->hlimit = limit >> 16;
 	entry->flags = flags;
-	entry->access = 0x80 | access;
+	entry->access = access;
 }
 
 void init_gdt()
@@ -18,8 +18,8 @@ void init_gdt()
 
 	ft_bzero(GDT_ENTRY(index++), sizeof(gdt_entry));
 
-	set_gdt_entry(GDT_ENTRY(index++), 0x00000000, 0xfffff, GRANULARITY | SIZE, SEGMENT_CODE | CODE_READABLE | ACCESS);
-	set_gdt_entry(GDT_ENTRY(index++), 0x00000000, 0xfffff, 0b1100, SEGMENT_DATA | DATA_WRITABLE | ACCESS);
+	set_gdt_entry(GDT_ENTRY(index++), 0x00000000, 0xfffff, GDT_FLAGS_32BIT | GDT_FLAGS_GRANULARITY_4K, GDT_ACCESS_PRESENT | GDT_ACCESS_RING0 | GDT_ACCESS_CODE_SEGMENT | GDT_ACCESS_CODE_READABLE);
+	set_gdt_entry(GDT_ENTRY(index++), 0x00000000, 0xfffff, GDT_FLAGS_32BIT | GDT_FLAGS_GRANULARITY_4K, GDT_ACCESS_PRESENT | GDT_ACCESS_RING0 | GDT_ACCESS_DATA_SEGMENT | GDT_ACCESS_DATA_WRITABLE);
 
 	// gdt_code:
 	// .short 0xffff
@@ -75,9 +75,8 @@ void init_gdt()
 	// .short gdt_end - gdt_start - 1
 	// .long gdt_start
 
-	struct gdt_descriptor *gdt_descriptor = (struct gdt_descriptor *)0x00001000;
-	gdt_descriptor->address = (u32)GDT_BASE;
-	gdt_descriptor->size = index * 8;
+	GDT_DESCRIPTOR->ptr = GDT_BASE;
+	GDT_DESCRIPTOR->size = index * sizeof(gdt_entry) - 1;
 
-	asm volatile ("lgdt [0x00001000]");
+	asm volatile("lgdt [0x00001000]");
 }

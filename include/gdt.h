@@ -2,36 +2,41 @@
 
 #include <types.h>
 
-#define GDT_BASE (gdt_entry *)0x00000800
+#define GDT_BASE ((gdt_entry *)0x00000800)
+#define GDT_DESCRIPTOR ((gdt_descriptor *)0x00001000)
 #define GDT_ENTRY(index) (GDT_BASE + index % 256)
 
 enum GDT_ACCESS {
-	DPL_KERNEL = 0,
-	DPL_USER = 3 << 5,
+	GDT_ACCESS_CODE_READABLE = 0x02,
+	GDT_ACCESS_DATA_WRITABLE = 0x02,
 
-	SEGMENT_SYSTEM = 0,
-	SEGMENT_DATA = 2 << 3,
-	SEGMENT_CODE = 3 << 3,
+	GDT_ACCESS_CODE_CONFORMING = 0x04,
+	GDT_ACCESS_DATA_DIRECTION_NORMAL = 0x00,
+	GDT_ACCESS_DATA_DIRECTION_DOWN = 0x04,
 
-	DATA_DIRECTION_UP = 0,
-	DATA_DIRECTION_DOWN = 1 << 2,
+	GDT_ACCESS_DATA_SEGMENT = 0x10,
+	GDT_ACCESS_CODE_SEGMENT = 0x18,
 
-	EXEC_DPL = 0,
-	EXEC_LOW_OR_EQ_DPL = 1 << 2,
+	GDT_ACCESS_DESCRIPTOR_TSS = 0x00,
 
-	CODE_READABLE = 1 << 1,
-	DATA_WRITABLE = 1 << 1,
+	GDT_ACCESS_RING0 = 0x00,
+	GDT_ACCESS_RING1 = 0x20,
+	GDT_ACCESS_RING2 = 0x40,
+	GDT_ACCESS_RING3 = 0x60,
 
-	ACCESS = 1
+	GDT_ACCESS_PRESENT = 0x80
 };
 
 enum GDT_FLAGS {
-	GRANULARITY = 1 << 3,
-	SIZE = 1 << 2,
-	LONG_MODE = 1 << 1,
+	GDT_FLAGS_64BIT = 0x20,
+	GDT_FLAGS_32BIT = 0x40,
+	GDT_FLAGS_16BIT = 0x00,
+
+	GDT_FLAGS_GRANULARITY_1B = 0x00,
+	GDT_FLAGS_GRANULARITY_4K = 0x80,
 };
 
-typedef struct __attribute__((packed)) s_gdt_entry {
+typedef struct {
 	u16 llimit;
 	u16 lbase;
 	u8 base;
@@ -39,11 +44,11 @@ typedef struct __attribute__((packed)) s_gdt_entry {
 	u8 hlimit : 4;
 	u8 flags : 4;
 	u8 hbase;
-} gdt_entry;
+} __attribute__((packed)) gdt_entry;
 
-struct __attribute__((packed)) gdt_descriptor {
+typedef struct {
 	u16 size;
-	u32 address;
-};
+	gdt_entry *ptr;
+} __attribute__((packed)) gdt_descriptor;
 
 void init_gdt();

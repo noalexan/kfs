@@ -4,14 +4,17 @@ AS=/tools/bin/i386-linux-gnu-as
 ASFLAGS=
 
 CC=/tools/bin/i386-linux-gnu-gcc
-CFLAGS=-fno-builtin -fno-exceptions -fno-stack-protector -nostdlib -nodefaultlibs -O3 -Wall -Wextra -I./include -I./lib/libft
+CFLAGS=-O3 -Wall -Wextra -I./include -I./lib/libft
+
+CXX=/tools/bin/i386-linux-gnu-g++
+CXXFLAGS=-O3 -Wall -Wextra -I./include -I./lib/libft
 
 LD=/tools/bin/i386-linux-gnu-ld
-LDFLAGS=-z noexecstack -T linker.ld
+LDFLAGS=-z noexecstack -T linker.ld -fno-builtin -fno-exceptions -fno-stack-protector -nostdlib -nodefaultlibs
 LDLIBS=-L./lib/libft -lft
 
 QEMU=qemu-system-i386
-QEMUFLAGS=# -monitor stdio -vga virtio -full-screen
+QEMUFLAGS=
 
 DOCKERIMAGENAME=noalexan/kfs-builder
 DOCKERIMAGETAG=24.04
@@ -25,6 +28,7 @@ OBJ= $(addprefix $(BUILDDIR)/, \
 	gdt.o \
 	idt.o \
 	exceptions_handlers.o \
+	tty.o \
 )
 
 .PHONY: all
@@ -41,6 +45,9 @@ $(BUILDDIR)/%.o: src/%.s $(BUILDDIR)
 $(BUILDDIR)/%.o: src/%.c $(BUILDDIR)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
+$(BUILDDIR)/%.o: src/%.cpp $(BUILDDIR)
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
+
 $(BUILDDIR)/boot.iso: $(BUILDDIR)/iso/boot/kernel $(BUILDDIR)/iso/boot/grub/grub.cfg
 	/tools/bin/grub-mkrescue -o $@ $(BUILDDIR)/iso
 
@@ -48,7 +55,7 @@ $(BUILDDIR)/iso/boot/grub/grub.cfg: grub.cfg $(BUILDDIR)/iso/boot/grub
 	@cp -v grub.cfg $@
 
 $(BUILDDIR)/iso/boot/kernel: ./lib/libft/libft.a $(OBJ) linker.ld
-	$(LD) $(LDFLAGS) -o $@ $(OBJ) $(LDLIBS)
+	$(CC) $(LDFLAGS) -o $@ $(OBJ) $(LDLIBS)
 
 ./lib/libft/libft.a:
 	make -C ./lib/libft CC=$(CC) OBJ="ft_bzero.o ft_memset.o ft_memcpy.o" static
