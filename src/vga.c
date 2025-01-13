@@ -2,8 +2,8 @@
 #include <libft.h>
 #include <vga.h>
 
-vga_entry *const vga_buffer = (vga_entry *)0xb8000;
-u8 vga_screen_mode = 0x00;
+vga_entry *const vga_buffer      = (vga_entry *)0xb8000;
+u8               vga_screen_mode = 0x00;
 
 struct s_cursor cursor;
 

@@ -1,3 +1,4 @@
+#include <printk.h>
 #include <tty.hpp>
 
 extern "C" {
@@ -13,21 +14,11 @@ TTY::TTY()
 	}
 }
 
-TTY::~TTY()
-{
-}
+TTY::~TTY() {}
 
-void TTY::load()
-{
-	ft_memcpy(vga_buffer, this->buffer, sizeof(this->buffer));
-}
+void TTY::load() { ft_memcpy(vga_buffer, this->buffer, sizeof(this->buffer)); }
 
-extern "C" void __stack_chk_fail_local(void)
-{
-	// Handle stack smashing detection here
-	// For example, print an error message and halt the system
-	while (1);
-}
+extern "C" void __stack_chk_fail_local(void) { asm volatile("hlt\n\t"); }
 
 extern "C" void test()
 {

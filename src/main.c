@@ -12,9 +12,7 @@ static void memory_dump(u32 addr_start, u32 addr_end)
 			printk("%p:  \t", addr);
 		if (*(u8 *)addr < 0x10)
 			ft_putchar('0');
-		ft_puthexa(*(u8 *)addr, false, false);
-		ft_putchar(' ');
-		addr++;
+		printk("%x ", *(u8 *)(addr++));
 		if (addr % 8 == 0)
 			ft_putchar('\n');
 	}
@@ -22,24 +20,18 @@ static void memory_dump(u32 addr_start, u32 addr_end)
 		ft_putchar('\n');
 }
 
-static u8 read_status()
-{
-	return inb(0x64);
-}
+static u8 read_status() { return inb(0x64); }
 
-static u8 read_data()
-{
-	return inb(0x60);
-}
+static u8 read_data() { return inb(0x60); }
 
 char buffer[4096];
-int input_length = 0;
+int  input_length = 0;
 
 static void add_char_to_buffer(char c)
 {
 	ft_putchar(c);
 	buffer[input_length++] = c;
-	buffer[input_length] = 0;
+	buffer[input_length]   = 0;
 }
 
 void kernel_main()
@@ -51,10 +43,10 @@ void kernel_main()
 	char prompt[] = "$> ";
 	printk("%s", prompt);
 
-	test();
+	// test();
 
-	int caps_lock = false;
-	int left_shift = false;
+	int caps_lock   = false;
+	int left_shift  = false;
 	int right_shift = false;
 
 	while (true) {
@@ -105,43 +97,63 @@ void kernel_main()
 					break;
 
 				case 0x10:
-					add_char_to_buffer((caps_lock || left_shift || right_shift) ? 'Q' : 'Q' + 0x20);
+					add_char_to_buffer((caps_lock || left_shift || right_shift)
+					                       ? 'Q'
+					                       : 'Q' + 0x20);
 					break;
 
 				case 0x11:
-					add_char_to_buffer((caps_lock || left_shift || right_shift) ? 'W' : 'W' + 0x20);
+					add_char_to_buffer((caps_lock || left_shift || right_shift)
+					                       ? 'W'
+					                       : 'W' + 0x20);
 					break;
 
 				case 0x12:
-					add_char_to_buffer((caps_lock || left_shift || right_shift) ? 'E' : 'E' + 0x20);
+					add_char_to_buffer((caps_lock || left_shift || right_shift)
+					                       ? 'E'
+					                       : 'E' + 0x20);
 					break;
 
 				case 0x13:
-					add_char_to_buffer((caps_lock || left_shift || right_shift) ? 'R' : 'R' + 0x20);
+					add_char_to_buffer((caps_lock || left_shift || right_shift)
+					                       ? 'R'
+					                       : 'R' + 0x20);
 					break;
 
 				case 0x14:
-					add_char_to_buffer((caps_lock || left_shift || right_shift) ? 'T' : 'T' + 0x20);
+					add_char_to_buffer((caps_lock || left_shift || right_shift)
+					                       ? 'T'
+					                       : 'T' + 0x20);
 					break;
 
 				case 0x15:
-					add_char_to_buffer((caps_lock || left_shift || right_shift) ? 'Y' : 'Y' + 0x20);
+					add_char_to_buffer((caps_lock || left_shift || right_shift)
+					                       ? 'Y'
+					                       : 'Y' + 0x20);
 					break;
 
 				case 0x16:
-					add_char_to_buffer((caps_lock || left_shift || right_shift) ? 'U' : 'U' + 0x20);
+					add_char_to_buffer((caps_lock || left_shift || right_shift)
+					                       ? 'U'
+					                       : 'U' + 0x20);
 					break;
 
 				case 0x17:
-					add_char_to_buffer((caps_lock || left_shift || right_shift) ? 'I' : 'I' + 0x20);
+					add_char_to_buffer((caps_lock || left_shift || right_shift)
+					                       ? 'I'
+					                       : 'I' + 0x20);
 					break;
 
 				case 0x18:
-					add_char_to_buffer((caps_lock || left_shift || right_shift) ? 'O' : 'O' + 0x20);
+					add_char_to_buffer((caps_lock || left_shift || right_shift)
+					                       ? 'O'
+					                       : 'O' + 0x20);
 					break;
 
 				case 0x19:
-					add_char_to_buffer((caps_lock || left_shift || right_shift) ? 'P' : 'P' + 0x20);
+					add_char_to_buffer((caps_lock || left_shift || right_shift)
+					                       ? 'P'
+					                       : 'P' + 0x20);
 					break;
 
 				case 0x1A:
@@ -154,7 +166,7 @@ void kernel_main()
 
 				case 0x1C:
 					printk("\n%s", buffer);
-					buffer[0] = 0;
+					buffer[0]    = 0;
 					input_length = 0;
 					printk("\n$> ");
 					break;
@@ -164,39 +176,57 @@ void kernel_main()
 					break;
 
 				case 0x1E:
-					add_char_to_buffer((caps_lock || left_shift || right_shift) ? 'A' : 'A' + 0x20);
+					add_char_to_buffer((caps_lock || left_shift || right_shift)
+					                       ? 'A'
+					                       : 'A' + 0x20);
 					break;
 
 				case 0x1F:
-					add_char_to_buffer((caps_lock || left_shift || right_shift) ? 'S' : 'S' + 0x20);
+					add_char_to_buffer((caps_lock || left_shift || right_shift)
+					                       ? 'S'
+					                       : 'S' + 0x20);
 					break;
 
 				case 0x20:
-					add_char_to_buffer((caps_lock || left_shift || right_shift) ? 'D' : 'D' + 0x20);
+					add_char_to_buffer((caps_lock || left_shift || right_shift)
+					                       ? 'D'
+					                       : 'D' + 0x20);
 					break;
 
 				case 0x21:
-					add_char_to_buffer((caps_lock || left_shift || right_shift) ? 'F' : 'F' + 0x20);
+					add_char_to_buffer((caps_lock || left_shift || right_shift)
+					                       ? 'F'
+					                       : 'F' + 0x20);
 					break;
 
 				case 0x22:
-					add_char_to_buffer((caps_lock || left_shift || right_shift) ? 'G' : 'G' + 0x20);
+					add_char_to_buffer((caps_lock || left_shift || right_shift)
+					                       ? 'G'
+					                       : 'G' + 0x20);
 					break;
 
 				case 0x23:
-					add_char_to_buffer((caps_lock || left_shift || right_shift) ? 'H' : 'H' + 0x20);
+					add_char_to_buffer((caps_lock || left_shift || right_shift)
+					                       ? 'H'
+					                       : 'H' + 0x20);
 					break;
 
 				case 0x24:
-					add_char_to_buffer((caps_lock || left_shift || right_shift) ? 'J' : 'J' + 0x20);
+					add_char_to_buffer((caps_lock || left_shift || right_shift)
+					                       ? 'J'
+					                       : 'J' + 0x20);
 					break;
 
 				case 0x25:
-					add_char_to_buffer((caps_lock || left_shift || right_shift) ? 'K' : 'K' + 0x20);
+					add_char_to_buffer((caps_lock || left_shift || right_shift)
+					                       ? 'K'
+					                       : 'K' + 0x20);
 					break;
 
 				case 0x26:
-					add_char_to_buffer((caps_lock || left_shift || right_shift) ? 'L' : 'L' + 0x20);
+					add_char_to_buffer((caps_lock || left_shift || right_shift)
+					                       ? 'L'
+					                       : 'L' + 0x20);
 					break;
 
 				case 0x27:
@@ -216,31 +246,45 @@ void kernel_main()
 					break;
 
 				case 0x2C:
-					add_char_to_buffer((caps_lock || left_shift || right_shift) ? 'Z' : 'Z' + 0x20);
+					add_char_to_buffer((caps_lock || left_shift || right_shift)
+					                       ? 'Z'
+					                       : 'Z' + 0x20);
 					break;
 
 				case 0x2D:
-					add_char_to_buffer((caps_lock || left_shift || right_shift) ? 'X' : 'X' + 0x20);
+					add_char_to_buffer((caps_lock || left_shift || right_shift)
+					                       ? 'X'
+					                       : 'X' + 0x20);
 					break;
 
 				case 0x2E:
-					add_char_to_buffer((caps_lock || left_shift || right_shift) ? 'C' : 'C' + 0x20);
+					add_char_to_buffer((caps_lock || left_shift || right_shift)
+					                       ? 'C'
+					                       : 'C' + 0x20);
 					break;
 
 				case 0x2F:
-					add_char_to_buffer((caps_lock || left_shift || right_shift) ? 'V' : 'V' + 0x20);
+					add_char_to_buffer((caps_lock || left_shift || right_shift)
+					                       ? 'V'
+					                       : 'V' + 0x20);
 					break;
 
 				case 0x30:
-					add_char_to_buffer((caps_lock || left_shift || right_shift) ? 'B' : 'B' + 0x20);
+					add_char_to_buffer((caps_lock || left_shift || right_shift)
+					                       ? 'B'
+					                       : 'B' + 0x20);
 					break;
 
 				case 0x31:
-					add_char_to_buffer((caps_lock || left_shift || right_shift) ? 'N' : 'N' + 0x20);
+					add_char_to_buffer((caps_lock || left_shift || right_shift)
+					                       ? 'N'
+					                       : 'N' + 0x20);
 					break;
 
 				case 0x32:
-					add_char_to_buffer((caps_lock || left_shift || right_shift) ? 'M' : 'M' + 0x20);
+					add_char_to_buffer((caps_lock || left_shift || right_shift)
+					                       ? 'M'
+					                       : 'M' + 0x20);
 					break;
 
 				case 0x33:

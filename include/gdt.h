@@ -2,16 +2,16 @@
 
 #include <types.h>
 
-#define GDT_DESCRIPTOR ((gdt_descriptor *)0x00001000)
+#define GDT_DESCRIPTOR   ((gdt_descriptor *)0x00001000)
 #define GDT_ENTRY(index) (gdt_base + index % 256)
 
 enum GDT_ACCESS {
 	GDT_ACCESS_CODE_READABLE = 0x02,
 	GDT_ACCESS_DATA_WRITABLE = 0x02,
 
-	GDT_ACCESS_CODE_CONFORMING = 0x04,
+	GDT_ACCESS_CODE_CONFORMING       = 0x04,
 	GDT_ACCESS_DATA_DIRECTION_NORMAL = 0x00,
-	GDT_ACCESS_DATA_DIRECTION_DOWN = 0x04,
+	GDT_ACCESS_DATA_DIRECTION_DOWN   = 0x04,
 
 	GDT_ACCESS_DATA_SEGMENT = 0x10,
 	GDT_ACCESS_CODE_SEGMENT = 0x18,
@@ -38,15 +38,15 @@ enum GDT_FLAGS {
 typedef struct {
 	u16 llimit;
 	u16 lbase;
-	u8 base;
-	u8 access;
-	u8 hlimit : 4;
-	u8 flags : 4;
-	u8 hbase;
+	u8  base;
+	u8  access;
+	u8  hlimit : 4;
+	u8  flags : 4;
+	u8  hbase;
 } __attribute__((packed)) gdt_entry;
 
 typedef struct {
-	u16 size;
+	u16        size;
 	gdt_entry *ptr;
 } __attribute__((packed)) gdt_descriptor;
 

@@ -1,6 +1,6 @@
+#include <stdarg.h>
 #include <utils.h>
 #include <vga.h>
-#include <stdarg.h>
 
 int ft_putchar(char c)
 {
@@ -106,8 +106,7 @@ void printk(const char *fmt, ...)
 			default:
 				break;
 			}
-		}
-		else
+		} else
 			ft_putchar(fmt[i]);
 	}
 }
