@@ -75,7 +75,7 @@ void init_gdt()
 	// .short gdt_end - gdt_start - 1
 	// .long gdt_start
 
-	GDT_DESCRIPTOR->ptr = GDT_BASE;
+	GDT_DESCRIPTOR->ptr = gdt_base;
 	GDT_DESCRIPTOR->size = index * sizeof(gdt_entry) - 1;
 
 	asm volatile("lgdt [0x00001000]");

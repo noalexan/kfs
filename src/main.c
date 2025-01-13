@@ -2,6 +2,8 @@
 #include <printk.h>
 #include <vga.h>
 
+void test();
+
 static void memory_dump(u32 addr_start, u32 addr_end)
 {
 	u32 addr = addr_start;
@@ -45,6 +47,11 @@ void kernel_main()
 	clear_screen();
 	set_screen_mode(FOREGROUND_WHITE | BACKGROUND_BLACK);
 	vga_update_cursor_position(0, 0);
+
+	char prompt[] = "$> ";
+	printk("%s", prompt);
+
+	test();
 
 	int caps_lock = false;
 	int left_shift = false;
@@ -146,11 +153,10 @@ void kernel_main()
 					break;
 
 				case 0x1C:
-					ft_putchar('\n');
-					ft_putstr(buffer);
+					printk("\n%s", buffer);
+					buffer[0] = 0;
 					input_length = 0;
-					buffer[input_length] = 0;
-					ft_putchar('\n');
+					printk("\n$> ");
 					break;
 
 				case 0x1D:

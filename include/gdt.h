@@ -2,9 +2,8 @@
 
 #include <types.h>
 
-#define GDT_BASE ((gdt_entry *)0x00000800)
 #define GDT_DESCRIPTOR ((gdt_descriptor *)0x00001000)
-#define GDT_ENTRY(index) (GDT_BASE + index % 256)
+#define GDT_ENTRY(index) (gdt_base + index % 256)
 
 enum GDT_ACCESS {
 	GDT_ACCESS_CODE_READABLE = 0x02,
@@ -50,5 +49,7 @@ typedef struct {
 	u16 size;
 	gdt_entry *ptr;
 } __attribute__((packed)) gdt_descriptor;
+
+gdt_entry *gdt_base = (gdt_entry *)0x00000800;
 
 void init_gdt();

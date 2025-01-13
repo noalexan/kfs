@@ -2,6 +2,4 @@
 ? TTY Class to save input/output buffers
 Add multi tty support (F1, F2, etc.)
 Add colors
-Fix relink
-Fix warning: array subscript 0 is outside array bounds of 'gdt_entry[0]'
 Fix scroll down

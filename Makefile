@@ -10,7 +10,7 @@ CXX=/tools/bin/i386-linux-gnu-g++
 CXXFLAGS=-O3 -Wall -Wextra -I./include -I./lib/libft
 
 LD=/tools/bin/i386-linux-gnu-ld
-LDFLAGS=-z noexecstack -T linker.ld -fno-builtin -fno-exceptions -fno-stack-protector -nostdlib -nodefaultlibs
+LDFLAGS=-T linker.ld -z noexecstack -fno-builtin -fno-exceptions -fno-stack-protector -fno-rtti -nostdlib -nodefaultlibs
 LDLIBS=-L./lib/libft -lft
 
 QEMU=qemu-system-i386
@@ -31,6 +31,11 @@ OBJ= $(addprefix $(BUILDDIR)/, \
 	tty.o \
 )
 
+LIBFT_OBJ= \
+	ft_bzero.o \
+	ft_memset.o \
+	ft_memcpy.o
+
 .PHONY: all
 ifeq ($(IN_DOCKER),1)
 all: $(BUILDDIR)/boot.iso
@@ -39,13 +44,13 @@ all:
 	docker run --rm -t -v .:/kfs $(DOCKERIMAGENAME):$(DOCKERIMAGETAG)
 endif
 
-$(BUILDDIR)/%.o: src/%.s $(BUILDDIR)
+$(BUILDDIR)/%.o: src/%.s | $(BUILDDIR)
 	$(AS) $(ASFLAGS) -o $@ $<
 
-$(BUILDDIR)/%.o: src/%.c $(BUILDDIR)
+$(BUILDDIR)/%.o: src/%.c | $(BUILDDIR)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-$(BUILDDIR)/%.o: src/%.cpp $(BUILDDIR)
+$(BUILDDIR)/%.o: src/%.cpp | $(BUILDDIR)
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 $(BUILDDIR)/boot.iso: $(BUILDDIR)/iso/boot/kernel $(BUILDDIR)/iso/boot/grub/grub.cfg
@@ -54,11 +59,12 @@ $(BUILDDIR)/boot.iso: $(BUILDDIR)/iso/boot/kernel $(BUILDDIR)/iso/boot/grub/grub
 $(BUILDDIR)/iso/boot/grub/grub.cfg: grub.cfg $(BUILDDIR)/iso/boot/grub
 	@cp -v grub.cfg $@
 
-$(BUILDDIR)/iso/boot/kernel: ./lib/libft/libft.a $(OBJ) linker.ld
+$(BUILDDIR)/iso/boot/kernel: $(OBJ) linker.ld | libft $(BUILDDIR)/iso/boot
 	$(CC) $(LDFLAGS) -o $@ $(OBJ) $(LDLIBS)
 
-./lib/libft/libft.a:
-	make -C ./lib/libft CC=$(CC) OBJ="ft_bzero.o ft_memset.o ft_memcpy.o" static
+.PHONY: libft
+libft:
+	@make -C ./lib/libft CC=$(CC) OBJ="$(LIBFT_OBJ)" static
 
 $(BUILDDIR) $(BUILDDIR)/iso $(BUILDDIR)/iso/boot $(BUILDDIR)/iso/boot/grub:
 	@mkdir -pv $@
@@ -73,3 +79,5 @@ clean:
 
 .PHONY: re
 re: clean all
+
+.NOTPARALLEL: re fclean
