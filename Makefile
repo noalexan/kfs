@@ -4,13 +4,13 @@ AS=/tools/bin/i386-linux-gnu-as
 ASFLAGS=
 
 CC=/tools/bin/i386-linux-gnu-gcc
-CFLAGS=-O3 -Wall -Wextra -I./include -I./lib/libft
+CFLAGS=-fno-builtin -fno-exceptions -fno-stack-protector -O3 -Wall -Wextra -I./include -I./lib/libft
 
 CXX=/tools/bin/i386-linux-gnu-g++
-CXXFLAGS=-O3 -Wall -Wextra -I./include -I./lib/libft
+CXXFLAGS=-fno-builtin -fno-exceptions -fno-stack-protector -fno-rtti -O3 -Wall -Wextra -I./include -I./lib/libft
 
-LD=/tools/bin/i386-linux-gnu-ld
-LDFLAGS=-T linker.ld -z noexecstack -fno-builtin -fno-exceptions -fno-stack-protector -fno-rtti -nostdlib -nodefaultlibs
+LD=$(CXX)
+LDFLAGS=-T linker.ld -z noexecstack -nostdlib -nodefaultlibs
 LDLIBS=-L./lib/libft -lft
 
 QEMU=qemu-system-i386
@@ -60,7 +60,7 @@ $(BUILDDIR)/iso/boot/grub/grub.cfg: grub.cfg $(BUILDDIR)/iso/boot/grub
 	@cp -v grub.cfg $@
 
 $(BUILDDIR)/iso/boot/kernel: $(OBJ) linker.ld | libft $(BUILDDIR)/iso/boot
-	$(CC) $(LDFLAGS) -o $@ $(OBJ) $(LDLIBS)
+	$(LD) $(LDFLAGS) -o $@ $(OBJ) $(LDLIBS)
 
 .PHONY: libft
 libft:

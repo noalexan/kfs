@@ -1,24 +1,26 @@
+extern "C" {
 #include <io.h>
 #include <printk.h>
 #include <vga.h>
-
-void test();
-
-static void memory_dump(u32 addr_start, u32 addr_end)
-{
-	u32 addr = addr_start;
-	while (addr < addr_end) {
-		if (addr % 8 == 0 || addr == addr_start)
-			printk("%p:  \t", addr);
-		if (*(u8 *)addr < 0x10)
-			ft_putchar('0');
-		printk("%x ", *(u8 *)(addr++));
-		if (addr % 8 == 0)
-			ft_putchar('\n');
-	}
-	if (addr % 8)
-		ft_putchar('\n');
 }
+
+#include <tty.hpp>
+
+// static void memory_dump(u32 addr_start, u32 addr_end)
+// {
+// 	u32 addr = addr_start;
+// 	while (addr < addr_end) {
+// 		if (addr % 8 == 0 || addr == addr_start)
+// 			printk("%p:  \t", addr);
+// 		if (*(u8 *)addr < 0x10)
+// 			ft_putchar('0');
+// 		printk("%x ", *(u8 *)(addr++));
+// 		if (addr % 8 == 0)
+// 			ft_putchar('\n');
+// 	}
+// 	if (addr % 8)
+// 		ft_putchar('\n');
+// }
 
 static u8 read_status() { return inb(0x64); }
 
@@ -34,16 +36,21 @@ static void add_char_to_buffer(char c)
 	buffer[input_length]   = 0;
 }
 
-void kernel_main()
+extern "C" void _Unwind_Resume() {}
+
+extern "C" void kernel_main()
 {
 	clear_screen();
 	set_screen_mode(FOREGROUND_WHITE | BACKGROUND_BLACK);
 	vga_update_cursor_position(0, 0);
 
+	TTY ttys[12];
+	TTY *current_tty = ttys;
+
+	current_tty->load();
+
 	char prompt[] = "$> ";
 	printk("%s", prompt);
-
-	// test();
 
 	int caps_lock   = false;
 	int left_shift  = false;
@@ -333,50 +340,74 @@ void kernel_main()
 
 				case 0x3B:
 					// F1 pressed
+					current_tty = ttys;
+					current_tty->load();
 					break;
 
 				case 0x3C:
 					// F2 pressed
+					current_tty = ttys + 1;
+					current_tty->load();
 					break;
 
 				case 0x3D:
 					// F3 pressed
+					current_tty = ttys + 2;
+					current_tty->load();
 					break;
 
 				case 0x3E:
 					// F4 pressed
+					current_tty = ttys + 3;
+					current_tty->load();
 					break;
 
 				case 0x3F:
 					// F5 pressed
+					current_tty = ttys + 4;
+					current_tty->load();
 					break;
 
 				case 0x40:
 					// F6 pressed
+					current_tty = ttys + 5;
+					current_tty->load();
 					break;
 
 				case 0x41:
 					// F7 pressed
+					current_tty = ttys + 6;
+					current_tty->load();
 					break;
 
 				case 0x42:
 					// F8 pressed
+					current_tty = ttys + 7;
+					current_tty->load();
 					break;
 
 				case 0x43:
 					// F9 pressed
+					current_tty = ttys + 8;
+					current_tty->load();
 					break;
 
 				case 0x44:
 					// F10 pressed
+					current_tty = ttys + 9;
+					current_tty->load();
 					break;
 
 				case 0x57:
 					// F11 pressed
+					current_tty = ttys + 10;
+					current_tty->load();
 					break;
 
 				case 0x58:
 					// F12 pressed
+					current_tty = ttys + 11;
+					current_tty->load();
 					break;
 
 				case 0x3A:
