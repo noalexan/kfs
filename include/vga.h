@@ -5,7 +5,7 @@
 #define VGA_SCREEN_WIDTH  80
 #define VGA_SCREEN_HEIGTH 25
 
-#define VGA_ENTRY(x, y) (vga_buffer + ((y) * VGA_SCREEN_WIDTH + x))
+#define VGA_ENTRY(x, y) (vga_buffer + ((y)*VGA_SCREEN_WIDTH + x))
 
 enum VGA_SCREEN_MODE {
 	FOREGROUND_BLACK,

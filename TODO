@@ -1,5 +1,5 @@
 ? Add printk KERN_* support
 ? TTY Class to save input/output buffers
-Add multi tty support (F1, F2, etc.)
 Add colors
 Fix scroll down
+Fix Keystroke printing into ttys buffers

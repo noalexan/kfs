@@ -71,7 +71,7 @@ $(BUILDDIR) $(BUILDDIR)/iso $(BUILDDIR)/iso/boot $(BUILDDIR)/iso/boot/grub:
 
 .PHONY: format
 format:
-	@clang-format --verbose --Werror -i $(shell find ./{src,include} -regex '.*\.\(c\|h\|cpp\|hpp\)')
+	@clang-format --verbose --Werror -i $(shell find ./src ./include -regex '.*\.\(c\|h\|cpp\|hpp\)')
 
 .PHONY: run
 run: all
