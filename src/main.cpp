@@ -3,6 +3,7 @@
 extern "C" {
 #include <frames.h>
 #include <io.h>
+#include <libft.h>
 #include <printk.h>
 }
 
@@ -35,14 +36,8 @@ static u8 read_status() { return inb(0x64); }
 
 static u8 read_data() { return inb(0x60); }
 
-extern "C" void kernel_main()
+void spinning_mushroom()
 {
-	TTY ttys[12];
-
-	// char msg[] = "abcdefghijkl";
-	// for (size_t i = 0; i < 12; i++)
-	// 	ttys[i].write(msg + i, 1);
-
 	int frame = 0;
 
 	while (true) {
@@ -58,21 +53,25 @@ extern "C" void kernel_main()
 		frame++;
 		frame %= sizeof(frames) / sizeof(frames[0]);
 
+		if (read_status() & 0x01) {
+			u8 scancode = read_data();
+			if (scancode == 0x01)
+				break;
+		}
+
 		for (int i = 0; i < 100000000; i++) {
 			asm volatile("nop\n\t");
 		}
 	}
+}
 
-	// u8 a = 223;
-	// for (int y = 0; y < VGA_SCREEN_HEIGTH; y++) {
-	// 	for (int x = 0 ; x < VGA_SCREEN_WIDTH; x++) {
-	// 		VGA_ENTRY(x, y)->character = 0xdf;
-	// 		VGA_ENTRY(x, y)->mode = (x % 2) ? 0x0f : 0xf0;
-	// 	}
-	// }
+extern "C" void kernel_main()
+{
+	TTY ttys[12];
 
-	while (1)
-		;
+	char msg[] = "abcdefghijkl";
+	for (size_t i = 0; i < 12; i++)
+		ttys[i].write(msg + i, 1);
 
 	current_tty = ttys;
 	current_tty->load();
@@ -477,6 +476,10 @@ extern "C" void kernel_main()
 
 			case 0x53:
 				current_tty->write(".", 1);
+				break;
+
+			case 0xc6:
+				spinning_mushroom();
 				break;
 
 			default:
