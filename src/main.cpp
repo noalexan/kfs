@@ -1,6 +1,8 @@
 #include <tty.hpp>
 
 extern "C" {
+#include <io.h>
+#include <libft.h>
 #include <printk.h>
 #include <io.h>
 }
@@ -453,6 +455,9 @@ extern "C" void kernel_main()
 				// case 0x53:
 				// 	add_char_to_buffer('.');
 				// 	break;
+
+			case 0xc6:
+				break;
 
 			default:
 				break;
