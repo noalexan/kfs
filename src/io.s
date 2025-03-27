@@ -1,4 +1,5 @@
 .intel_syntax noprefix
+.code32
 
 .text
 .global outb

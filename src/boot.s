@@ -1,4 +1,5 @@
 .intel_syntax noprefix
+.code32
 
 .set MAGIC,         0xE85250D6
 .set ARCHITECTURE,  0

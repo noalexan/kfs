@@ -1,6 +1,6 @@
+#include "vga.h"
 #include <stdarg.h>
 #include <utils.h>
-#include <vga.h>
 
 int ft_putchar(char c)
 {

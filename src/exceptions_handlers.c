@@ -1,4 +1,4 @@
-#include <printk.h>
+#include "printk.h"
 
 void aa() { ft_putstr("aa\n"); }
 
@@ -16,12 +16,7 @@ void ag() { ft_putstr("ag\n"); }
 
 void ah() { ft_putstr("ah\n"); }
 
-void ai(int err_code)
-{
-	ft_putstr("ai <error code: ");
-	ft_putnbr(err_code);
-	ft_putstr(">\n");
-}
+void ai() { ft_putstr("ai\n"); }
 
 void aj() { ft_putstr("aj\n"); }
 

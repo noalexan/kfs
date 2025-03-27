@@ -1,7 +1,7 @@
 #pragma once
 
 extern "C" {
-#include <vga.h>
+#include "../vga.h"
 }
 
 class TTY {
@@ -16,7 +16,7 @@ public:
 
 	void set_mode(u8 mode);
 
-	size_t write(char *buffer, size_t length);
+	size_t write(const char *buffer, size_t length);
 
 	void load();
 	void save();

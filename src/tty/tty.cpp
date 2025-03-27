@@ -1,9 +1,9 @@
-#include <tty.hpp>
+#include "tty.hpp"
 
 extern "C" {
-#include <io.h>
+#include "../io.h"
+#include "../printk.h"
 #include <libft.h>
-#include <printk.h>
 }
 
 TTY::TTY() : mode(BACKGROUND_BLACK | FOREGROUND_WHITE)
@@ -20,10 +20,10 @@ void TTY::set_mode(u8 mode)
 {
 	this->mode = mode;
 	for (int i = 0; i < VGA_SCREEN_WIDTH * VGA_SCREEN_HEIGTH; i++)
-		this->buffer[i].mode      = mode;
+		this->buffer[i].mode = mode;
 }
 
-size_t TTY::write(char *buffer, size_t length)
+size_t TTY::write(const char *buffer, size_t length)
 {
 	size_t i = 0;
 
@@ -48,7 +48,8 @@ size_t TTY::write(char *buffer, size_t length)
 	return i;
 }
 
-void TTY::load() {
+void TTY::load()
+{
 	ft_memcpy(vga_buffer, this->buffer, sizeof(this->buffer));
 	vga_update_cursor_position(this->cursor.x, this->cursor.y);
 }
