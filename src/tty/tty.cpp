@@ -29,7 +29,7 @@ size_t TTY::write(const char *buffer, size_t length)
 
 	for (; i < length; i++) {
 		this->buffer[this->cursor.y * VGA_SCREEN_WIDTH + cursor.x++] =
-		    (vga_entry){buffer[i], mode};
+		    (vga_entry){(u8)buffer[i], mode};
 
 		if (this->cursor.x >= VGA_SCREEN_WIDTH) {
 			this->cursor.y++;

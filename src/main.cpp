@@ -8,21 +8,21 @@ extern "C" {
 
 TTY *current_tty;
 
-static void memory_dump(u32 addr_start, u32 addr_end)
-{
-	u32 addr = addr_start;
-	while (addr < addr_end) {
-		if (addr % 8 == 0 || addr == addr_start)
-			printk("%p:  \t", addr);
-		if (*(u8 *)addr < 0x10)
-			ft_putchar('0');
-		printk("%x ", *(u8 *)(addr++));
-		if (addr % 8 == 0)
-			ft_putchar('\n');
-	}
-	if (addr % 8)
-		ft_putchar('\n');
-}
+// static void memory_dump(u32 addr_start, u32 addr_end)
+// {
+// 	u32 addr = addr_start;
+// 	while (addr < addr_end) {
+// 		if (addr % 8 == 0 || addr == addr_start)
+// 			printk("%p:  \t", addr);
+// 		if (*(u8 *)addr < 0x10)
+// 			ft_putchar('0');
+// 		printk("%x ", *(u8 *)(addr++));
+// 		if (addr % 8 == 0)
+// 			ft_putchar('\n');
+// 	}
+// 	if (addr % 8)
+// 		ft_putchar('\n');
+// }
 
 static void switch_tty(TTY *tty)
 {

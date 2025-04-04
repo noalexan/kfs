@@ -1,3 +1,36 @@
-build/
-.gdb_history
-peda-session-kernel.txt
+# Ignore build artifacts
+/build/
+*.o
+*.bin
+*.elf
+*.iso
+
+# Ignore temporary files and logs
+*.log
+*.tmp
+*.swp
+*.swo
+
+# Ignore IDE and editor-specific files
+.vscode/
+.idea/
+*.iml
+*.sublime-workspace
+*.sublime-project
+
+# Ignore OS-specific files
+.DS_Store
+Thumbs.db
+
+# Ignore Docker-related files (if using Docker for builds)
+docker-compose.override.yml
+
+# Ignore Git-related temporary files
+.git/
+
+# Ignore core dumps and debugging artifacts
+core.*
+*.core
+
+# Ignore custom scripts or generated files (adjust as needed)
+scripts/generated/*

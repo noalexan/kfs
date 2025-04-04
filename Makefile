@@ -1,73 +1,68 @@
 BUILDDIR=build
+BINDIR=$(BUILDDIR)/bin
+ISODIR=$(BUILDDIR)/iso
 
-AS=/tools/bin/i386-linux-gnu-as
-ASFLAGS=--32
+AS=i686-linux-gnu-as
+ASFLAGS=
 
-CC=/tools/bin/i386-linux-gnu-gcc
-CFLAGS=-fno-builtin -fno-exceptions -fno-stack-protector -O3 -Wall -Wextra -I./include -I./lib/libft -m32
+CC=i686-linux-gnu-gcc
+CFLAGS=-fno-builtin -fno-exceptions -fno-stack-protector -O3 -Wall -Wextra -I./include -I./lib/libft
 
-CXX=/tools/bin/i386-linux-gnu-g++
-CXXFLAGS=-fno-builtin -fno-exceptions -fno-stack-protector -fno-rtti -O3 -Wall -Wextra -I./include -I./lib/libft -m32
+CXX=i686-linux-gnu-g++
+CXXFLAGS=-fno-builtin -fno-exceptions -fno-stack-protector -fno-rtti -O3 -Wall -Wextra -I./include -I./lib/libft
 
-LD=$(CXX)
-LDFLAGS=-z noexecstack -nostdlib -nodefaultlibs -m32
+LD=$(CC)
+LDFLAGS=-z noexecstack -nostdlib -nodefaultlibs
 LDLIBS=-L./lib/libft -lft
 
 QEMU=qemu-system-i386
 QEMUFLAGS=-serial mon:stdio
 
-DOCKERIMAGENAME=noalexan/kfs-builder
-DOCKERIMAGETAG=24.04
+DOCKERIMAGENAME=noalexan/cross-compiler
+DOCKERIMAGETAG=latest
 
-OBJ= $(addprefix $(BUILDDIR)/, \
-	boot.o \
-	main.o \
-	vga.o \
-	printk.o \
-	io.o \
-	gdt.o \
-	idt.o \
-	exceptions_handlers.o \
-	tty/tty.o \
-)
+OBJ=$(patsubst src/%,$(BINDIR)/%,$(shell find src -regex '.*\(\.c\|\.cpp\|\.s\)' | sed 's/\(\.c\|\.cpp\|\.s\)/.o/g'))
 
-LIBFT_OBJ= \
-	ft_bzero.o \
+LIBFT_OBJ=    \
+	ft_bzero.o  \
 	ft_memset.o \
 	ft_memcpy.o
+
+$(BINDIR)/%.o: src/%.s
+	@mkdir -pv $(@D)
+	$(AS) $(ASFLAGS) -o $@ $<
+
+$(BINDIR)/%.o: src/%.c
+	@mkdir -pv $(@D)
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+$(BINDIR)/%.o: src/%.cpp
+	@mkdir -pv $(@D)
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 .PHONY: all
 ifeq ($(IN_DOCKER),1)
 all: $(BUILDDIR)/boot.iso
 else
 all:
-	docker run --rm -t -v $(PWD):/kfs -e IN_DOCKER=1 $(DOCKERIMAGENAME):$(DOCKERIMAGETAG)
+	docker run --rm -t -v .:/kfs -e IN_DOCKER=1 $(DOCKERIMAGENAME):$(DOCKERIMAGETAG)
 endif
 
-$(BUILDDIR)/%/:
-	@mkdir -pv $@
+$(BUILDDIR)/boot.iso: $(ISODIR)/boot/kernel $(ISODIR)/boot/grub/grub.cfg
+	@mkdir -pv $(@D)
+	grub-mkrescue -o $@ $(ISODIR)
 
-$(BUILDDIR)/%.o: src/%.s | $(@D)
-	$(AS) $(ASFLAGS) -o $(BUILDDIR)/$(@F) $<
+$(ISODIR)/boot/grub/grub.cfg: grub.cfg
+	@mkdir -pv $(@D)
+	cp grub.cfg $@
 
-$(BUILDDIR)/%.o: src/%.c | $(@D)
-	$(CC) $(CFLAGS) -c -o $(BUILDDIR)/$(@F) $<
-
-$(BUILDDIR)/%.o: src/%.cpp | $(@D)
-	$(CXX) $(CXXFLAGS) -c -o $(BUILDDIR)/$(@F) $<
-
-$(BUILDDIR)/boot.iso: $(BUILDDIR)/iso/boot/kernel $(BUILDDIR)/iso/boot/grub/grub.cfg
-	/tools/bin/grub-mkrescue -o $@ $(BUILDDIR)/iso
-
-$(BUILDDIR)/iso/boot/grub/grub.cfg: grub.cfg $(BUILDDIR)/iso/boot/grub
-	@cp -v grub.cfg $@
-
-$(BUILDDIR)/iso/boot/kernel: $(OBJ) linker.ld | libft $(BUILDDIR)/iso/boot
+$(ISODIR)/boot/kernel: $(OBJ) linker.ld | libft
+	@mkdir -pv $(@D)
 	$(LD) -T linker.ld $(LDFLAGS) -o $@ $(OBJ) $(LDLIBS)
 
 .PHONY: libft
 libft:
-	@make -C ./lib/libft CC=$(CC) OBJ="$(LIBFT_OBJ)" static
+	@make -C lib/libft CC=$(CC) AR="i686-linux-gnu-ar" OBJ="$(LIBFT_OBJ)"
 
 .PHONY: format
 format:
@@ -79,7 +74,7 @@ run: all
 
 .PHONY: clean
 clean:
-	@$(RM) -rv $(BUILDDIR)
+	$(RM) -r $(BUILDDIR)
 
 .PHONY: re
 re: clean all
