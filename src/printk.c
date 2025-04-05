@@ -4,6 +4,8 @@
 
 static int ft_putchar(char c)
 {
+	static struct s_cursor cursor = (struct s_cursor){0, 0};
+
 	switch (c) {
 	case '\n':
 		cursor.y++;
@@ -20,10 +22,10 @@ static int ft_putchar(char c)
 		break;
 
 	default:
-		vga_put_char(cursor.x++, cursor.y, c);
+		vga_set_char(cursor.x++, cursor.y, c);
 	}
 
-	vga_update_cursor_position(cursor.x, cursor.y);
+	vga_set_cursor_position(cursor.x, cursor.y);
 	return 1;
 }
 

@@ -40,7 +40,7 @@ size_t TTY::write(const char *buffer, size_t length)
 			          VGA_SCREEN_WIDTH * (VGA_SCREEN_HEIGTH - 1) * 2);
 			for (int x = 0; x < VGA_SCREEN_WIDTH; x++)
 				this->buffer[VGA_SCREEN_WIDTH * (VGA_SCREEN_HEIGTH - 1) + x] =
-				    (vga_entry){0, vga_screen_mode};
+				    (vga_entry){0, mode};
 			cursor.y--;
 		}
 	}
@@ -51,7 +51,7 @@ size_t TTY::write(const char *buffer, size_t length)
 void TTY::load()
 {
 	ft_memcpy(VGA_BUFFER, this->buffer, sizeof(this->buffer));
-	vga_update_cursor_position(this->cursor.x, this->cursor.y);
+	vga_set_cursor_position(this->cursor.x, this->cursor.y);
 }
 
 void TTY::save() { ft_memcpy(this->buffer, VGA_BUFFER, sizeof(this->buffer)); }

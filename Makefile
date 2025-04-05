@@ -26,7 +26,8 @@ OBJ=$(patsubst src/%,$(BINDIR)/%,$(shell find src -regex '.*\(\.c\|\.cpp\|\.s\)'
 LIBFT_OBJ=    \
 	ft_bzero.o  \
 	ft_memset.o \
-	ft_memcpy.o
+	ft_memcpy.o \
+	ft_memcmp.o
 
 $(BINDIR)/%.o: src/%.s
 	@mkdir -pv $(@D)

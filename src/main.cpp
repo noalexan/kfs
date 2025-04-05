@@ -43,23 +43,13 @@ extern "C" void kernel_main()
 	int left_shift  = false;
 	int right_shift = false;
 
-	clear_screen();
-	vga_update_cursor_position(0, 0);
+	vga_clear();
+	vga_set_screen_mode(FOREGROUND_WHITE | BACKGROUND_BLACK);
+	vga_set_cursor_position(0, 0);
 
-	while (true) {
-		if (read_status() & 1) {
-			u8 scancode = read_data();
+	printk("Hello, World!\n");
 
-			switch (scancode) {
-			case 0x10:
-				printk("q");
-				break;
-
-			default:
-				break;
-			}
-		}
-	}
+	while(true);
 
 	while (true) {
 		if (read_status() & 0x01) {
@@ -71,51 +61,51 @@ extern "C" void kernel_main()
 				break;
 
 			case 0x02:
-				current_tty->write((left_shift || right_shift) ? "!" : "1", 1);
+				printk((left_shift || right_shift) ? "!" : "1");
 				break;
 
 			case 0x03:
-				current_tty->write((left_shift || right_shift) ? "@" : "2", 1);
+				printk((left_shift || right_shift) ? "@" : "2");
 				break;
 
 			case 0x04:
-				current_tty->write((left_shift || right_shift) ? "#" : "3", 1);
+				printk((left_shift || right_shift) ? "#" : "3");
 				break;
 
 			case 0x05:
-				current_tty->write((left_shift || right_shift) ? "$" : "4", 1);
+				printk((left_shift || right_shift) ? "$" : "4");
 				break;
 
 			case 0x06:
-				current_tty->write((left_shift || right_shift) ? "%" : "5", 1);
+				printk((left_shift || right_shift) ? "%" : "5");
 				break;
 
 			case 0x07:
-				current_tty->write((left_shift || right_shift) ? "^" : "6", 1);
+				printk((left_shift || right_shift) ? "^" : "6");
 				break;
 
 			case 0x08:
-				current_tty->write((left_shift || right_shift) ? "&" : "7", 1);
+				printk((left_shift || right_shift) ? "&" : "7");
 				break;
 
 			case 0x09:
-				current_tty->write((left_shift || right_shift) ? "*" : "8", 1);
+				printk((left_shift || right_shift) ? "*" : "8");
 				break;
 
 			case 0x0A:
-				current_tty->write((left_shift || right_shift) ? "(" : "9", 1);
+				printk((left_shift || right_shift) ? "(" : "9");
 				break;
 
 			case 0x0B:
-				current_tty->write((left_shift || right_shift) ? ")" : "0", 1);
+				printk((left_shift || right_shift) ? ")" : "0");
 				break;
 
 			case 0x0C:
-				current_tty->write((left_shift || right_shift) ? "_" : "-", 1);
+				printk((left_shift || right_shift) ? "_" : "-");
 				break;
 
 			case 0x0D:
-				current_tty->write((left_shift || right_shift) ? "+" : "=", 1);
+				printk((left_shift || right_shift) ? "+" : "=");
 				break;
 
 			case 0x0E:
@@ -123,69 +113,59 @@ extern "C" void kernel_main()
 				break;
 
 			case 0x0F:
-				current_tty->write("\t", 1);
+				printk("\t");
 				break;
 
 			case 0x10:
-				current_tty->write(
-				    (caps_lock || left_shift || right_shift) ? "Q" : "q", 1);
+				printk((caps_lock || left_shift || right_shift) ? "Q" : "q");
 				break;
 
 			case 0x11:
-				current_tty->write(
-				    (caps_lock || left_shift || right_shift) ? "W" : "w", 1);
+				printk((caps_lock || left_shift || right_shift) ? "W" : "w");
 				break;
 
 			case 0x12:
-				current_tty->write(
-				    (caps_lock || left_shift || right_shift) ? "E" : "e", 1);
+				printk((caps_lock || left_shift || right_shift) ? "E" : "e");
 				break;
 
 			case 0x13:
-				current_tty->write(
-				    (caps_lock || left_shift || right_shift) ? "R" : "r", 1);
+				printk((caps_lock || left_shift || right_shift) ? "R" : "r");
 				break;
 
 			case 0x14:
-				current_tty->write(
-				    (caps_lock || left_shift || right_shift) ? "T" : "t", 1);
+				printk((caps_lock || left_shift || right_shift) ? "T" : "t");
 				break;
 
 			case 0x15:
-				current_tty->write(
-				    (caps_lock || left_shift || right_shift) ? "Y" : "y", 1);
+				printk((caps_lock || left_shift || right_shift) ? "Y" : "y");
 				break;
 
 			case 0x16:
-				current_tty->write(
-				    (caps_lock || left_shift || right_shift) ? "U" : "u", 1);
+				printk((caps_lock || left_shift || right_shift) ? "U" : "u");
 				break;
 
 			case 0x17:
-				current_tty->write(
-				    (caps_lock || left_shift || right_shift) ? "I" : "i", 1);
+				printk((caps_lock || left_shift || right_shift) ? "I" : "i");
 				break;
 
 			case 0x18:
-				current_tty->write(
-				    (caps_lock || left_shift || right_shift) ? "O" : "o", 1);
+				printk((caps_lock || left_shift || right_shift) ? "O" : "o");
 				break;
 
 			case 0x19:
-				current_tty->write(
-				    (caps_lock || left_shift || right_shift) ? "P" : "p", 1);
+				printk((caps_lock || left_shift || right_shift) ? "P" : "p");
 				break;
 
 			case 0x1A:
-				current_tty->write((left_shift || right_shift) ? "{" : "[", 1);
+				printk((left_shift || right_shift) ? "{" : "[");
 				break;
 
 			case 0x1B:
-				current_tty->write((left_shift || right_shift) ? "}" : "]", 1);
+				printk((left_shift || right_shift) ? "}" : "]");
 				break;
 
 			case 0x1C:
-				current_tty->write("\n", 1);
+				printk("\n");
 				break;
 
 			case 0x1D:
@@ -193,119 +173,103 @@ extern "C" void kernel_main()
 				break;
 
 			case 0x1E:
-				current_tty->write(
-				    (caps_lock || left_shift || right_shift) ? "A" : "a", 1);
+				printk((caps_lock || left_shift || right_shift) ? "A" : "a");
 				break;
 
 			case 0x1F:
-				current_tty->write(
-				    (caps_lock || left_shift || right_shift) ? "S" : "s", 1);
+				printk((caps_lock || left_shift || right_shift) ? "S" : "s");
 				break;
 
 			case 0x20:
-				current_tty->write(
-				    (caps_lock || left_shift || right_shift) ? "D" : "d", 1);
+				printk((caps_lock || left_shift || right_shift) ? "D" : "d");
 				break;
 
 			case 0x21:
-				current_tty->write(
-				    (caps_lock || left_shift || right_shift) ? "F" : "f", 1);
+				printk((caps_lock || left_shift || right_shift) ? "F" : "f");
 				break;
 
 			case 0x22:
-				current_tty->write(
-				    (caps_lock || left_shift || right_shift) ? "G" : "g", 1);
+				printk((caps_lock || left_shift || right_shift) ? "G" : "g");
 				break;
 
 			case 0x23:
-				current_tty->write(
-				    (caps_lock || left_shift || right_shift) ? "H" : "h", 1);
+				printk((caps_lock || left_shift || right_shift) ? "H" : "h");
 				break;
 
 			case 0x24:
-				current_tty->write(
-				    (caps_lock || left_shift || right_shift) ? "J" : "j", 1);
+				printk((caps_lock || left_shift || right_shift) ? "J" : "j");
 				break;
 
 			case 0x25:
-				current_tty->write(
-				    (caps_lock || left_shift || right_shift) ? "K" : "k", 1);
+				printk((caps_lock || left_shift || right_shift) ? "K" : "k");
 				break;
 
 			case 0x26:
-				current_tty->write(
-				    (caps_lock || left_shift || right_shift) ? "L" : "l", 1);
+				printk((caps_lock || left_shift || right_shift) ? "L" : "l");
 				break;
 
 			case 0x27:
-				current_tty->write((left_shift || right_shift) ? ":" : ";", 1);
+				printk((left_shift || right_shift) ? ":" : ";");
 				break;
 
 			case 0x28:
-				current_tty->write((left_shift || right_shift) ? "\"" : "'", 1);
+				printk((left_shift || right_shift) ? "\"" : "'");
 				break;
 
 			case 0x29:
-				current_tty->write((left_shift || right_shift) ? "~" : "`", 1);
+				printk((left_shift || right_shift) ? "~" : "`");
 				break;
 
 			case 0x2B:
-				current_tty->write((left_shift || right_shift) ? "|" : "\\", 1);
+				printk((left_shift || right_shift) ? "|" : "\\");
 				break;
 
 			case 0x2C:
-				current_tty->write(
-				    (caps_lock || left_shift || right_shift) ? "Z" : "z", 1);
+				printk((caps_lock || left_shift || right_shift) ? "Z" : "z");
 				break;
 
 			case 0x2D:
-				current_tty->write(
-				    (caps_lock || left_shift || right_shift) ? "X" : "x", 1);
+				printk((caps_lock || left_shift || right_shift) ? "X" : "x");
 				break;
 
 			case 0x2E:
-				current_tty->write(
-				    (caps_lock || left_shift || right_shift) ? "C" : "c", 1);
+				printk((caps_lock || left_shift || right_shift) ? "C" : "c");
 				break;
 
 			case 0x2F:
-				current_tty->write(
-				    (caps_lock || left_shift || right_shift) ? "V" : "v", 1);
+				printk((caps_lock || left_shift || right_shift) ? "V" : "v");
 				break;
 
 			case 0x30:
-				current_tty->write(
-				    (caps_lock || left_shift || right_shift) ? "B" : "b", 1);
+				printk((caps_lock || left_shift || right_shift) ? "B" : "b");
 				break;
 
 			case 0x31:
-				current_tty->write(
-				    (caps_lock || left_shift || right_shift) ? "N" : "n", 1);
+				printk((caps_lock || left_shift || right_shift) ? "N" : "n");
 				break;
 
 			case 0x32:
-				current_tty->write(
-				    (caps_lock || left_shift || right_shift) ? "M" : "m", 1);
+				printk((caps_lock || left_shift || right_shift) ? "M" : "m");
 				break;
 
 			case 0x33:
-				current_tty->write((left_shift || right_shift) ? "<" : ",", 1);
+				printk((left_shift || right_shift) ? "<" : ",");
 				break;
 
 			case 0x34:
-				current_tty->write((left_shift || right_shift) ? ">" : ".", 1);
+				printk((left_shift || right_shift) ? ">" : ".");
 				break;
 
 			case 0x35:
-				current_tty->write((left_shift || right_shift) ? "?" : "/", 1);
+				printk((left_shift || right_shift) ? "?" : "/");
 				break;
 
 			case 0x37:
-				current_tty->write("*", 1);
+				printk("*");
 				break;
 
 			case 0x39:
-				current_tty->write(" ", 1);
+				printk(" ");
 				break;
 
 			case 0x2A:
@@ -420,7 +384,7 @@ extern "C" void kernel_main()
 				break;
 
 			case 0x4A:
-				current_tty->write("-", 1);
+				printk("-");
 				break;
 
 			case 0x4B:
@@ -436,7 +400,7 @@ extern "C" void kernel_main()
 				break;
 
 			case 0x4E:
-				current_tty->write("+", 1);
+				printk("+");
 				break;
 
 			case 0x4F:
@@ -456,7 +420,7 @@ extern "C" void kernel_main()
 				break;
 
 			case 0x53:
-				current_tty->write(".", 1);
+				printk(".");
 				break;
 
 			default:
