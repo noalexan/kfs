@@ -1,1 +1,3 @@
 ? Add printk KERN_* support
+Fix the new line glitch
+Review base functions

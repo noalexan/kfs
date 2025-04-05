@@ -39,16 +39,27 @@ extern "C" void kernel_main()
 {
 	TTY ttys[12];
 
-	char msg[] = "abcdefghijkl";
-	for (size_t i = 0; i < 12; i++)
-		ttys[i].write(msg + i, 1);
-
-	current_tty = ttys;
-	current_tty->load();
-
 	int caps_lock   = false;
 	int left_shift  = false;
 	int right_shift = false;
+
+	clear_screen();
+	vga_update_cursor_position(0, 0);
+
+	while (true) {
+		if (read_status() & 1) {
+			u8 scancode = read_data();
+
+			switch (scancode) {
+			case 0x10:
+				printk("q");
+				break;
+
+			default:
+				break;
+			}
+		}
+	}
 
 	while (true) {
 		if (read_status() & 0x01) {

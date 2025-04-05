@@ -8,7 +8,7 @@ void ae();
 void af();
 void ag();
 void ah();
-void ai(int);
+void ai();
 void aj();
 void ak();
 void al();

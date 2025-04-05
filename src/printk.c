@@ -2,11 +2,11 @@
 #include <stdarg.h>
 #include <utils.h>
 
-int ft_putchar(char c)
+static int ft_putchar(char c)
 {
 	switch (c) {
 	case '\n':
-		++cursor.y;
+		cursor.y++;
 		fallthrough;
 
 	case '\r':
@@ -27,7 +27,7 @@ int ft_putchar(char c)
 	return 1;
 }
 
-int ft_putstr(char *str)
+static int ft_putstr(char *str)
 {
 	int i = -1;
 
@@ -38,7 +38,7 @@ int ft_putstr(char *str)
 	return (i);
 }
 
-int ft_putnbr(int nb)
+static int ft_putnbr(int nb)
 {
 	if (nb == -2147483648)
 		return (ft_putnbr(-21474) + ft_putnbr(83648));
@@ -50,7 +50,7 @@ int ft_putnbr(int nb)
 		return (ft_putchar(nb + '0'));
 }
 
-int ft_putunsignednbr(unsigned int nb)
+static int ft_putunsignednbr(unsigned int nb)
 {
 	if (nb >= 10)
 		return (ft_putnbr(nb / 10) + ft_putnbr(nb % 10));
@@ -58,7 +58,7 @@ int ft_putunsignednbr(unsigned int nb)
 		return (ft_putchar(nb + '0'));
 }
 
-int ft_puthexa(unsigned long nb, int upper, int addr)
+static int ft_puthexa(unsigned long nb, int upper, int addr)
 {
 	char *dict = upper ? "0123456789ABCDEF" : "0123456789abcdef";
 

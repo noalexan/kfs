@@ -1,65 +1,65 @@
 #include "printk.h"
 
-void aa() { ft_putstr("aa\n"); }
+void aa() { printk(KERN_DEBUG "aa\n"); }
 
-void ab() { ft_putstr("ab\n"); }
+void ab() { printk(KERN_DEBUG "ab\n"); }
 
-void ac() { ft_putstr("ac\n"); }
+void ac() { printk(KERN_DEBUG "ac\n"); }
 
-void ad() { ft_putstr("ad\n"); }
+void ad() { printk(KERN_DEBUG "ad\n"); }
 
-void ae() { ft_putstr("ae\n"); }
+void ae() { printk(KERN_DEBUG "ae\n"); }
 
-void af() { ft_putstr("af\n"); }
+void af() { printk(KERN_DEBUG "af\n"); }
 
-void ag() { ft_putstr("ag\n"); }
+void ag() { printk(KERN_DEBUG "ag\n"); }
 
-void ah() { ft_putstr("ah\n"); }
+void ah() { printk(KERN_DEBUG "ah\n"); }
 
-void ai() { ft_putstr("ai\n"); }
+void ai() { printk(KERN_DEBUG "ai\n"); }
 
-void aj() { ft_putstr("aj\n"); }
+void aj() { printk(KERN_DEBUG "aj\n"); }
 
-void ak() { ft_putstr("ak\n"); }
+void ak() { printk(KERN_DEBUG "ak\n"); }
 
-void al() { ft_putstr("al\n"); }
+void al() { printk(KERN_DEBUG "al\n"); }
 
-void am() { ft_putstr("am\n"); }
+void am() { printk(KERN_DEBUG "am\n"); }
 
-void an() { ft_putstr("an\n"); }
+void an() { printk(KERN_DEBUG "an\n"); }
 
-void ao() { ft_putstr("ao\n"); }
+void ao() { printk(KERN_DEBUG "ao\n"); }
 
-void ap() { ft_putstr("ap\n"); }
+void ap() { printk(KERN_DEBUG "ap\n"); }
 
-void aq() { ft_putstr("aq\n"); }
+void aq() { printk(KERN_DEBUG "aq\n"); }
 
-void ar() { ft_putstr("ar\n"); }
+void ar() { printk(KERN_DEBUG "ar\n"); }
 
-void as() { ft_putstr("as\n"); }
+void as() { printk(KERN_DEBUG "as\n"); }
 
-void at() { ft_putstr("at\n"); }
+void at() { printk(KERN_DEBUG "at\n"); }
 
-void au() { ft_putstr("au\n"); }
+void au() { printk(KERN_DEBUG "au\n"); }
 
-void av() { ft_putstr("av\n"); }
+void av() { printk(KERN_DEBUG "av\n"); }
 
-void aw() { ft_putstr("aw\n"); }
+void aw() { printk(KERN_DEBUG "aw\n"); }
 
-void ax() { ft_putstr("ax\n"); }
+void ax() { printk(KERN_DEBUG "ax\n"); }
 
-void ay() { ft_putstr("ay\n"); }
+void ay() { printk(KERN_DEBUG "ay\n"); }
 
-void az() { ft_putstr("az\n"); }
+void az() { printk(KERN_DEBUG "az\n"); }
 
-void ba() { ft_putstr("ba\n"); }
+void ba() { printk(KERN_DEBUG "ba\n"); }
 
-void bb() { ft_putstr("bb\n"); }
+void bb() { printk(KERN_DEBUG "bb\n"); }
 
-void bc() { ft_putstr("bc\n"); }
+void bc() { printk(KERN_DEBUG "bc\n"); }
 
-void bd() { ft_putstr("bd\n"); }
+void bd() { printk(KERN_DEBUG "bd\n"); }
 
-void be() { ft_putstr("be\n"); }
+void be() { printk(KERN_DEBUG "be\n"); }
 
-void bf() { ft_putstr("bf\n"); }
+void bf() { printk(KERN_DEBUG "bf\n"); }

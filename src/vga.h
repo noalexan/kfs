@@ -4,8 +4,8 @@
 
 #define VGA_SCREEN_WIDTH  80
 #define VGA_SCREEN_HEIGTH 25
-
-#define VGA_ENTRY(x, y) (vga_buffer + ((y)*VGA_SCREEN_WIDTH + x))
+#define VGA_BUFFER        ((vga_entry *)0xb8000)
+#define VGA_ENTRY(x, y)   (VGA_BUFFER + ((y) * VGA_SCREEN_WIDTH + x))
 
 enum VGA_SCREEN_MODE {
 	FOREGROUND_BLACK,
@@ -42,7 +42,7 @@ enum VGA_SCREEN_MODE {
 	BACKGROUND_WHITE      = 15 << 4
 };
 
-typedef struct __attribute__((packed)) s_vga_entry {
+typedef struct __attribute__((packed)) {
 	u8 character;
 	u8 mode;
 } vga_entry;
@@ -52,13 +52,9 @@ struct s_cursor {
 	u8 y;
 };
 
-extern vga_entry *const vga_buffer;
-extern u8               vga_screen_mode;
-extern struct s_cursor  cursor;
-
-void vga_update_cursor_position(int x, int y);
-void vga_init_cursor_position(void);
-void vga_put_char(int x, int y, char c);
-void scroll_down(void);
-void set_screen_mode(u8 mode);
-void clear_screen(void);
+void            vga_set_cursor_position(u8 x, u8 y);
+struct s_cursor vga_get_cursor_position(void);
+void            vga_set_char(int x, int y, char c);
+void            vga_scroll_down(void);
+void            vga_set_screen_mode(u8 mode);
+void            vga_clear(void);
