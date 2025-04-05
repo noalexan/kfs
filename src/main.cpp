@@ -39,6 +39,8 @@ extern "C" void kernel_main()
 {
 	TTY ttys[12];
 
+	current_tty = ttys;
+
 	int caps_lock   = false;
 	int left_shift  = false;
 	int right_shift = false;
@@ -426,8 +428,6 @@ extern "C" void kernel_main()
 			default:
 				break;
 			}
-
-			// current_tty->load();
 		}
 	}
 }

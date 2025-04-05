@@ -54,4 +54,8 @@ void TTY::load()
 	vga_set_cursor_position(this->cursor.x, this->cursor.y);
 }
 
-void TTY::save() { ft_memcpy(this->buffer, VGA_BUFFER, sizeof(this->buffer)); }
+void TTY::save()
+{
+	ft_memcpy(this->buffer, VGA_BUFFER, sizeof(this->buffer));
+	this->cursor = vga_get_cursor_position();
+}
