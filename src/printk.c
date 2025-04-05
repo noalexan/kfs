@@ -25,6 +25,16 @@ static int ft_putchar(char c)
 		vga_set_char(cursor.x++, cursor.y, c);
 	}
 
+	if (cursor.x >= VGA_SCREEN_WIDTH) {
+		cursor.x = 0;
+		cursor.y++;
+	}
+
+	if (cursor.y >= VGA_SCREEN_HEIGTH) {
+		vga_scroll_down();
+		cursor.y--;
+	}
+
 	vga_set_cursor_position(cursor.x, cursor.y);
 	return 1;
 }

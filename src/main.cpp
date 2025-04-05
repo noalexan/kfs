@@ -49,7 +49,7 @@ extern "C" void kernel_main()
 
 	printk("Hello, World!\n");
 
-	while(true);
+	// while(true);
 
 	while (true) {
 		if (read_status() & 0x01) {
@@ -427,7 +427,7 @@ extern "C" void kernel_main()
 				break;
 			}
 
-			current_tty->load();
+			// current_tty->load();
 		}
 	}
 }
