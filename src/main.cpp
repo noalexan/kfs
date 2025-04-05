@@ -51,8 +51,6 @@ extern "C" void kernel_main()
 
 	printk("Hello, World!\n");
 
-	// while(true);
-
 	while (true) {
 		if (read_status() & 0x01) {
 			u8 scancode = read_data();
@@ -374,15 +372,15 @@ extern "C" void kernel_main()
 				// -- Keypad --
 
 			case 0x47:
-				current_tty->set_mode(BACKGROUND_WHITE | FOREGROUND_GREEN);
+				vga_set_screen_mode(BACKGROUND_WHITE | FOREGROUND_GREEN);
 				break;
 
 			case 0x48:
-				current_tty->set_mode(BACKGROUND_LIGHTGREEN | FOREGROUND_RED);
+				vga_set_screen_mode(BACKGROUND_LIGHTGREEN | FOREGROUND_RED);
 				break;
 
 			case 0x49:
-				current_tty->set_mode(BACKGROUND_RED | FOREGROUND_LIGHTPINK);
+				vga_set_screen_mode(BACKGROUND_RED | FOREGROUND_LIGHTPINK);
 				break;
 
 			case 0x4A:
@@ -390,15 +388,15 @@ extern "C" void kernel_main()
 				break;
 
 			case 0x4B:
-				current_tty->set_mode(BACKGROUND_LIGHTGREEN | FOREGROUND_BROWN);
+				vga_set_screen_mode(BACKGROUND_LIGHTGREEN | FOREGROUND_BROWN);
 				break;
 
 			case 0x4C:
-				current_tty->set_mode(BACKGROUND_YELLOW | FOREGROUND_GREEN);
+				vga_set_screen_mode(BACKGROUND_YELLOW | FOREGROUND_GREEN);
 				break;
 
 			case 0x4D:
-				current_tty->set_mode(BACKGROUND_BLACK | FOREGROUND_PINK);
+				vga_set_screen_mode(BACKGROUND_BLACK | FOREGROUND_PINK);
 				break;
 
 			case 0x4E:
@@ -406,19 +404,19 @@ extern "C" void kernel_main()
 				break;
 
 			case 0x4F:
-				current_tty->set_mode(BACKGROUND_LIGHTGREY | FOREGROUND_BLACK);
+				vga_set_screen_mode(BACKGROUND_LIGHTGREY | FOREGROUND_BLACK);
 				break;
 
 			case 0x50:
-				current_tty->set_mode(BACKGROUND_BLUE | FOREGROUND_BLACK);
+				vga_set_screen_mode(BACKGROUND_BLUE | FOREGROUND_BLACK);
 				break;
 
 			case 0x51:
-				current_tty->set_mode(BACKGROUND_BLUE | FOREGROUND_WHITE);
+				vga_set_screen_mode(BACKGROUND_BLUE | FOREGROUND_WHITE);
 				break;
 
 			case 0x52:
-				current_tty->set_mode(BACKGROUND_BLACK | FOREGROUND_WHITE);
+				vga_set_screen_mode(BACKGROUND_BLACK | FOREGROUND_WHITE);
 				break;
 
 			case 0x53:

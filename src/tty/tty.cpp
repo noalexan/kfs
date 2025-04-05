@@ -23,31 +23,6 @@ void TTY::set_mode(u8 mode)
 		this->buffer[i].mode = mode;
 }
 
-size_t TTY::write(const char *buffer, size_t length)
-{
-	size_t i = 0;
-
-	for (; i < length; i++) {
-		this->buffer[this->cursor.y * VGA_SCREEN_WIDTH + this->cursor.x++] =
-		    (vga_entry){(u8)buffer[i], mode};
-
-		if (this->cursor.x >= VGA_SCREEN_WIDTH) {
-			this->cursor.y++;
-		}
-
-		if (this->cursor.y >= VGA_SCREEN_HEIGTH) {
-			ft_memcpy(this->buffer, this->buffer + VGA_SCREEN_WIDTH,
-			          VGA_SCREEN_WIDTH * (VGA_SCREEN_HEIGTH - 1) * 2);
-			for (int x = 0; x < VGA_SCREEN_WIDTH; x++)
-				this->buffer[VGA_SCREEN_WIDTH * (VGA_SCREEN_HEIGTH - 1) + x] =
-				    (vga_entry){0, mode};
-			cursor.y--;
-		}
-	}
-
-	return i;
-}
-
 void TTY::load()
 {
 	ft_memcpy(VGA_BUFFER, this->buffer, sizeof(this->buffer));

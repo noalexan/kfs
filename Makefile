@@ -11,6 +11,8 @@ CFLAGS=-fno-builtin -fno-exceptions -fno-stack-protector -O3 -Wall -Wextra -I./i
 CXX=i686-linux-gnu-g++
 CXXFLAGS=-fno-builtin -fno-exceptions -fno-stack-protector -fno-rtti -O3 -Wall -Wextra -I./include -I./lib/libft
 
+AR=i686-linux-gnu-ar
+
 LD=$(CC)
 LDFLAGS=-z noexecstack -nostdlib -nodefaultlibs
 LDLIBS=-L./lib/libft -lft
@@ -63,7 +65,7 @@ $(ISODIR)/boot/kernel: $(OBJ) linker.ld | libft
 
 .PHONY: libft
 libft:
-	@make -C lib/libft CC=$(CC) AR="i686-linux-gnu-ar" OBJ="$(LIBFT_OBJ)"
+	@make -C lib/libft CC=$(CC) AR=$(AR) OBJ="$(LIBFT_OBJ)"
 
 .PHONY: format
 format:
