@@ -24,6 +24,11 @@ TTY *current_tty;
 // 		ft_putchar('\n');
 // }
 
+static void shutdown(void)
+{
+	outw(0x604, 0x2000); // Works in newer versions of QEMU
+}
+
 static void switch_tty(TTY *tty)
 {
 	current_tty->save();
@@ -57,7 +62,7 @@ extern "C" void kernel_main()
 
 			switch (scancode) {
 			case 0x01:
-				// escape pressed
+				shutdown();
 				break;
 
 			case 0x02:

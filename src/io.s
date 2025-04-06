@@ -2,8 +2,17 @@
 .code32
 
 .text
+.global outw
 .global outb
 .global inb
+
+outw:
+	push edx
+	mov edx, [esp+8]
+	mov ax, [esp+12]
+	outw dx, ax
+	pop edx
+	ret
 
 outb:
 	push edx
