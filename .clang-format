@@ -9,4 +9,5 @@ BraceWrapping:
   AfterFunction: true
 AccessModifierOffset: -4
 IndentAccessModifiers: false
-
+IndentPPDirectives: AfterHash
+PPIndentWidth: 1
