@@ -1,9 +1,9 @@
 IndentWidth: 4
 UseTab: ForIndentation
 TabWidth: 4
-AlignConsecutiveAssignments: Consecutive
-AlignConsecutiveDeclarations: Consecutive
-AlignConsecutiveMacros: Consecutive
+AlignConsecutiveAssignments: AcrossEmptyLinesAndComments
+AlignConsecutiveDeclarations: AcrossEmptyLinesAndComments
+AlignConsecutiveMacros: AcrossEmptyLinesAndComments
 BreakBeforeBraces: Custom
 BraceWrapping:
   AfterFunction: true

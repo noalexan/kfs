@@ -27,12 +27,12 @@ enum IDT_FLAGS {
 	IDT_FLAGS_GATE_32BIT_INT  = 0x0E,
 	IDT_FLAGS_GATE_32BIT_TRAP = 0x0F,
 
-	IDT_FLAGS_RING0 = (0 << 5),
-	IDT_FLAGS_RING1 = (1 << 5),
-	IDT_FLAGS_RING2 = (2 << 5),
-	IDT_FLAGS_RING3 = (3 << 5),
+	IDT_FLAGS_RING0           = (0 << 5),
+	IDT_FLAGS_RING1           = (1 << 5),
+	IDT_FLAGS_RING2           = (2 << 5),
+	IDT_FLAGS_RING3           = (3 << 5),
 
-	IDT_FLAGS_PRESENT = 0x80,
+	IDT_FLAGS_PRESENT         = 0x80,
 };
 
 void init_idt();

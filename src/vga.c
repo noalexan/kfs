@@ -4,7 +4,7 @@
 
 static u8 vga_mode = FOREGROUND_WHITE | BACKGROUND_BLACK;
 
-void vga_set_cursor_position(u8 x, u8 y)
+void      vga_set_cursor_position(u8 x, u8 y)
 {
 	u16 pos = y * VGA_SCREEN_WIDTH + x;
 

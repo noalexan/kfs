@@ -6,7 +6,7 @@ extern "C" {
 #include <libft.h>
 }
 
-TTY *current_tty;
+TTY        *current_tty;
 
 // static void memory_dump(u32 addr_start, u32 addr_end)
 // {
@@ -36,15 +36,11 @@ static void switch_tty(TTY *tty)
 	current_tty->load();
 }
 
-static u8 read_status() { return inb(0x64); }
-
-static u8 read_data() { return inb(0x60); }
-
 extern "C" void kernel_main()
 {
 	TTY ttys[12];
 
-	current_tty = ttys;
+	current_tty     = ttys;
 
 	int caps_lock   = false;
 	int left_shift  = false;
@@ -57,8 +53,8 @@ extern "C" void kernel_main()
 	printk("Hello, World!\n");
 
 	while (true) {
-		if (read_status() & 0x01) {
-			u8 scancode = read_data();
+		if (inb(0x64) & 0x01) {      // read status
+			u8 scancode = inb(0x64); // read data
 
 			switch (scancode) {
 			case 0x01:
