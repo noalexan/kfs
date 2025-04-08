@@ -30,7 +30,7 @@ void load_tty(TTY *tty)
 void save_tty(TTY *tty)
 {
 	ft_memcpy(tty->buffer, VGA_BUFFER, sizeof(tty->buffer));
-	tty->cursor = vga_get_cursor_position();
+	tty->cursor = g_cursor;
 }
 
 void switch_tty(TTY *tty)

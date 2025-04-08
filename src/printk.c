@@ -4,38 +4,36 @@
 
 static int ft_putchar(char c)
 {
-	static struct s_cursor cursor = (struct s_cursor){0, 0};
-
 	switch (c) {
 	case '\n':
-		cursor.y++;
+		g_cursor.y++;
 		fallthrough;
 
 	case '\r':
-		cursor.x = 0;
+		g_cursor.x = 0;
 		break;
 
 	case '\t':
 		do {
 			ft_putchar(' ');
-		} while (cursor.x % 4);
+		} while (g_cursor.x % 4);
 		break;
 
 	default:
-		vga_set_char(cursor.x++, cursor.y, c);
+		vga_set_char(g_cursor.x++, g_cursor.y, c);
 	}
 
-	while (cursor.x >= VGA_SCREEN_WIDTH) {
-		cursor.x -= VGA_SCREEN_WIDTH;
-		cursor.y++;
+	while (g_cursor.x >= VGA_SCREEN_WIDTH) {
+		g_cursor.x -= VGA_SCREEN_WIDTH;
+		g_cursor.y++;
 	}
 
-	while (cursor.y >= VGA_SCREEN_HEIGHT) {
+	while (g_cursor.y >= VGA_SCREEN_HEIGHT) {
 		vga_scroll_down();
-		cursor.y--;
+		g_cursor.y--;
 	}
 
-	vga_set_cursor_position(cursor.x, cursor.y);
+	vga_set_cursor_position(g_cursor.x, g_cursor.y);
 	return 1;
 }
 

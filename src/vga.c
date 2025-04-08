@@ -2,28 +2,19 @@
 #include "io.h"
 #include <libft.h>
 
-static uint8_t vga_mode = FOREGROUND_WHITE | BACKGROUND_BLACK;
+struct s_cursor g_cursor;
 
-void           vga_set_cursor_position(uint8_t x, uint8_t y)
+static uint8_t  vga_mode = FOREGROUND_WHITE | BACKGROUND_BLACK;
+
+void            vga_set_cursor_position(uint8_t x, uint8_t y)
 {
+	g_cursor     = (struct s_cursor){.x = x, .y = y};
 	uint16_t pos = y * VGA_SCREEN_WIDTH + x;
 
 	outb(0x3D4, 0x0F);
 	outb(0x3D5, pos);
 	outb(0x3D4, 0x0E);
 	outb(0x3D5, pos >> 8);
-}
-
-struct s_cursor vga_get_cursor_position(void)
-{
-	uint16_t pos;
-
-	outb(0x3D4, 0x0F);
-	pos = inb(0x3D5);
-	outb(0x3D4, 0x0E);
-	pos |= (uint16_t)inb(0x3D5) << 8;
-
-	return (struct s_cursor){pos % VGA_SCREEN_WIDTH, pos / VGA_SCREEN_WIDTH};
 }
 
 void vga_set_char(int x, int y, char c)

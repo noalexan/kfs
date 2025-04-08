@@ -52,9 +52,11 @@ struct s_cursor {
 	uint8_t y;
 };
 
-void            vga_set_cursor_position(uint8_t x, uint8_t y);
-struct s_cursor vga_get_cursor_position(void);
-void            vga_set_char(int x, int y, char c);
-void            vga_scroll_down(void);
-void            vga_set_screen_mode(uint8_t mode);
-void            vga_clear(void);
+extern struct s_cursor g_cursor;
+
+void                   vga_set_cursor_position(uint8_t x, uint8_t y);
+struct s_cursor        vga_get_cursor_position(void);
+void                   vga_set_char(int x, int y, char c);
+void                   vga_scroll_down(void);
+void                   vga_set_screen_mode(uint8_t mode);
+void                   vga_clear(void);
