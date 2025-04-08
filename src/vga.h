@@ -3,7 +3,7 @@
 #include <types.h>
 
 #define VGA_SCREEN_WIDTH  80
-#define VGA_SCREEN_HEIGTH 25
+#define VGA_SCREEN_HEIGHT 25
 #define VGA_BUFFER        ((vga_entry *)0xb8000)
 #define VGA_ENTRY(x, y)   (VGA_BUFFER + ((y) * VGA_SCREEN_WIDTH + x))
 
