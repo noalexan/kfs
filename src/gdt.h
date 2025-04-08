@@ -36,17 +36,17 @@ enum GDT_FLAGS {
 };
 
 typedef struct {
-	u16 llimit;
-	u16 lbase;
-	u8  base;
-	u8  access;
-	u8  hlimit : 4;
-	u8  flags : 4;
-	u8  hbase;
+	uint16_t llimit;
+	uint16_t lbase;
+	uint8_t  base;
+	uint8_t  access;
+	uint8_t  hlimit : 4;
+	uint8_t  flags : 4;
+	uint8_t  hbase;
 } __attribute__((packed)) gdt_entry;
 
 typedef struct {
-	u16        size;
+	uint16_t   size;
 	gdt_entry *ptr;
 } __attribute__((packed)) gdt_descriptor;
 

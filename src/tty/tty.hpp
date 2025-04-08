@@ -8,7 +8,7 @@ class TTY {
 private:
 	vga_entry       buffer[VGA_SCREEN_WIDTH * VGA_SCREEN_HEIGTH];
 	struct s_cursor cursor = {0, 0};
-	u8              mode;
+	uint8_t         mode;
 
 public:
 	TTY();
@@ -19,3 +19,7 @@ public:
 };
 
 extern TTY *current_tty;
+
+#ifndef TEST
+# define TEST
+#endif

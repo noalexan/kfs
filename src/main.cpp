@@ -1,6 +1,7 @@
 #include "tty/tty.hpp"
 
 extern "C" {
+#include "idt.h"
 #include "io.h"
 #include "printk.h"
 #include <libft.h>
@@ -8,25 +9,35 @@ extern "C" {
 
 TTY        *current_tty;
 
-// static void memory_dump(u32 addr_start, u32 addr_end)
-// {
-// 	u32 addr = addr_start;
-// 	while (addr < addr_end) {
-// 		if (addr % 8 == 0 || addr == addr_start)
-// 			printk("%p:  \t", addr);
-// 		if (*(u8 *)addr < 0x10)
-// 			ft_putchar('0');
-// 		printk("%x ", *(u8 *)(addr++));
-// 		if (addr % 8 == 0)
-// 			ft_putchar('\n');
-// 	}
-// 	if (addr % 8)
-// 		ft_putchar('\n');
-// }
+static void memory_dump(uint32_t addr_start, uint32_t addr_end)
+{
+	uint32_t addr = addr_start;
+	while (addr < addr_end) {
+		if (addr % 8 == 0 || addr == addr_start)
+			printk("%p:  \t", addr);
+		if (*(uint8_t *)addr < 0x10)
+			printk("0");
+		printk("%x ", *(uint8_t *)(addr++));
+		if (addr % 8 == 0)
+			printk("\n");
+	}
+	if (addr % 8)
+		printk("\n");
+}
 
 static void shutdown(void)
 {
 	outw(0x604, 0x2000); // Works in newer versions of QEMU
+}
+
+static void halt(void) { asm volatile("hlt\n\t"); }
+
+static void reboot()
+{
+	while (inb(0x64) & 0x02)
+		;
+	outb(0x64, 0xFE);
+	halt();
 }
 
 static void switch_tty(TTY *tty)
@@ -39,7 +50,6 @@ static void switch_tty(TTY *tty)
 extern "C" void kernel_main()
 {
 	TTY ttys[12];
-
 	current_tty     = ttys;
 
 	int caps_lock   = false;
@@ -50,11 +60,11 @@ extern "C" void kernel_main()
 	vga_set_screen_mode(FOREGROUND_WHITE | BACKGROUND_BLACK);
 	vga_set_cursor_position(0, 0);
 
-	printk("Hello, World!\n");
+	memory_dump((uint32_t)idt_tab, (uint32_t)(idt_tab + 1 + 0x10));
 
 	while (true) {
-		if (inb(0x64) & 0x01) {      // read status
-			u8 scancode = inb(0x64); // read data
+		if (inb(0x64) & 0x01) {           // read status
+			uint8_t scancode = inb(0x60); // read data
 
 			switch (scancode) {
 			case 0x01:
@@ -111,6 +121,7 @@ extern "C" void kernel_main()
 
 			case 0x0E:
 				// backspace pressed
+				reboot();
 				break;
 
 			case 0x0F:

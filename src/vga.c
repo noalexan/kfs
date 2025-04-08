@@ -2,11 +2,11 @@
 #include "io.h"
 #include <libft.h>
 
-static u8 vga_mode = FOREGROUND_WHITE | BACKGROUND_BLACK;
+static uint8_t vga_mode = FOREGROUND_WHITE | BACKGROUND_BLACK;
 
-void      vga_set_cursor_position(u8 x, u8 y)
+void           vga_set_cursor_position(uint8_t x, uint8_t y)
 {
-	u16 pos = y * VGA_SCREEN_WIDTH + x;
+	uint16_t pos = y * VGA_SCREEN_WIDTH + x;
 
 	outb(0x3D4, 0x0F);
 	outb(0x3D5, pos);
@@ -16,12 +16,12 @@ void      vga_set_cursor_position(u8 x, u8 y)
 
 struct s_cursor vga_get_cursor_position(void)
 {
-	u16 pos;
+	uint16_t pos;
 
 	outb(0x3D4, 0x0F);
 	pos = inb(0x3D5);
 	outb(0x3D4, 0x0E);
-	pos |= (u16)inb(0x3D5) << 8;
+	pos |= (uint16_t)inb(0x3D5) << 8;
 
 	return (struct s_cursor){pos % VGA_SCREEN_WIDTH, pos / VGA_SCREEN_WIDTH};
 }
@@ -40,7 +40,7 @@ void vga_scroll_down(void)
 		*VGA_ENTRY(x, VGA_SCREEN_HEIGTH - 1) = (vga_entry){0, vga_mode};
 }
 
-void vga_set_screen_mode(u8 mode)
+void vga_set_screen_mode(uint8_t mode)
 {
 	vga_mode = mode;
 	for (int y = 0; y < VGA_SCREEN_HEIGTH; y++)

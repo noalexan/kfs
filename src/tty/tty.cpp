@@ -16,13 +16,6 @@ TTY::TTY() : mode(BACKGROUND_BLACK | FOREGROUND_WHITE)
 
 TTY::~TTY() {}
 
-void TTY::set_mode(u8 mode)
-{
-	this->mode = mode;
-	for (int i = 0; i < VGA_SCREEN_WIDTH * VGA_SCREEN_HEIGTH; i++)
-		this->buffer[i].mode = mode;
-}
-
 void TTY::load()
 {
 	ft_memcpy(VGA_BUFFER, this->buffer, sizeof(this->buffer));

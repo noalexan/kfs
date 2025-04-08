@@ -43,18 +43,18 @@ enum VGA_SCREEN_MODE {
 };
 
 typedef struct __attribute__((packed)) {
-	u8 character;
-	u8 mode;
+	uint8_t character;
+	uint8_t mode;
 } vga_entry;
 
 struct s_cursor {
-	u8 x;
-	u8 y;
+	uint8_t x;
+	uint8_t y;
 };
 
-void            vga_set_cursor_position(u8 x, u8 y);
+void            vga_set_cursor_position(uint8_t x, uint8_t y);
 struct s_cursor vga_get_cursor_position(void);
 void            vga_set_char(int x, int y, char c);
 void            vga_scroll_down(void);
-void            vga_set_screen_mode(u8 mode);
+void            vga_set_screen_mode(uint8_t mode);
 void            vga_clear(void);

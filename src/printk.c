@@ -112,7 +112,7 @@ void printk(const char *fmt, ...)
 				break;
 
 			case 'p':
-				ft_puthexa(va_arg(ap, u32), false, true);
+				ft_puthexa(va_arg(ap, uint32_t), false, true);
 				break;
 
 			default:
