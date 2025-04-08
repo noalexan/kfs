@@ -30,7 +30,7 @@ static int ft_putchar(char c)
 		cursor.y++;
 	}
 
-	while (cursor.y >= VGA_SCREEN_HEIGTH) {
+	while (cursor.y >= VGA_SCREEN_HEIGHT) {
 		vga_scroll_down();
 		cursor.y--;
 	}

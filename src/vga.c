@@ -28,27 +28,27 @@ struct s_cursor vga_get_cursor_position(void)
 
 void vga_set_char(int x, int y, char c)
 {
-	*VGA_ENTRY(x % VGA_SCREEN_WIDTH, y % VGA_SCREEN_HEIGTH) =
+	*VGA_ENTRY(x % VGA_SCREEN_WIDTH, y % VGA_SCREEN_HEIGHT) =
 	    (vga_entry){c, vga_mode};
 }
 
 void vga_scroll_down(void)
 {
-	for (int y = 0; y < (VGA_SCREEN_HEIGTH - 1); y++)
+	for (int y = 0; y < (VGA_SCREEN_HEIGHT - 1); y++)
 		ft_memcpy(VGA_ENTRY(0, y), VGA_ENTRY(0, y + 1), VGA_SCREEN_WIDTH * 2);
 	for (int x = 0; x < VGA_SCREEN_WIDTH; x++)
-		*VGA_ENTRY(x, VGA_SCREEN_HEIGTH - 1) = (vga_entry){0, vga_mode};
+		*VGA_ENTRY(x, VGA_SCREEN_HEIGHT - 1) = (vga_entry){0, vga_mode};
 }
 
 void vga_set_screen_mode(uint8_t mode)
 {
 	vga_mode = mode;
-	for (int y = 0; y < VGA_SCREEN_HEIGTH; y++)
+	for (int y = 0; y < VGA_SCREEN_HEIGHT; y++)
 		for (int x = 0; x < VGA_SCREEN_WIDTH; x++)
 			VGA_ENTRY(x, y)->mode = vga_mode;
 }
 
 void vga_clear(void)
 {
-	ft_bzero(VGA_BUFFER, VGA_SCREEN_WIDTH * VGA_SCREEN_HEIGTH);
+	ft_bzero(VGA_BUFFER, VGA_SCREEN_WIDTH * VGA_SCREEN_HEIGHT);
 }
