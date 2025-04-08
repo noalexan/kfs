@@ -2,37 +2,29 @@
 
 #include <types.h>
 
-#define IDT_BASE         ((idt_entry *)0x00001800)
-#define IDT_DESCRIPTOR   ((idt_descriptor *)0x00002000)
-#define IDT_ENTRY(index) (IDT_BASE + index % IDT_MAX_ENTRIES)
-#define IDT_MAX_ENTRIES  256
+#define IDT_MAX_ENTRY 256
 
-typedef struct {
-	u16 loffset;
-	u16 segment;
-	u8  reserved;
-	u8  flags;
-	u16 hoffset;
-} __attribute__((packed)) idt_entry;
+typedef struct __attribute__((__packed__)) {
+	uint16_t offset_1;        // offset bits 0..15
+	uint16_t selector;        // a code segment selector in GDT or LDT
+	uint8_t  zero;            // unused, set to 0
+	uint8_t  type_attributes; // gate type, dpl, and p fields
+	uint16_t offset_2;        // offset bits 16..31
+} idt_entry;
 
-typedef struct __attribute__((packed)) {
-	u16        size;
-	idt_entry *ptr;
-} idt_descriptor;
+enum IDTTypeAttributes {
+	TaskGate    = 0x05,
+	IntGate_16  = 0x06,
+	TrapGate_16 = 0x07,
+	IntGate_32  = 0x0E,
+	TrapGate_32 = 0x0F,
 
-enum IDT_FLAGS {
-	IDT_FLAGS_GATE_TASK       = 0x05,
-	IDT_FLAGS_GATE_16BIT_INT  = 0x06,
-	IDT_FLAGS_GATE_16BIT_TRAP = 0x07,
-	IDT_FLAGS_GATE_32BIT_INT  = 0x0E,
-	IDT_FLAGS_GATE_32BIT_TRAP = 0x0F,
+	CPU_Ring0   = 0x00 << 5,
+	CPU_Ring1   = 0x01 << 5,
+	CPU_Ring2   = 0x02 << 5,
+	CPU_Ring3   = 0x03 << 5,
 
-	IDT_FLAGS_RING0           = (0 << 5),
-	IDT_FLAGS_RING1           = (1 << 5),
-	IDT_FLAGS_RING2           = (2 << 5),
-	IDT_FLAGS_RING3           = (3 << 5),
-
-	IDT_FLAGS_PRESENT         = 0x80,
+	PresentBit  = 0x01 << 7
 };
 
-void init_idt();
+extern idt_entry idt_tab[];

@@ -36,7 +36,7 @@ _start:
 	lea esp, [0x00090000]
 
 	// call init_gdt
-	// call init_idt
+	call init_idt
 	call kernel_main
 
 	hlt
