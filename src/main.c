@@ -1,11 +1,9 @@
 #include "keymap.h"
-#include "tty.h"
-#include "io.h"
 #include "printk.h"
-#include <libft.h>
+#include "tty.h"
 #include "vga.h"
 
-void	vga_init()
+static void init_vga()
 {
 	vga_clear();
 	vga_set_screen_mode(FOREGROUND_WHITE | BACKGROUND_BLACK);
@@ -14,10 +12,10 @@ void	vga_init()
 
 void kernel_main()
 {
-	vga_init();
+	init_vga();
+	init_ttys();
 
 	printk("Hello, World!\n");
-	init_ttys(12);
 	while (true) {
 		handle_keyboard();
 	}
