@@ -1,20 +1,20 @@
 #include "keymap.h"
 
-TTY *current_tty;
-TTY  ttys[12];
+TTY        *current_tty;
+TTY         ttys[12];
 
-int  caps_lock               = false;
-int  left_shift              = false;
-int  right_shift             = false;
+static bool caps_lock               = false;
+static bool left_shift              = false;
+static bool right_shift             = false;
 
-char shift_keycode_table[64] = {
+static char shift_keycode_table[64] = {
     [0x02] = '!', [0x03] = '@', [0x04] = '#', [0x05] = '$', [0x06] = '%',
     [0x07] = '^', [0x08] = '&', [0x09] = '*', [0x0A] = '(', [0x0B] = ')',
     [0x0C] = '_', [0x0D] = '+', [0x1A] = '{', [0x1B] = '}', [0x27] = ':',
     [0x28] = '"', [0x29] = '~', [0x2B] = '|', [0x33] = '<', [0x34] = '>',
     [0x35] = '?'};
 
-char keycode_table[256] = {
+static char keycode_table[256] = {
     // base
     [0x1E] = 'a',
     [0x30] = 'b',
@@ -93,7 +93,7 @@ char keycode_table[256] = {
     [0x73] = '-',
 };
 
-uint32_t scancode_to_ascii(uint8_t keycode, uint8_t shift, uint8_t caps_lock)
+static uint32_t scancode_to_ascii(uint8_t keycode, bool shift, bool caps_lock)
 {
 	uint32_t base_char = keycode_table[keycode];
 	if (base_char >= 'a' && base_char <= 'z') {
@@ -104,11 +104,7 @@ uint32_t scancode_to_ascii(uint8_t keycode, uint8_t shift, uint8_t caps_lock)
 	return base_char;
 }
 
-static uint8_t read_status() { return inb(0x64); }
-
-static uint8_t read_data() { return inb(0x60); }
-
-static void    shutdown(void)
+static void shutdown(void)
 {
 	outw(0x604,
 	     0x2000); // Works in newer versions of QEMU
@@ -116,8 +112,8 @@ static void    shutdown(void)
 
 void handle_keyboard()
 {
-	if (read_status() & 0x01) {
-		uint8_t scancode = read_data();
+	if (inb(0x64) & 0x01) {           // read status
+		uint8_t scancode = inb(0x60); // read data
 
 		switch (scancode) {
 

@@ -68,7 +68,7 @@ static int ft_putunsignednbr(unsigned int nb)
 		return (ft_putchar(nb + '0'));
 }
 
-static int ft_puthexa(unsigned long nb, int upper, int addr)
+static int ft_puthexa(unsigned long nb, bool upper, bool addr)
 {
 	char *dict = upper ? "0123456789ABCDEF" : "0123456789abcdef";
 
