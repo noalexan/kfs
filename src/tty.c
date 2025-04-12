@@ -38,9 +38,4 @@ void switch_tty(TTY *tty)
 	save_tty(current_tty);
 	current_tty = tty;
 	load_tty(tty);
-	// printk("sizeof
-	// tty
-	// :
-	// %d\n",
-	// sizeof(tty->buffer));
 }

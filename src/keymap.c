@@ -111,9 +111,10 @@ void handle_keyboard()
 
 		switch (scancode) {
 
-		case 0x01:
+		case 0x01: {
 			shutdown();
 			break;
+		}
 
 		case 0x0E:
 			// backspace pressed
@@ -230,8 +231,8 @@ void handle_keyboard()
 
 		case 0x46:
 			// ScrollLock pressed
-			for (int i = 0; i < 12; i++)
-				printk("%d : %c|\n", i, (ttys + i)->buffer[0].character);
+			// for (int i = 0; i < 12; i++)
+			// 	printk("%d : %c|\n", i, (ttys + i)->buffer[0].character);
 			break;
 
 		case 0x47:

@@ -11,13 +11,17 @@ static void init_vga()
 	vga_set_cursor_position(0, 0);
 }
 
-void kernel_main()
+static void init_builtin()
 {
 	init_vga();
-	printk("OH");
 	init_ttys();
 	shell_init();
-	printk("Hello, World!\n");
+}
+
+void kernel_main()
+{
+	init_builtin();
+	printk("Hello, World!");
 	while (true) {
 		handle_keyboard();
 	}
