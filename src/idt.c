@@ -1,35 +1,36 @@
 #include "idt.h"
 #include <libft.h>
+#include "printk.h"
 
 idt_entry idt_tab[IDT_MAX_ENTRY];
 
-void aa(void);
-void ab(void);
-void ac(void);
-void ad(void);
-void ae(void);
-void af(void);
-void ag(void);
-void ah(void);
-void ai(void);
-void aj(void);
-void ak(void);
-void al(void);
-void am(void);
-void an(void);
-void ao(void);
-void ap(void);
-void aq(void);
-void ar(void);
-void at(void);
-void au(void);
-void av(void);
-void aw(void);
+void aa(void) { printk(KERN_DEBUG "aa\n"); }
+void ab(void) { printk(KERN_DEBUG "ab\n"); }
+void ac(void) { printk(KERN_DEBUG "ac\n"); }
+void ad(void) { printk(KERN_DEBUG "ad\n"); }
+void ae(void) { printk(KERN_DEBUG "ae\n"); }
+void af(void) { printk(KERN_DEBUG "af\n"); }
+void ag(void) { printk(KERN_DEBUG "ag\n"); }
+void ah(void) { printk(KERN_DEBUG "ah\n"); }
+void ai(void) { printk(KERN_DEBUG "ai\n"); }
+void aj(void) { printk(KERN_DEBUG "aj\n"); }
+void ak(void) { printk(KERN_DEBUG "ak\n"); }
+void al(void) { printk(KERN_DEBUG "al\n"); }
+void am(void) { printk(KERN_DEBUG "am\n"); }
+void an(void) { printk(KERN_DEBUG "an\n"); }
+void ao(void) { printk(KERN_DEBUG "ao\n"); }
+void ap(void) { printk(KERN_DEBUG "ap\n"); }
+void aq(void) { printk(KERN_DEBUG "aq\n"); }
+void ar(void) { printk(KERN_DEBUG "ar\n"); }
+void at(void) { printk(KERN_DEBUG "at\n"); }
+void au(void) { printk(KERN_DEBUG "au\n"); }
+void av(void) { printk(KERN_DEBUG "av\n"); }
+void aw(void) { printk(KERN_DEBUG "aw\n"); }
 
 #define set_idt_entry(index, selector, type_attr, offset)                      \
-	idt_tab[index] = (idt_entry){                                              \
-	    (uint16_t)((uintptr_t)offset & 0xFFFF), selector, 0, type_attr,        \
-	    (uint16_t)(((uintptr_t)offset >> 16) & 0xFFFF)};
+ idt_tab[index] =                                                              \
+	 (idt_entry){(uint16_t)((uintptr_t)offset & 0xFFFF), selector, 0,          \
+	             type_attr, (uint16_t)(((uintptr_t)offset >> 16) & 0xFFFF)};
 
 void init_idt(void)
 {
