@@ -1,6 +1,6 @@
 #pragma once
 
-#define NULL  (void *)0
+#define NULL (void *)0
 
 #define bool  _Bool
 #define true  1
@@ -11,4 +11,4 @@ typedef unsigned short uint16_t;
 typedef unsigned int   uint32_t;
 typedef unsigned int   uintptr_t;
 
-typedef uint32_t       size_t;
+typedef uint32_t size_t;

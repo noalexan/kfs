@@ -1,11 +1,11 @@
 #include "keymap.h"
 
-TTY        *current_tty;
-TTY         ttys[12];
+TTY *current_tty;
+TTY  ttys[12];
 
-static bool caps_lock               = false;
-static bool left_shift              = false;
-static bool right_shift             = false;
+static bool caps_lock   = false;
+static bool left_shift  = false;
+static bool right_shift = false;
 
 static char shift_keycode_table[64] = {
     [0x02] = '!', [0x03] = '@', [0x04] = '#', [0x05] = '$', [0x06] = '%',

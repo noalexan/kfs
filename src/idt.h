@@ -19,12 +19,12 @@ enum IDTTypeAttributes {
 	IntGate_32  = 0x0E,
 	TrapGate_32 = 0x0F,
 
-	CPU_Ring0   = 0x00 << 5,
-	CPU_Ring1   = 0x01 << 5,
-	CPU_Ring2   = 0x02 << 5,
-	CPU_Ring3   = 0x03 << 5,
+	CPU_Ring0 = 0x00 << 5,
+	CPU_Ring1 = 0x01 << 5,
+	CPU_Ring2 = 0x02 << 5,
+	CPU_Ring3 = 0x03 << 5,
 
-	PresentBit  = 0x01 << 7
+	PresentBit = 0x01 << 7
 };
 
 extern idt_entry idt_tab[];

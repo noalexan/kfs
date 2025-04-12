@@ -3,28 +3,28 @@
 
 idt_entry idt_tab[IDT_MAX_ENTRY];
 
-void      aa(void);
-void      ab(void);
-void      ac(void);
-void      ad(void);
-void      ae(void);
-void      af(void);
-void      ag(void);
-void      ah(void);
-void      ai(void);
-void      aj(void);
-void      ak(void);
-void      al(void);
-void      am(void);
-void      an(void);
-void      ao(void);
-void      ap(void);
-void      aq(void);
-void      ar(void);
-void      at(void);
-void      au(void);
-void      av(void);
-void      aw(void);
+void aa(void);
+void ab(void);
+void ac(void);
+void ad(void);
+void ae(void);
+void af(void);
+void ag(void);
+void ah(void);
+void ai(void);
+void aj(void);
+void ak(void);
+void al(void);
+void am(void);
+void an(void);
+void ao(void);
+void ap(void);
+void aq(void);
+void ar(void);
+void at(void);
+void au(void);
+void av(void);
+void aw(void);
 
 #define set_idt_entry(index, selector, type_attr, offset)                      \
 	idt_tab[index] = (idt_entry){                                              \

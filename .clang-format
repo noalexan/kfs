@@ -4,9 +4,9 @@ ColumnLimit: 80
 IndentWidth: 4
 UseTab: ForIndentation
 TabWidth: 4
-AlignConsecutiveAssignments: AcrossEmptyLinesAndComments
-AlignConsecutiveDeclarations: AcrossEmptyLinesAndComments
-AlignConsecutiveMacros: AcrossEmptyLinesAndComments
+AlignConsecutiveAssignments: Consecutive
+AlignConsecutiveDeclarations: Consecutive
+AlignConsecutiveMacros: Consecutive
 BreakBeforeBraces: Custom
 BraceWrapping:
   AfterFunction: true

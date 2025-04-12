@@ -4,9 +4,9 @@
 
 struct s_cursor g_cursor;
 
-static uint8_t  vga_mode = FOREGROUND_WHITE | BACKGROUND_BLACK;
+static uint8_t vga_mode = FOREGROUND_WHITE | BACKGROUND_BLACK;
 
-void            vga_set_cursor_position(uint8_t x, uint8_t y)
+void vga_set_cursor_position(uint8_t x, uint8_t y)
 {
 	g_cursor     = (struct s_cursor){.x = x, .y = y};
 	uint16_t pos = y * VGA_SCREEN_WIDTH + x;
