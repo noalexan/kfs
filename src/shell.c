@@ -44,23 +44,36 @@ bool ft_strequ(char *s1, char *s2)
     return true;
 }
 
+void print_help()
+{
+    printk("\nUsage: [command] [options]\n\n");
+    printk("Available commands:\n");
+    printk("  shutdown   Shut down the system\n");
+    printk("  halt       Halt the system\n");  
+    printk("  reboot     Reboot the system\n");
+    printk("  help       Display this help message\n\n");
+}
+
 void shell_handle_keycode(uint32_t ascii)
 {
-    uint32_t len = ft_strlen(current_shell);
+    char *cmd = &current_shell[3];
+    uint32_t len = ft_strlen(cmd);
 	if (ascii == NEW_LINE)
 	{
-        if (ft_strequ(current_shell, "shutdown")) {
+        if (ft_strequ(cmd, "shutdown")) {
             shutdown();
         }
-        else if (ft_strequ(current_shell, "reboot"))
+        else if (ft_strequ(cmd, "reboot"))
             printk("\nreboot dans ta gueule");
-        else if (ft_strequ(current_shell, "halt"))
+        else if (ft_strequ(cmd, "halt"))
             printk("\nhalt dans ton front");
+        else if (ft_strequ(cmd, "help"))
+            print_help();
         printk("%c", NEW_LINE);
         shell_prompt();
 	}
 	else {
-        current_shell[len] = ascii;
+        cmd[len] = ascii;
         printk("%c", ascii);
     }
 }
