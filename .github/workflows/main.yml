@@ -1,0 +1,28 @@
+name: Clang Format Check
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  format-check:
+    name: Check Code Formatting
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Step 2: Install clang-format
+      - name: Install clang-format
+        run: sudo apt-get update && sudo apt-get install -y clang-format
+
+      # Step 3: Run clang-format for formatting check
+      - name: Run clang-format check
+        run: |
+          clang-format --verbose --Werror --dry-run $(find ./src ./include -regex '.*\.\(c\|h\|cpp\|hpp\)')
