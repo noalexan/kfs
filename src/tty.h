@@ -2,6 +2,8 @@
 
 #include "vga.h"
 
+#define MAX_TTY 12
+
 typedef struct TTY {
 	vga_entry       buffer[VGA_SCREEN_WIDTH * VGA_SCREEN_HEIGHT];
 	struct s_cursor cursor;
@@ -9,11 +11,11 @@ typedef struct TTY {
 
 } TTY;
 
+void init_ttys();
 void load_tty(TTY *tty);
 void save_tty(TTY *tty);
 void init_tty(TTY *tty);
-void init_ttys();
 void switch_tty(TTY *tty);
 
 extern TTY *current_tty;
-extern TTY  ttys[12];
+extern TTY  ttys[MAX_TTY];

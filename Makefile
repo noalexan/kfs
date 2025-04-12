@@ -29,7 +29,8 @@ LIBFT_OBJ=    \
 	ft_bzero.o  \
 	ft_memset.o \
 	ft_memcpy.o \
-	ft_memcmp.o
+	ft_memcmp.o \
+	ft_strlen.o
 
 $(BINDIR)/%.o: src/%.s
 	@mkdir -pv $(@D)

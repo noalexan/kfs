@@ -2,6 +2,7 @@
 #include "printk.h"
 #include "tty.h"
 #include "vga.h"
+#include "shell.h"
 
 static void init_vga()
 {
@@ -13,8 +14,9 @@ static void init_vga()
 void kernel_main()
 {
 	init_vga();
+	printk("OH");
 	init_ttys();
-
+	shell_init();
 	printk("Hello, World!\n");
 	while (true) {
 		handle_keyboard();

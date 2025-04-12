@@ -104,12 +104,6 @@ static uint32_t scancode_to_ascii(uint8_t keycode, bool shift, bool caps_lock)
 	return base_char;
 }
 
-static void shutdown(void)
-{
-	outw(0x604,
-	     0x2000); // Works in newer versions of QEMU
-}
-
 void handle_keyboard()
 {
 	if (inb(0x64) & 0x01) {           // read status
@@ -156,61 +150,73 @@ void handle_keyboard()
 		case 0x3B:
 			// F1 pressed
 			switch_tty(ttys);
+			shell_switch(0);
 			break;
 
 		case 0x3C:
 			// F2 pressed
 			switch_tty(ttys + 1);
+			shell_switch(1);
 			break;
 
 		case 0x3D:
 			// F3 pressed
 			switch_tty(ttys + 2);
+			shell_switch(2);
 			break;
 
 		case 0x3E:
 			// F4 pressed
 			switch_tty(ttys + 3);
+			shell_switch(3);
 			break;
 
 		case 0x3F:
 			// F5 pressed
 			switch_tty(ttys + 4);
+			shell_switch(4);
 			break;
 
 		case 0x40:
 			// F6 pressed
 			switch_tty(ttys + 5);
+			shell_switch(5);
 			break;
 
 		case 0x41:
 			// F7 pressed
 			switch_tty(ttys + 6);
+			shell_switch(6);
 			break;
 
 		case 0x42:
 			// F8 pressed
 			switch_tty(ttys + 7);
+			shell_switch(7);
 			break;
 
 		case 0x43:
 			// F9 pressed
 			switch_tty(ttys + 8);
+			shell_switch(8);
 			break;
 
 		case 0x44:
 			// F10 pressed
 			switch_tty(ttys + 9);
+			shell_switch(9);
 			break;
 
 		case 0x57:
 			// F11 pressed
 			switch_tty(ttys + 10);
+			shell_switch(10);
 			break;
 
 		case 0x58:
 			// F12 pressed
 			switch_tty(ttys + 11);
+			shell_switch(11);
 			break;
 
 		case 0x3A:
@@ -263,8 +269,8 @@ void handle_keyboard()
 		default:
 			if (scancode < 0x73 && scancode > 0x01) {
 				char ascii = scancode_to_ascii(
-				    scancode, (left_shift || right_shift), caps_lock);
-				printk("%c", ascii);
+					scancode, (left_shift || right_shift), caps_lock);
+				shell_handle_keycode(ascii);
 			}
 			break;
 		}
