@@ -16,7 +16,7 @@ void init_tty(TTY *tty)
 
 void init_ttys()
 {
-	for (unsigned long i = 0; i < sizeof(ttys); i++)
+	for (unsigned long i = 0; i < MAX_TTY; i++)
 		init_tty(ttys + i);
 	current_tty = ttys;
 }
