@@ -5,7 +5,7 @@
 #define MAX_TTY 12
 
 typedef struct TTY {
-	vga_entry       buffer[VGA_SCREEN_WIDTH * VGA_SCREEN_HEIGHT];
+	vga_entry       buffer[VGA_WIDTH * VGA_HEIGHT];
 	struct s_cursor cursor;
 	uint8_t         mode;
 

@@ -1,6 +1,6 @@
 #include "idt.h"
-#include <libft.h>
 #include "printk.h"
+#include <libft.h>
 
 idt_entry idt_tab[IDT_MAX_ENTRY];
 
@@ -28,9 +28,9 @@ void av(void) { printk(KERN_DEBUG "av\n"); }
 void aw(void) { printk(KERN_DEBUG "aw\n"); }
 
 #define set_idt_entry(index, selector, type_attr, offset)                      \
- idt_tab[index] =                                                              \
-	 (idt_entry){(uint16_t)((uintptr_t)offset & 0xFFFF), selector, 0,          \
-	             type_attr, (uint16_t)(((uintptr_t)offset >> 16) & 0xFFFF)};
+	idt_tab[index] = (idt_entry){                                              \
+	    (uint16_t)((uintptr_t)offset & 0xFFFF), selector, 0, type_attr,        \
+	    (uint16_t)(((uintptr_t)offset >> 16) & 0xFFFF)};
 
 void init_idt(void)
 {

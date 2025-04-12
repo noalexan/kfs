@@ -1,4 +1,5 @@
 #include "keymap.h"
+#include "acpi.h"
 
 TTY *current_tty;
 TTY  ttys[12];
@@ -236,41 +237,45 @@ void handle_keyboard()
 			break;
 
 		case 0x47:
-			vga_set_screen_mode(BACKGROUND_WHITE | FOREGROUND_GREEN);
+			vga_set_screen_mode(VGA_COLOR(VGA_COLOR_WHITE, VGA_COLOR_GREEN));
 			break;
 
 		case 0x48:
-			vga_set_screen_mode(BACKGROUND_LIGHTGREEN | FOREGROUND_RED);
+			vga_set_screen_mode(
+			    VGA_COLOR(VGA_COLOR_LIGHT_GREEN, VGA_COLOR_RED));
 			break;
 
 		case 0x49:
-			vga_set_screen_mode(BACKGROUND_RED | FOREGROUND_LIGHTPINK);
+			vga_set_screen_mode(
+			    VGA_COLOR(VGA_COLOR_RED, VGA_COLOR_LIGHT_MAGENTA));
 			break;
 
 		case 0x4B:
-			vga_set_screen_mode(BACKGROUND_LIGHTGREEN | FOREGROUND_BROWN);
+			vga_set_screen_mode(
+			    VGA_COLOR(VGA_COLOR_LIGHT_GREEN, VGA_COLOR_BROWN));
 			break;
 
 		case 0x4C:
-			vga_set_screen_mode(BACKGROUND_YELLOW | FOREGROUND_GREEN);
+			vga_set_screen_mode(VGA_COLOR(VGA_COLOR_YELLOW, VGA_COLOR_GREEN));
 			break;
 
 		case 0x4D:
-			vga_set_screen_mode(BACKGROUND_BLACK | FOREGROUND_PINK);
+			vga_set_screen_mode(VGA_COLOR(VGA_COLOR_BLACK, VGA_COLOR_MAGENTA));
 			break;
 
 		case 0x4F:
-			vga_set_screen_mode(BACKGROUND_LIGHTGREY | FOREGROUND_BLACK);
+			vga_set_screen_mode(
+			    VGA_COLOR(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK));
 			break;
 
 		case 0x50:
-			vga_set_screen_mode(BACKGROUND_BLUE | FOREGROUND_BLACK);
+			vga_set_screen_mode(VGA_COLOR(VGA_COLOR_BLUE, VGA_COLOR_BLACK));
 			break;
 
 		default:
 			if (scancode < 0x73 && scancode > 0x01) {
 				char ascii = scancode_to_ascii(
-					scancode, (left_shift || right_shift), caps_lock);
+				    scancode, (left_shift || right_shift), caps_lock);
 				shell_handle_keycode(ascii);
 			}
 			break;

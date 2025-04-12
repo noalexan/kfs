@@ -1,5 +1,6 @@
 #include "vga.h"
 #include <stdarg.h>
+#include <types.h>
 #include <utils.h>
 
 static int ft_putchar(char c)
@@ -23,12 +24,12 @@ static int ft_putchar(char c)
 		vga_set_char(g_cursor.x++, g_cursor.y, c);
 	}
 
-	while (g_cursor.x >= VGA_SCREEN_WIDTH) {
-		g_cursor.x -= VGA_SCREEN_WIDTH;
+	while (g_cursor.x >= VGA_WIDTH) {
+		g_cursor.x -= VGA_WIDTH;
 		g_cursor.y++;
 	}
 
-	while (g_cursor.y >= VGA_SCREEN_HEIGHT) {
+	while (g_cursor.y >= VGA_HEIGHT) {
 		vga_scroll_down();
 		g_cursor.y--;
 	}
@@ -60,7 +61,7 @@ static int ft_putnbr(int nb)
 		return (ft_putchar(nb + '0'));
 }
 
-static int ft_putunsignednbr(unsigned int nb)
+static int ft_putunsignednbr(uint32_t nb)
 {
 	if (nb >= 10)
 		return (ft_putnbr(nb / 10) + ft_putnbr(nb % 10));
@@ -98,15 +99,15 @@ void printk(const char *fmt, ...)
 				break;
 
 			case 'u':
-				ft_putunsignednbr(va_arg(ap, unsigned int));
+				ft_putunsignednbr(va_arg(ap, uint32_t));
 				break;
 
 			case 'x':
-				ft_puthexa(va_arg(ap, unsigned int), false, false);
+				ft_puthexa(va_arg(ap, uint32_t), false, false);
 				break;
 
 			case 'X':
-				ft_puthexa(va_arg(ap, unsigned int), true, false);
+				ft_puthexa(va_arg(ap, uint32_t), true, false);
 				break;
 
 			case 'p':

@@ -1,45 +1,34 @@
-#pragma once
+#ifndef VGA_H
+#define VGA_H
 
 #include <types.h>
 
-#define VGA_SCREEN_WIDTH  80
-#define VGA_SCREEN_HEIGHT 25
-#define VGA_BUFFER        ((vga_entry *)0xb8000)
-#define VGA_ENTRY(x, y)   (VGA_BUFFER + ((y) * VGA_SCREEN_WIDTH + x))
+/* VGA Text Mode Constants */
+#define VGA_WIDTH       80
+#define VGA_HEIGHT      25
+#define VGA_BUFFER      ((vga_entry *)0xB8000)
+#define VGA_ENTRY(x, y) (VGA_BUFFER + y * VGA_WIDTH + x)
 
-enum VGA_SCREEN_MODE {
-	FOREGROUND_BLACK,
-	FOREGROUND_BLUE,
-	FOREGROUND_GREEN,
-	FOREGROUND_CYAN,
-	FOREGROUND_RED,
-	FOREGROUND_PINK,
-	FOREGROUND_BROWN,
-	FOREGROUND_LIGHTGREY,
-	FOREGROUND_GREY,
-	FOREGROUND_PURPLE,
-	FOREGROUND_LIGHTGREEN,
-	FOREGROUND_LIGHTBLUE,
-	FOREGROUND_LIGHTRED,
-	FOREGROUND_LIGHTPINK,
-	FOREGROUND_YELLOW,
-	FOREGROUND_WHITE,
-	BACKGROUND_BLACK      = 0,
-	BACKGROUND_BLUE       = 1 << 4,
-	BACKGROUND_GREEN      = 2 << 4,
-	BACKGROUND_CYAN       = 3 << 4,
-	BACKGROUND_RED        = 4 << 4,
-	BACKGROUND_PINK       = 5 << 4,
-	BACKGROUND_BROWN      = 6 << 4,
-	BACKGROUND_LIGHTGREY  = 7 << 4,
-	BACKGROUND_GREY       = 8 << 4,
-	BACKGROUND_PURPLE     = 9 << 4,
-	BACKGROUND_LIGHTGREEN = 10 << 4,
-	BACKGROUND_LIGHTBLUE  = 11 << 4,
-	BACKGROUND_LIGHTRED   = 12 << 4,
-	BACKGROUND_LIGHTPINK  = 13 << 4,
-	BACKGROUND_YELLOW     = 14 << 4,
-	BACKGROUND_WHITE      = 15 << 4
+#define VGA_COLOR(bg, fg) (bg << 4 | fg)
+
+/* VGA Color Enumeration */
+enum vga_color {
+	VGA_COLOR_BLACK         = 0,
+	VGA_COLOR_BLUE          = 1,
+	VGA_COLOR_GREEN         = 2,
+	VGA_COLOR_CYAN          = 3,
+	VGA_COLOR_RED           = 4,
+	VGA_COLOR_MAGENTA       = 5,
+	VGA_COLOR_BROWN         = 6,
+	VGA_COLOR_LIGHT_GREY    = 7,
+	VGA_COLOR_DARK_GREY     = 8,
+	VGA_COLOR_LIGHT_BLUE    = 9,
+	VGA_COLOR_LIGHT_GREEN   = 10,
+	VGA_COLOR_LIGHT_CYAN    = 11,
+	VGA_COLOR_LIGHT_RED     = 12,
+	VGA_COLOR_LIGHT_MAGENTA = 13,
+	VGA_COLOR_YELLOW        = 14,
+	VGA_COLOR_WHITE         = 15,
 };
 
 typedef struct __attribute__((packed)) {
@@ -60,3 +49,5 @@ void            vga_set_char(int x, int y, char c);
 void            vga_scroll_down(void);
 void            vga_set_screen_mode(uint8_t mode);
 void            vga_clear(void);
+
+#endif

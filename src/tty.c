@@ -7,8 +7,8 @@ void init_tty(TTY *tty)
 {
 	tty->cursor.x = 0;
 	tty->cursor.y = 0;
-	tty->mode     = (BACKGROUND_BLACK | FOREGROUND_WHITE);
-	for (int i = 0; i < VGA_SCREEN_WIDTH * VGA_SCREEN_HEIGHT; i++) {
+	tty->mode     = VGA_COLOR(VGA_COLOR_BLACK, VGA_COLOR_WHITE);
+	for (int i = 0; i < VGA_WIDTH * VGA_HEIGHT; i++) {
 		tty->buffer[i].character = 0;
 		tty->buffer[i].mode      = tty->mode;
 	}
