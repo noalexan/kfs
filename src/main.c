@@ -22,7 +22,8 @@ static void init_builtin(void)
 void kernel_main(void)
 {
 	init_builtin();
-
+	printk("Hello, World 42!\n");
+	shell_prompt();
 	while (true) {
 		handle_keyboard();
 	}

@@ -4,7 +4,8 @@
 #include "tty.h"
 #include <libft.h>
 
-#define NEW_LINE '\n'
+#define NEW_LINE    '\n'
+#define MAX_CMD_LEN 253
 
 char  shells_buffers[MAX_TTY][256];
 char *current_shell;
@@ -46,6 +47,7 @@ void print_help(void)
 	printk("\nUsage: [command] [options]\n\n");
 	printk("Available commands:\n");
 	printk("  shutdown   Shut down the system\n");
+	printk("  poweroff   Shut down the system\n");
 	printk("  halt       Halt the system\n");
 	printk("  reboot     Reboot the system\n");
 	printk("  help       Display this help message\n\n");
@@ -53,10 +55,10 @@ void print_help(void)
 
 void shell_handle_keycode(uint32_t ascii)
 {
-	char    *cmd = &current_shell[3];
-	uint32_t len = ft_strlen(cmd);
+	char    *cmd     = &current_shell[3];
+	uint32_t cmd_len = ft_strlen(cmd);
 	if (ascii == NEW_LINE) {
-		if (ft_strequ(cmd, "shutdown")) {
+		if (ft_strequ(cmd, "shutdown") || ft_strequ(cmd, "poweroff")) {
 			shutdown();
 		} else if (ft_strequ(cmd, "reboot"))
 			reboot();
@@ -64,10 +66,13 @@ void shell_handle_keycode(uint32_t ascii)
 			halt();
 		else if (ft_strequ(cmd, "help"))
 			print_help();
+		else if (cmd_len)
+			printk("\nk1tOS: command not found: %s", current_shell + 3);
 		printk("%c", NEW_LINE);
 		shell_prompt();
 	} else {
-		cmd[len] = ascii;
+		if (cmd_len < MAX_CMD_LEN)
+			cmd[cmd_len] = ascii;
 		printk("%c", ascii);
 	}
 }
