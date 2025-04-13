@@ -1,3 +1,4 @@
+#include "gdt.h"
 #include "keymap.h"
 #include "printk.h"
 #include "shell.h"
@@ -14,6 +15,7 @@ static void init_vga(void)
 
 static void init_builtin(void)
 {
+	// gdt_init();
 	init_vga();
 	init_ttys();
 	shell_init();

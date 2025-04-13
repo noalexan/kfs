@@ -32,7 +32,7 @@ void aw(void) { printk(KERN_DEBUG "aw\n"); }
 	    (uint16_t)((uintptr_t)offset & 0xFFFF), selector, 0, type_attr,        \
 	    (uint16_t)(((uintptr_t)offset >> 16) & 0xFFFF)};
 
-void init_idt(void)
+void idt_init(void)
 {
 	ft_bzero(idt_tab, sizeof(idt_tab));
 

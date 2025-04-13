@@ -28,15 +28,14 @@ header_end:
 
 .section .text
 .global _start
-.extern init_gdt
-.extern init_idt
+.extern gdt_init
+.extern idt_init
 .extern kernel_main
 
 _start:
 	lea esp, [0x00090000]
 
-	// call init_gdt
-	call init_idt
+	call gdt_init
 	call kernel_main
 
 	hlt
