@@ -5,9 +5,18 @@
 struct s_cursor g_cursor;
 static uint8_t  vga_mode;
 
+void vga_enable_cursor(uint8_t cursor_start, uint8_t cursor_end)
+{
+	outb(0x3D4, 0x0A);
+	outb(0x3D5, (inb(0x3D5) & 0xC0) | cursor_start);
+
+	outb(0x3D4, 0x0B);
+	outb(0x3D5, (inb(0x3D5) & 0xE0) | cursor_end);
+}
+
 void vga_set_cursor_position(uint8_t x, uint8_t y)
 {
-	g_cursor     = (struct s_cursor){.x = x, .y = y};
+	g_cursor     = (struct s_cursor){x, y};
 	uint16_t pos = y * VGA_WIDTH + x;
 
 	outb(0x3D4, 0x0F);
@@ -37,4 +46,4 @@ void vga_set_screen_mode(uint8_t mode)
 			VGA_ENTRY(x, y)->mode = vga_mode;
 }
 
-void vga_clear(void) { ft_bzero(VGA_BUFFER, VGA_WIDTH * VGA_HEIGHT); }
+void vga_clear(void) { ft_bzero(VGA_BUFFER, 2 * VGA_WIDTH * VGA_HEIGHT); }

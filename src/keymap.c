@@ -105,7 +105,7 @@ static uint32_t scancode_to_ascii(uint8_t keycode, bool shift, bool caps_lock)
 	return base_char;
 }
 
-void handle_keyboard()
+void handle_keyboard(void)
 {
 	if (inb(0x64) & 0x01) {           // read status
 		uint8_t scancode = inb(0x60); // read data

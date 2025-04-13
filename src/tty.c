@@ -1,5 +1,4 @@
 #include "tty.h"
-
 #include "printk.h"
 #include <libft.h>
 
@@ -14,7 +13,7 @@ void init_tty(TTY *tty)
 	}
 }
 
-void init_ttys()
+void init_ttys(void)
 {
 	for (unsigned long i = 0; i < MAX_TTY; i++)
 		init_tty(ttys + i);

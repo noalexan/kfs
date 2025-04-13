@@ -11,7 +11,7 @@ typedef struct TTY {
 
 } TTY;
 
-void init_ttys();
+void init_ttys(void);
 void load_tty(TTY *tty);
 void save_tty(TTY *tty);
 void init_tty(TTY *tty);

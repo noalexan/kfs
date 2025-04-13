@@ -7,4 +7,4 @@
 #include "types.h"
 #include "vga.h"
 
-void handle_keyboard();
+void handle_keyboard(void);

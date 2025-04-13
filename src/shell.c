@@ -9,13 +9,13 @@
 char  shells_buffers[MAX_TTY][256];
 char *current_shell;
 
-void shell_init()
+void shell_init(void)
 {
 	current_shell = shells_buffers[0];
 	shell_prompt();
 }
 
-void shell_prompt()
+void shell_prompt(void)
 {
 	ft_bzero(current_shell, 256);
 	printk("$> ");
@@ -41,7 +41,7 @@ bool ft_strequ(char *s1, char *s2)
 	return true;
 }
 
-void print_help()
+void print_help(void)
 {
 	printk("\nUsage: [command] [options]\n\n");
 	printk("Available commands:\n");
@@ -59,9 +59,9 @@ void shell_handle_keycode(uint32_t ascii)
 		if (ft_strequ(cmd, "shutdown")) {
 			shutdown();
 		} else if (ft_strequ(cmd, "reboot"))
-			printk("\nreboot dans ta gueule");
+			reboot();
 		else if (ft_strequ(cmd, "halt"))
-			printk("\nhalt dans ton front");
+			halt();
 		else if (ft_strequ(cmd, "help"))
 			print_help();
 		printk("%c", NEW_LINE);
