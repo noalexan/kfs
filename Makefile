@@ -18,14 +18,14 @@ LDFLAGS=-z noexecstack -nostdlib -nodefaultlibs -static
 LDLIBS=-L./lib/libft -lft
 
 QEMU=qemu-system-i386
-QEMUFLAGS=-serial mon:stdio
+QEMUFLAGS=-monitor stdio
 
 DOCKERIMAGENAME=noalexan/cross-compiler
 DOCKERIMAGETAG=ubuntu
 
 OBJ=$(patsubst src/%,$(BINDIR)/%,$(shell find src -regex '.*\(\.c\|\.cpp\|\.s\)' | sed 's/\(\.c\|\.cpp\|\.s\)/.o/g'))
 
-LIBFT_OBJ=    \
+LIBFT_OBJ=      \
 	ft_bzero.o  \
 	ft_memset.o \
 	ft_memcpy.o \
