@@ -14,7 +14,7 @@ CXXFLAGS=-fno-builtin -fno-exceptions -fno-stack-protector -fno-rtti -O3 -Wall -
 AR=i686-linux-gnu-ar
 
 LD=$(CC)
-LDFLAGS=-z noexecstack -nostdlib -nodefaultlibs
+LDFLAGS=-z noexecstack -nostdlib -nodefaultlibs -static
 LDLIBS=-L./lib/libft -lft
 
 QEMU=qemu-system-i386
