@@ -4,13 +4,18 @@
 
 #define IDT_MAX_ENTRY 256
 
-typedef struct __attribute__((__packed__)) {
+typedef struct __attribute__((packed)) {
 	uint16_t offset_1;        // offset bits 0..15
 	uint16_t selector;        // a code segment selector in GDT or LDT
 	uint8_t  zero;            // unused, set to 0
 	uint8_t  type_attributes; // gate type, dpl, and p fields
 	uint16_t offset_2;        // offset bits 16..31
 } idt_entry;
+
+typedef struct __attribute__((packed)) {
+	uint16_t limit;
+	uint32_t base;
+} idtr_t;
 
 enum IDTTypeAttributes {
 	TaskGate    = 0x05,
@@ -27,4 +32,6 @@ enum IDTTypeAttributes {
 	PresentBit = 0x01 << 7
 };
 
-extern idt_entry idt_tab[];
+extern const char *interrupt_names[];
+extern idt_entry   idt_tab[];
+extern idtr_t      idtr;

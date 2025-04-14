@@ -7,6 +7,7 @@
 .set CHECKSUM,      -(MAGIC + ARCHITECTURE + HEADER_LENGTH)
 
 .section .multiboot
+
 .align 8
 
 header_start:
@@ -18,15 +19,16 @@ header_start:
 
 .short 7
 .short 0
-.long 8
+.long  8
 
 .short 0
 .short 0
-.long 8
+.long  8
 
 header_end:
 
 .section .text
+
 .global _start
 .extern gdt_init
 .extern idt_init
@@ -36,6 +38,7 @@ _start:
 	lea esp, [0x00090000]
 
 	call gdt_init
+	call idt_init
 	call kernel_main
 
 	hlt

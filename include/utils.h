@@ -4,6 +4,6 @@
 # define fallthrough __attribute__((__fallthrough__))
 #else
 # define fallthrough                                                                               \
-	 do {                                                                                          \
-	 } while (0) /* fallthrough */
+  do {                                                                                             \
+  } while (0) /* fallthrough */
 #endif
