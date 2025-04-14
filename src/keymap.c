@@ -4,6 +4,10 @@
 TTY *current_tty;
 TTY  ttys[12];
 
+key_handler_t key_handlers[5];
+
+key_handler_t key_handlers[] = {special_key, switch_tty_key, switch_color_key, printable_key, NULL};
+
 static bool caps_lock   = false;
 static bool left_shift  = false;
 static bool right_shift = false;
@@ -42,7 +46,6 @@ static char keycode_table[256] = {
     [0x2D] = 'x',
     [0x15] = 'y',
     [0x2C] = 'z',
-
     // top keys
     [0x02] = '1',
     [0x03] = '2',
@@ -54,7 +57,6 @@ static char keycode_table[256] = {
     [0x09] = '8',
     [0x0A] = '9',
     [0x0B] = '0',
-
     // keypad
     [0x52] = '0',
     [0x4F] = '1',
@@ -66,18 +68,15 @@ static char keycode_table[256] = {
     [0x47] = '7',
     [0x48] = '8',
     [0x49] = '9',
-
     [0x37] = '*',
     [0x4A] = '-',
     [0x4E] = '+',
     [0x35] = '/',
     [0x1C] = '\n',
     [0x53] = '.',
-
     // whitespace
     [0x39] = ' ',
     [0x0F] = '\t',
-
     // others
     [0x0c] = '-',
     [0x0d] = '=',
@@ -93,6 +92,137 @@ static char keycode_table[256] = {
     [0x73] = '-',
 };
 
+bool special_key(uint8_t keycode)
+{
+	switch (keycode) {
+	case 0x01:
+		shutdown();
+		break; // echap
+	case 0x1D:
+		return true;
+		break; // left control
+	case 0x2A:
+		left_shift = true;
+		break; // left shift
+	case 0x36:
+		right_shift = true;
+		break; // right shift
+	case 0xAA:
+		left_shift = false;
+		break; // left shift
+	case 0xB6:
+		right_shift = false;
+		break; // right shift
+	case 0x38:
+		return true;
+		break; // left alt
+	case 0x3A:
+		caps_lock = !caps_lock;
+		break; // CapsLock
+	case 0x45:
+		return true;
+		break; // NumberLock
+	case 0x46:
+		return true;
+		break; // ScrollLock
+	default:
+		return false;
+	}
+	return true;
+}
+
+bool switch_tty_key(uint8_t keycode)
+{
+	uint8_t ret;
+	switch (keycode) {
+	case 0x3B:
+		ret = 0;
+		break; // F1
+	case 0x3C:
+		ret = 1;
+		break; // F2
+	case 0x3D:
+		ret = 2;
+		break; // F3
+	case 0x3E:
+		ret = 3;
+		break; // F4
+	case 0x3F:
+		ret = 4;
+		break; // F5
+	case 0x40:
+		ret = 5;
+		break; // F6
+	case 0x41:
+		ret = 6;
+		break; // F7
+	case 0x42:
+		ret = 7;
+		break; // F8
+	case 0x43:
+		ret = 8;
+		break; // F9
+	case 0x44:
+		ret = 9;
+		break; // F10
+	case 0x57:
+		ret = 10;
+		break; // F11
+	case 0x58:
+		ret = 11;
+		break; // F12
+	default:
+		return false;
+	}
+	switch_tty(ttys + ret);
+	shell_switch(ret);
+	return true;
+}
+
+bool switch_color_key(uint8_t keycode)
+{
+	uint8_t ret;
+	switch (keycode) {
+	case 0x47:
+		ret = VGA_COLOR(VGA_COLOR_WHITE, VGA_COLOR_GREEN);
+		break;
+	case 0x48:
+		ret = VGA_COLOR(VGA_COLOR_LIGHT_GREEN, VGA_COLOR_RED);
+		break;
+	case 0x49:
+		ret = VGA_COLOR(VGA_COLOR_RED, VGA_COLOR_LIGHT_MAGENTA);
+		break;
+	case 0x4B:
+		ret = VGA_COLOR(VGA_COLOR_LIGHT_GREEN, VGA_COLOR_BROWN);
+		break;
+	case 0x4C:
+		ret = VGA_COLOR(VGA_COLOR_YELLOW, VGA_COLOR_GREEN);
+		break;
+	case 0x4D:
+		ret = VGA_COLOR(VGA_COLOR_BLACK, VGA_COLOR_MAGENTA);
+		break;
+	case 0x50:
+		ret = VGA_COLOR(VGA_COLOR_BLUE, VGA_COLOR_BLACK);
+		break;
+	default:
+		return false;
+	}
+	vga_set_screen_mode(ret);
+	return true;
+}
+
+bool printable_key(uint8_t keycode)
+{
+	if (keycode < 0x73 && keycode > 0x01 || keycode == 0x0E) {
+		if (keycode == 0x0E)
+			return true;
+		char ascii = scancode_to_ascii(keycode, (left_shift || right_shift), caps_lock);
+		shell_handle_keycode(ascii);
+		return true;
+	}
+	return false;
+}
+
 static uint32_t scancode_to_ascii(uint8_t keycode, bool shift, bool caps_lock)
 {
 	uint32_t base_char = keycode_table[keycode];
@@ -106,173 +236,12 @@ static uint32_t scancode_to_ascii(uint8_t keycode, bool shift, bool caps_lock)
 
 void handle_keyboard(void)
 {
-	if (inb(0x64) & 0x01) {           // read status
-		uint8_t scancode = inb(0x60); // read data
-
-		switch (scancode) {
-
-		case 0x01: {
-			shutdown();
-			break;
-		}
-
-		case 0x0E:
-			// backspace pressed
-			break;
-
-		case 0x1D:
-			// left control pressed
-			break;
-
-		case 0x2A:
-			// left shift pressed
-			left_shift = true;
-			break;
-
-		case 0x36:
-			// right shift pressed
-			right_shift = true;
-			break;
-
-		case 0xAA:
-			// left shift pressed
-			left_shift = false;
-			break;
-
-		case 0xB6:
-			// right shift pressed
-			right_shift = false;
-			break;
-
-		case 0x38:
-			// left alt pressed
-			break;
-
-		case 0x3B:
-			// F1 pressed
-			switch_tty(ttys);
-			shell_switch(0);
-			break;
-
-		case 0x3C:
-			// F2 pressed
-			switch_tty(ttys + 1);
-			shell_switch(1);
-			break;
-
-		case 0x3D:
-			// F3 pressed
-			switch_tty(ttys + 2);
-			shell_switch(2);
-			break;
-
-		case 0x3E:
-			// F4 pressed
-			switch_tty(ttys + 3);
-			shell_switch(3);
-			break;
-
-		case 0x3F:
-			// F5 pressed
-			switch_tty(ttys + 4);
-			shell_switch(4);
-			break;
-
-		case 0x40:
-			// F6 pressed
-			switch_tty(ttys + 5);
-			shell_switch(5);
-			break;
-
-		case 0x41:
-			// F7 pressed
-			switch_tty(ttys + 6);
-			shell_switch(6);
-			break;
-
-		case 0x42:
-			// F8 pressed
-			switch_tty(ttys + 7);
-			shell_switch(7);
-			break;
-
-		case 0x43:
-			// F9 pressed
-			switch_tty(ttys + 8);
-			shell_switch(8);
-			break;
-
-		case 0x44:
-			// F10 pressed
-			switch_tty(ttys + 9);
-			shell_switch(9);
-			break;
-
-		case 0x57:
-			// F11 pressed
-			switch_tty(ttys + 10);
-			shell_switch(10);
-			break;
-
-		case 0x58:
-			// F12 pressed
-			switch_tty(ttys + 11);
-			shell_switch(11);
-			break;
-
-		case 0x3A:
-			// CapsLock pressed
-			caps_lock = !caps_lock;
-			break;
-
-		case 0x45:
-			// NumberLock pressed
-			break;
-
-		case 0x46:
-			// ScrollLock pressed
-			// for (int i = 0; i < 12; i++)
-			// 	printk("%d : %c|\n", i, (ttys + i)->buffer[0].character);
-			break;
-
-		case 0x47:
-			vga_set_screen_mode(VGA_COLOR(VGA_COLOR_WHITE, VGA_COLOR_GREEN));
-			break;
-
-		case 0x48:
-			vga_set_screen_mode(VGA_COLOR(VGA_COLOR_LIGHT_GREEN, VGA_COLOR_RED));
-			break;
-
-		case 0x49:
-			vga_set_screen_mode(VGA_COLOR(VGA_COLOR_RED, VGA_COLOR_LIGHT_MAGENTA));
-			break;
-
-		case 0x4B:
-			vga_set_screen_mode(VGA_COLOR(VGA_COLOR_LIGHT_GREEN, VGA_COLOR_BROWN));
-			break;
-
-		case 0x4C:
-			vga_set_screen_mode(VGA_COLOR(VGA_COLOR_YELLOW, VGA_COLOR_GREEN));
-			break;
-
-		case 0x4D:
-			vga_set_screen_mode(VGA_COLOR(VGA_COLOR_BLACK, VGA_COLOR_MAGENTA));
-			break;
-
-		case 0x4F:
-			vga_set_screen_mode(VGA_COLOR(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK));
-			break;
-
-		case 0x50:
-			vga_set_screen_mode(VGA_COLOR(VGA_COLOR_BLUE, VGA_COLOR_BLACK));
-			break;
-
-		default:
-			if (scancode < 0x73 && scancode > 0x01) {
-				char ascii = scancode_to_ascii(scancode, (left_shift || right_shift), caps_lock);
-				shell_handle_keycode(ascii);
-			}
-			break;
+	if (inb(0x64) & 0x01) {          // read status
+		uint8_t keycode = inb(0x60); // read data
+		for (int i = 0; key_handlers[i]; i++) {
+			key_handler_t f = key_handlers[i];
+			if (f(keycode))
+				break;
 		}
 	}
 }

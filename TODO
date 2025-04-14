@@ -1,1 +1,8 @@
-? Add printk KERN_* support
+
+- [ ] Improve Project Architecture
+- [ ] Handle Backspace
+- [ ] Create Qwerty layout
+- [ ] Add TSS
+- [ ] Implement Idt
+<!-- ? Add printk KERN_* support -->
+
