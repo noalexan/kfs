@@ -3,7 +3,7 @@
 #include <types.h>
 
 #define GDT_MAX_ENTRIES 7
-#define GDT_ADDR        0x0000800
+#define GDT_ADDR        0x00000800
 // #define GDT_ENTRY(indx) ((segment_descriptor_t *)gdt_entries + (indx))
 #define GDT_FLAGS (SEGMENT_SIZE_BIT | GRANULARITY_BIT)
 
@@ -42,7 +42,7 @@ typedef struct gdt_ptr {
 	uint32_t base;
 } __attribute__((packed)) gdt_ptr_t;
 
-extern segment_descriptor_t *gdt_entries;
-extern gdt_ptr_t             gdt_r;
+extern segment_descriptor_t gdt_entries[GDT_MAX_ENTRIES];
+extern gdt_ptr_t            gdt_r;
 
 void gdt_init(void);

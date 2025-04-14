@@ -28,7 +28,8 @@ void kernel_main(void)
 {
 	init_builtin();
 	printk("Hello, World 42!\n");
-	printk("GDT base: 0x%x, limit: 0x%x, entries 0x%x\n", gdt_r.base, gdt_r.limit, gdt_entries);
+	printk("GDT base: 0x%x, limit: 0x%x, entries 0x%p\n", gdt_r.base, gdt_r.limit,
+	       (void *)gdt_entries);
 	shell_prompt();
 
 	while (true) {
