@@ -5,6 +5,16 @@
 struct s_cursor g_cursor;
 static uint8_t  vga_mode;
 
+void vga_setup_default_screen(uint8_t mode)
+{
+	if (mode == 0)
+		mode = DEFAULT_COLORS;
+	vga_clear();
+	vga_enable_cursor(14, 15);
+	vga_set_cursor_position(0, 0);
+	vga_set_screen_mode(mode);
+}
+
 void vga_enable_cursor(uint8_t cursor_start, uint8_t cursor_end)
 {
 	outb(0x3D4, 0x0A);

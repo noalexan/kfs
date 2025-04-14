@@ -16,6 +16,7 @@ void load_tty(TTY *tty);
 void save_tty(TTY *tty);
 void init_tty(TTY *tty);
 void switch_tty(TTY *tty);
+void tty_switch_color(uint8_t mode);
 
 extern TTY *current_tty;
 extern TTY  ttys[MAX_TTY];

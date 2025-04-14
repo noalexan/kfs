@@ -50,6 +50,7 @@ void print_help(void)
 	printk("  poweroff   Shut down the system\n");
 	printk("  halt       Halt the system\n");
 	printk("  reboot     Reboot the system\n");
+	printk("  clear      Clear display\n");
 	printk("  help       Display this help message\n\n");
 }
 
@@ -66,6 +67,8 @@ void shell_handle_keycode(uint32_t ascii)
 			halt();
 		else if (ft_strequ(cmd, "help"))
 			print_help();
+		else if (ft_strequ(cmd, "clear"))
+			vga_setup_default_screen(current_tty->mode);
 		else if (cmd_len)
 			printk("\nk1tOS: command not found: %s", current_shell + 3);
 		printk("%c", NEW_LINE);

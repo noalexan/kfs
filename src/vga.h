@@ -41,6 +41,8 @@ struct s_cursor {
 	uint8_t y;
 };
 
+#define DEFAULT_COLORS VGA_COLOR(VGA_COLOR_BLUE, VGA_COLOR_WHITE)
+
 extern struct s_cursor g_cursor;
 
 void vga_enable_cursor(uint8_t cursor_start, uint8_t cursor_end);
@@ -49,5 +51,6 @@ void vga_set_char(int x, int y, char c);
 void vga_scroll_down(void);
 void vga_set_screen_mode(uint8_t mode);
 void vga_clear(void);
+void vga_setup_default_screen(uint8_t mode);
 
 #endif

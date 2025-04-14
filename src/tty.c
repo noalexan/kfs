@@ -6,11 +6,17 @@ void init_tty(TTY *tty)
 {
 	tty->cursor.x = 0;
 	tty->cursor.y = 0;
-	tty->mode     = VGA_COLOR(VGA_COLOR_BLACK, VGA_COLOR_WHITE);
+	tty->mode     = DEFAULT_COLORS;
 	for (int i = 0; i < VGA_WIDTH * VGA_HEIGHT; i++) {
 		tty->buffer[i].character = 0;
 		tty->buffer[i].mode      = tty->mode;
 	}
+}
+
+void tty_switch_color(uint8_t mode)
+{
+	current_tty->mode = mode;
+	vga_set_screen_mode(current_tty->mode);
 }
 
 void init_ttys(void)
@@ -18,6 +24,7 @@ void init_ttys(void)
 	for (unsigned long i = 0; i < MAX_TTY; i++)
 		init_tty(ttys + i);
 	current_tty = ttys;
+	vga_setup_default_screen(current_tty->mode);
 }
 
 void load_tty(TTY *tty)
