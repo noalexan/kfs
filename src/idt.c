@@ -27,10 +27,9 @@ void au(void) { printk(KERN_DEBUG "au\n"); }
 void av(void) { printk(KERN_DEBUG "av\n"); }
 void aw(void) { printk(KERN_DEBUG "aw\n"); }
 
-#define set_idt_entry(index, selector, type_attr, offset)                      \
-	idt_tab[index] = (idt_entry){                                              \
-	    (uint16_t)((uintptr_t)offset & 0xFFFF), selector, 0, type_attr,        \
-	    (uint16_t)(((uintptr_t)offset >> 16) & 0xFFFF)};
+#define set_idt_entry(index, selector, type_attr, offset)                                          \
+	idt_tab[index] = (idt_entry){(uint16_t)((uintptr_t)offset & 0xFFFF), selector, 0, type_attr,   \
+	                             (uint16_t)(((uintptr_t)offset >> 16) & 0xFFFF)};
 
 void idt_init(void)
 {

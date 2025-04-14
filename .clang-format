@@ -1,6 +1,6 @@
 BasedOnStyle: LLVM
 
-ColumnLimit: 80
+ColumnLimit: 100
 IndentWidth: 4
 UseTab: ForIndentation
 TabWidth: 4

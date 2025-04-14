@@ -9,7 +9,7 @@ inline void shutdown(void)
 	outw(0x604, 0x2000);
 }
 
-inline void halt(void) { asm volatile("hlt\n\t"); }
+inline void halt(void) { __asm__ volatile("hlt\n\t"); }
 
 inline void reboot(void)
 {

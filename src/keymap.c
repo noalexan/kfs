@@ -9,11 +9,10 @@ static bool left_shift  = false;
 static bool right_shift = false;
 
 static char shift_keycode_table[64] = {
-    [0x02] = '!', [0x03] = '@', [0x04] = '#', [0x05] = '$', [0x06] = '%',
-    [0x07] = '^', [0x08] = '&', [0x09] = '*', [0x0A] = '(', [0x0B] = ')',
-    [0x0C] = '_', [0x0D] = '+', [0x1A] = '{', [0x1B] = '}', [0x27] = ':',
-    [0x28] = '"', [0x29] = '~', [0x2B] = '|', [0x33] = '<', [0x34] = '>',
-    [0x35] = '?'};
+    [0x02] = '!', [0x03] = '@', [0x04] = '#', [0x05] = '$', [0x06] = '%', [0x07] = '^',
+    [0x08] = '&', [0x09] = '*', [0x0A] = '(', [0x0B] = ')', [0x0C] = '_', [0x0D] = '+',
+    [0x1A] = '{', [0x1B] = '}', [0x27] = ':', [0x28] = '"', [0x29] = '~', [0x2B] = '|',
+    [0x33] = '<', [0x34] = '>', [0x35] = '?'};
 
 static char keycode_table[256] = {
     // base
@@ -241,18 +240,15 @@ void handle_keyboard(void)
 			break;
 
 		case 0x48:
-			vga_set_screen_mode(
-			    VGA_COLOR(VGA_COLOR_LIGHT_GREEN, VGA_COLOR_RED));
+			vga_set_screen_mode(VGA_COLOR(VGA_COLOR_LIGHT_GREEN, VGA_COLOR_RED));
 			break;
 
 		case 0x49:
-			vga_set_screen_mode(
-			    VGA_COLOR(VGA_COLOR_RED, VGA_COLOR_LIGHT_MAGENTA));
+			vga_set_screen_mode(VGA_COLOR(VGA_COLOR_RED, VGA_COLOR_LIGHT_MAGENTA));
 			break;
 
 		case 0x4B:
-			vga_set_screen_mode(
-			    VGA_COLOR(VGA_COLOR_LIGHT_GREEN, VGA_COLOR_BROWN));
+			vga_set_screen_mode(VGA_COLOR(VGA_COLOR_LIGHT_GREEN, VGA_COLOR_BROWN));
 			break;
 
 		case 0x4C:
@@ -264,8 +260,7 @@ void handle_keyboard(void)
 			break;
 
 		case 0x4F:
-			vga_set_screen_mode(
-			    VGA_COLOR(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK));
+			vga_set_screen_mode(VGA_COLOR(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK));
 			break;
 
 		case 0x50:
@@ -274,8 +269,7 @@ void handle_keyboard(void)
 
 		default:
 			if (scancode < 0x73 && scancode > 0x01) {
-				char ascii = scancode_to_ascii(
-				    scancode, (left_shift || right_shift), caps_lock);
+				char ascii = scancode_to_ascii(scancode, (left_shift || right_shift), caps_lock);
 				shell_handle_keycode(ascii);
 			}
 			break;
