@@ -2,10 +2,10 @@
 
 #include <types.h>
 
-#define GDT_MAX_ENTRIES 256
-#define GDT_ADDR        0x00000800
-#define GDT_ENTRY(indx) ((segment_descriptor_t *)gdt_entries + (indx))
-#define GDT_FLAGS       (SEGMENT_SIZE_BIT | GRANULARITY_BIT)
+#define GDT_MAX_ENTRIES 7
+#define GDT_ADDR        0x0000800
+// #define GDT_ENTRY(indx) ((segment_descriptor_t *)gdt_entries + (indx))
+#define GDT_FLAGS (SEGMENT_SIZE_BIT | GRANULARITY_BIT)
 
 enum Gdt_Access_Byte {
 	ACCESS_BIT      = 0b00000001, // Bit 0: Indique si le segment a été accédé par le CPU
@@ -38,11 +38,11 @@ typedef struct segment_descriptor {
 } __attribute__((packed)) segment_descriptor_t;
 
 typedef struct gdt_ptr {
-	uint16_t              limit;
-	segment_descriptor_t *base;
+	uint16_t limit;
+	uint32_t base;
 } __attribute__((packed)) gdt_ptr_t;
 
-extern segment_descriptor_t *const gdt_entries;
-extern gdt_ptr_t *const            gdt_ptr;
+extern segment_descriptor_t *gdt_entries;
+extern gdt_ptr_t             gdt_r;
 
 void gdt_init(void);

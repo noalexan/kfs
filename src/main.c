@@ -5,6 +5,9 @@
 #include "tty.h"
 #include "vga.h"
 
+// gdt_ptr_t            gdt_ptr;
+// segment_descriptor_t gdt_entries[GDT_MAX_ENTRIES];
+
 static void init_vga(void)
 {
 	vga_clear();
@@ -25,7 +28,9 @@ void kernel_main(void)
 {
 	init_builtin();
 	printk("Hello, World 42!\n");
+	printk("GDT base: 0x%x, limit: 0x%x, entries 0x%x\n", gdt_r.base, gdt_r.limit, gdt_entries);
 	shell_prompt();
+
 	while (true) {
 		handle_keyboard();
 	}
