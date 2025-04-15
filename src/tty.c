@@ -40,6 +40,7 @@ void tty_cli_hanlde_nl(void)
 {
 	char    *cmd     = &current_tty->cli[3];
 	uint32_t cmd_len = ft_strlen(cmd);
+
 	if (ft_strequ(cmd, "shutdown") || ft_strequ(cmd, "poweroff")) {
 		shutdown();
 	} else if (ft_strequ(cmd, "reboot"))
@@ -48,12 +49,12 @@ void tty_cli_hanlde_nl(void)
 		halt();
 	else if (ft_strequ(cmd, "help"))
 		print_help();
-	else if (ft_strequ(cmd, "clear"))
+	else if (ft_strequ(cmd, "clear")) {
 		vga_setup_default_screen(current_tty->mode);
-	else if (cmd_len)
+		return;
+	} else if (cmd_len)
 		printk("\nk1tOS: command not found: %s", cmd);
 	printk("%c", NEW_LINE);
-	tty_prompt();
 }
 
 void tty_cli_handle_ascii(char ascii)
@@ -98,6 +99,7 @@ void load_tty(TTY *tty)
 	if (ft_strlen(current_tty->cli) == 0) {
 		tty_prompt();
 	}
+	vga_set_screen_mode(current_tty->mode);
 }
 
 void save_tty(TTY *tty)

@@ -7,8 +7,6 @@ static uint8_t  vga_mode;
 
 void vga_setup_default_screen(uint8_t mode)
 {
-	if (mode == 0)
-		mode = DEFAULT_COLORS;
 	vga_clear();
 	vga_enable_cursor(14, 15);
 	vga_set_cursor_position(0, 0);

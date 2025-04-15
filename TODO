@@ -6,3 +6,4 @@
 - [ ] Implement Idt
 <!-- ? Add printk KERN_* support -->
 
+- [ ] Fix le clear qui reset le mode du tty

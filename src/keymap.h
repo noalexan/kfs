@@ -15,4 +15,4 @@ bool     special_key(uint8_t keycode);
 bool     switch_tty_key(uint8_t keycode);
 bool     switch_color_key(uint8_t keycode);
 bool     printable_key(uint8_t keycode);
-uint32_t scancode_to_ascii(uint8_t keycode, bool shift, bool caps_lock);
+uint32_t scancode_to_ascii(uint8_t keycode);

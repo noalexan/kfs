@@ -4,8 +4,6 @@
 TTY *current_tty;
 TTY  ttys[12];
 
-key_handler_t key_handlers[5];
-
 key_handler_t key_handlers[] = {special_key, switch_tty_key, switch_color_key, printable_key, NULL};
 
 static bool caps_lock   = false;
@@ -137,46 +135,15 @@ bool special_key(uint8_t keycode)
 bool switch_tty_key(uint8_t keycode)
 {
 	uint8_t ret;
-	switch (keycode) {
-	case 0x3B:
-		ret = 0;
-		break; // F1
-	case 0x3C:
-		ret = 1;
-		break; // F2
-	case 0x3D:
-		ret = 2;
-		break; // F3
-	case 0x3E:
-		ret = 3;
-		break; // F4
-	case 0x3F:
-		ret = 4;
-		break; // F5
-	case 0x40:
-		ret = 5;
-		break; // F6
-	case 0x41:
-		ret = 6;
-		break; // F7
-	case 0x42:
-		ret = 7;
-		break; // F8
-	case 0x43:
-		ret = 8;
-		break; // F9
-	case 0x44:
-		ret = 9;
-		break; // F10
-	case 0x57:
+
+	if (keycode >= 0x3B && keycode <= 0x44) // f1 -> f10
+		ret = (keycode - 0x3B);
+	else if (keycode == 0x57) // f11
 		ret = 10;
-		break; // F11
-	case 0x58:
+	else if (keycode == 0x58) // f12
 		ret = 11;
-		break; // F12
-	default:
+	else
 		return false;
-	}
 	switch_tty(ttys + ret);
 	return true;
 }
@@ -209,18 +176,19 @@ bool switch_color_key(uint8_t keycode)
 	default:
 		return false;
 	}
-	vga_set_screen_mode(ret);
+	tty_switch_color(ret);
 	return true;
 }
 
 bool printable_key(uint8_t keycode)
 {
-	if (keycode == NEW_LINE)
+	if (keycode == NEW_LINE) {
 		tty_cli_hanlde_nl();
-	else if (keycode == BACKSPACE) {
+		tty_prompt();
+	} else if (keycode == BACKSPACE) {
 		(void)keycode;
 	} else {
-		char ascii = scancode_to_ascii(keycode, (left_shift || right_shift), caps_lock);
+		char ascii = scancode_to_ascii(keycode);
 		if (!ascii)
 			return false;
 		tty_cli_handle_ascii(ascii);
@@ -228,8 +196,9 @@ bool printable_key(uint8_t keycode)
 	return true;
 }
 
-uint32_t scancode_to_ascii(uint8_t keycode, bool shift, bool caps_lock)
+uint32_t scancode_to_ascii(uint8_t keycode)
 {
+	bool     shift     = (left_shift || right_shift);
 	uint32_t base_char = keycode_table[keycode];
 	if (base_char >= 'a' && base_char <= 'z') {
 		return (caps_lock != shift) ? base_char - 32 : base_char;

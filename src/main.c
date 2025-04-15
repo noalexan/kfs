@@ -13,7 +13,7 @@ static void debug_printing()
 
 static void init_builtin(void)
 {
-	debug_printing();
+	// debug_printing();
 	init_ttys();
 }
 
