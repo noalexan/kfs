@@ -12,6 +12,9 @@ static bool caps_lock   = false;
 static bool left_shift  = false;
 static bool right_shift = false;
 
+#define BACKSPACE 0x0E
+#define NEW_LINE  0x1C
+
 static char shift_keycode_table[64] = {
     [0x02] = '!', [0x03] = '@', [0x04] = '#', [0x05] = '$', [0x06] = '%', [0x07] = '^',
     [0x08] = '&', [0x09] = '*', [0x0A] = '(', [0x0B] = ')', [0x0C] = '_', [0x0D] = '+',
@@ -175,7 +178,6 @@ bool switch_tty_key(uint8_t keycode)
 		return false;
 	}
 	switch_tty(ttys + ret);
-	shell_switch(ret);
 	return true;
 }
 
@@ -213,17 +215,20 @@ bool switch_color_key(uint8_t keycode)
 
 bool printable_key(uint8_t keycode)
 {
-	if (keycode < 0x73 && keycode > 0x01 || keycode == 0x0E) {
-		if (keycode == 0x0E)
-			return true;
+	if (keycode == NEW_LINE)
+		tty_cli_hanlde_nl();
+	else if (keycode == BACKSPACE) {
+		(void)keycode;
+	} else {
 		char ascii = scancode_to_ascii(keycode, (left_shift || right_shift), caps_lock);
-		shell_handle_keycode(ascii);
-		return true;
+		if (!ascii)
+			return false;
+		tty_cli_handle_ascii(ascii);
 	}
-	return false;
+	return true;
 }
 
-static uint32_t scancode_to_ascii(uint8_t keycode, bool shift, bool caps_lock)
+uint32_t scancode_to_ascii(uint8_t keycode, bool shift, bool caps_lock)
 {
 	uint32_t base_char = keycode_table[keycode];
 	if (base_char >= 'a' && base_char <= 'z') {
