@@ -208,7 +208,7 @@ uint32_t scancode_to_ascii(uint8_t keycode)
 	return base_char;
 }
 
-void handle_keyboard(void)
+void handle_keyboard(REGISTERS *reg)
 {
 	if (inb(0x64) & 0x01) {          // read status
 		uint8_t keycode = inb(0x60); // read data

@@ -1,6 +1,8 @@
 #pragma once
 
+#include "idt.h"
 #include "io.h"
+#include "isr.h"
 #include "printk.h"
 #include "tty.h"
 #include "types.h"
@@ -10,7 +12,7 @@ typedef bool (*key_handler_t)(uint8_t);
 
 extern TTY *current_tty;
 
-void     handle_keyboard(void);
+void     handle_keyboard(REGISTERS *reg);
 bool     special_key(uint8_t keycode);
 bool     switch_tty_key(uint8_t keycode);
 bool     switch_color_key(uint8_t keycode);
