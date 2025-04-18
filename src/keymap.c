@@ -150,73 +150,73 @@ void handle_keyboard(void)
 
 		case 0x3B:
 			// F1 pressed
-			switch_tty(ttys);
+			tty_switch(ttys);
 			shell_switch(0);
 			break;
 
 		case 0x3C:
 			// F2 pressed
-			switch_tty(ttys + 1);
+			tty_switch(ttys + 1);
 			shell_switch(1);
 			break;
 
 		case 0x3D:
 			// F3 pressed
-			switch_tty(ttys + 2);
+			tty_switch(ttys + 2);
 			shell_switch(2);
 			break;
 
 		case 0x3E:
 			// F4 pressed
-			switch_tty(ttys + 3);
+			tty_switch(ttys + 3);
 			shell_switch(3);
 			break;
 
 		case 0x3F:
 			// F5 pressed
-			switch_tty(ttys + 4);
+			tty_switch(ttys + 4);
 			shell_switch(4);
 			break;
 
 		case 0x40:
 			// F6 pressed
-			switch_tty(ttys + 5);
+			tty_switch(ttys + 5);
 			shell_switch(5);
 			break;
 
 		case 0x41:
 			// F7 pressed
-			switch_tty(ttys + 6);
+			tty_switch(ttys + 6);
 			shell_switch(6);
 			break;
 
 		case 0x42:
 			// F8 pressed
-			switch_tty(ttys + 7);
+			tty_switch(ttys + 7);
 			shell_switch(7);
 			break;
 
 		case 0x43:
 			// F9 pressed
-			switch_tty(ttys + 8);
+			tty_switch(ttys + 8);
 			shell_switch(8);
 			break;
 
 		case 0x44:
 			// F10 pressed
-			switch_tty(ttys + 9);
+			tty_switch(ttys + 9);
 			shell_switch(9);
 			break;
 
 		case 0x57:
 			// F11 pressed
-			switch_tty(ttys + 10);
+			tty_switch(ttys + 10);
 			shell_switch(10);
 			break;
 
 		case 0x58:
 			// F12 pressed
-			switch_tty(ttys + 11);
+			tty_switch(ttys + 11);
 			shell_switch(11);
 			break;
 

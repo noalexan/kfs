@@ -11,11 +11,11 @@ typedef struct TTY {
 
 } TTY;
 
-void init_ttys(void);
-void load_tty(TTY *tty);
-void save_tty(TTY *tty);
-void init_tty(TTY *tty);
-void switch_tty(TTY *tty);
+void ttys_init(void);
+void tty_load(TTY *tty);
+void tty_save(TTY *tty);
+void tty_init(TTY *tty);
+void tty_switch(TTY *tty);
 
 extern TTY *current_tty;
 extern TTY  ttys[MAX_TTY];

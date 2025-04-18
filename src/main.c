@@ -1,34 +1,35 @@
 #include "gdt.h"
+#include "idt.h"
 #include "keymap.h"
 #include "printk.h"
 #include "shell.h"
 #include "tty.h"
 #include "vga.h"
 
-static void init_vga(void)
+static void vga_init(void)
 {
 	vga_set_mode(VGA_COLOR(VGA_COLOR_BLUE, VGA_COLOR_WHITE));
 	vga_clear();
 	vga_enable_cursor(14, 15);
-	vga_set_cursor_position(0, 0);
-}
-
-static void init_builtin(void)
-{
-	init_vga();
-	init_ttys();
-	shell_init();
+	vga_set_cursor_position(0, 1);
 }
 
 void kernel_main(void)
 {
-	init_builtin();
-	printk("Hello, World 42!\n");
-	printk("GDT base: 0x%x, limit: 0x%x, entries 0x%p, segdesc size :%x\n", gdtr.base, gdtr.limit,
-	       (void *)gdt_entries, sizeof(segment_descriptor_t));
-	shell_prompt();
+	vga_init();
 
-	while (true) {
-		handle_keyboard();
-	}
+	printk("\tInitializing gdt...\n");
+	gdt_init();
+
+	printk("\tInitializing idt...\n");
+	idt_init();
+
+	printk("\tInitializing ttys...\n");
+	ttys_init();
+
+	printk("\tInitializing shell...\n\n");
+	shell_init();
+
+	while (true) // hang
+		;
 }

@@ -1,10 +1,12 @@
 #include "idt.h"
+#include "acpi.h"
+#include "io.h"
+#include "keymap.h"
 #include "printk.h"
 #include "vga.h"
 #include <libft.h>
 
-idt_entry idt_tab[IDT_MAX_ENTRY];
-idtr_t    idtr;
+idtr_t idtr;
 
 const char *interrupt_names[] = {"Divide Error",
                                  "Debug Exception",
@@ -29,133 +31,176 @@ const char *interrupt_names[] = {"Divide Error",
                                  "Virtualization Exception",
                                  "Control Protection Exception"};
 
-void exception_handler(int interrupt_number)
+extern void isr_0(void);
+extern void isr_1(void);
+extern void isr_2(void);
+extern void isr_3(void);
+extern void isr_4(void);
+extern void isr_5(void);
+extern void isr_6(void);
+extern void isr_7(void);
+extern void isr_8(void);
+extern void isr_9(void);
+extern void isr_10(void);
+extern void isr_11(void);
+extern void isr_12(void);
+extern void isr_13(void);
+extern void isr_14(void);
+extern void isr_15(void);
+extern void isr_16(void);
+extern void isr_17(void);
+extern void isr_18(void);
+extern void isr_19(void);
+extern void isr_20(void);
+extern void isr_21(void);
+extern void isr_22(void);
+extern void isr_23(void);
+extern void isr_24(void);
+extern void isr_25(void);
+extern void isr_26(void);
+extern void isr_27(void);
+extern void isr_28(void);
+extern void isr_29(void);
+extern void isr_30(void);
+extern void isr_31(void);
+
+extern void irq_0(void);
+extern void irq_1(void);
+extern void irq_2(void);
+extern void irq_3(void);
+extern void irq_4(void);
+extern void irq_5(void);
+extern void irq_6(void);
+extern void irq_7(void);
+extern void irq_8(void);
+extern void irq_9(void);
+extern void irq_10(void);
+extern void irq_11(void);
+extern void irq_12(void);
+extern void irq_13(void);
+extern void irq_14(void);
+extern void irq_15(void);
+
+void exception_handler(REGISTERS *regs)
 {
 	vga_set_mode(VGA_COLOR(VGA_COLOR_DARK_GREY, VGA_COLOR_YELLOW));
-
-	const char *interrupt_name = interrupt_names[interrupt_number];
-
-	if (interrupt_name) {
-		int len = ft_strlen(interrupt_name);
-
-		vga_set_cursor_position(VGA_WIDTH - len, 0);
-		printk("%s", interrupt_name);
-	}
-
-	else {
-		vga_set_cursor_position(VGA_WIDTH - 14, 0);
-		printk("interrupt [%x]", interrupt_number);
-	}
-
+	printk("%s", interrupt_names[regs->interrupt]);
 	vga_disable_cursor();
-
-	__asm__ volatile("cli; hlt");
+	halt();
 }
 
-inline static void ax(void) { printk("<ax>\n"); }
+void interrupt_handler(REGISTERS *regs)
+{
+	if (regs->interrupt >= 40)
+		outb(0xA0, 0x20);
+	outb(0x20, 0x20);
 
-#define set_idt_entry(index, selector, type_attr, offset)                                          \
- idt_tab[index] = (idt_entry){(uint16_t)((uintptr_t)offset & 0xFFFF), selector, 0, type_attr,      \
-	                          (uint16_t)(((uintptr_t)offset >> 16) & 0xFFFF)};
+	switch (regs->interrupt) {
+	case 32:
+		// printk("timer\n");
+		break;
 
-void isr_stub_0(void);
-void isr_stub_1(void);
-void isr_stub_2(void);
-void isr_stub_3(void);
-void isr_stub_4(void);
-void isr_stub_5(void);
-void isr_stub_6(void);
-void isr_stub_7(void);
-void isr_stub_8(void);
-void isr_stub_9(void);
-void isr_stub_10(void);
-void isr_stub_11(void);
-void isr_stub_12(void);
-void isr_stub_13(void);
-void isr_stub_14(void);
-void isr_stub_15(void);
-void isr_stub_16(void);
-void isr_stub_17(void);
-void isr_stub_18(void);
-void isr_stub_19(void);
-void isr_stub_20(void);
-void isr_stub_21(void);
-void isr_stub_22(void);
-void isr_stub_23(void);
-void isr_stub_24(void);
-void isr_stub_25(void);
-void isr_stub_26(void);
-void isr_stub_27(void);
-void isr_stub_28(void);
-void isr_stub_29(void);
-void isr_stub_30(void);
-void isr_stub_31(void);
+	case 33:
+		handle_keyboard();
+		break;
+
+	default:
+		printk("interrupt %d\n", regs->interrupt);
+		break;
+	}
+}
+
+static void init_pic(void)
+{
+	/* Initialization of ICW1 */
+	outb(0x20, 0x11);
+	outb(0xA0, 0x11);
+
+	/* Initialization of ICW2 */
+	outb(0x21, 0x20); /* start vector = 32 */
+	outb(0xA1, 0x28); /* start vector = 96 */
+
+	/* Initialization of ICW3 */
+	outb(0x21, 0x04);
+	outb(0xA1, 0x02);
+
+	/* Initialization of ICW4 */
+	outb(0x21, 0x01);
+	outb(0xA1, 0x01);
+
+	/* mask interrupts */
+	outb(0x21, 0x0);
+	outb(0xA1, 0x0);
+}
+
+static inline void idt_set_entry(uint8_t indx, uint16_t selector, uint8_t type, uint32_t offset)
+{
+	idt_entry *ptr = IDT_ENTRY(indx);
+
+	ptr->offset_1        = offset & 0xffff;
+	ptr->offset_2        = (offset & 0xffff0000) >> 16;
+	ptr->selector        = selector;
+	ptr->type_attributes = type;
+}
 
 void idt_init(void)
 {
-	ft_bzero(idt_tab, sizeof(idt_tab));
+	init_pic();
 
-	idtr.base  = (uintptr_t)idt_tab;
-	idtr.limit = (uint16_t)sizeof(idt_tab) - 1;
+	ft_bzero(IDT_BASE, sizeof(idt_entry) * IDT_SIZE);
 
-	set_idt_entry(0x00, 0x0008, PresentBit | IntGate_32,
-	              isr_stub_0); // Divide Error
-	set_idt_entry(0x01, 0x0008, PresentBit | IntGate_32,
-	              isr_stub_1); // Debug Exception
-	set_idt_entry(0x02, 0x0008, PresentBit | IntGate_32,
-	              isr_stub_2); // NMI Interrupt
-	set_idt_entry(0x03, 0x0008, PresentBit | IntGate_32,
-	              isr_stub_3); // Breakpoint
-	set_idt_entry(0x04, 0x0008, PresentBit | IntGate_32,
-	              isr_stub_4); // Overflow
-	set_idt_entry(0x05, 0x0008, PresentBit | IntGate_32,
-	              isr_stub_5); // BOUND Range Exceeded
-	set_idt_entry(0x06, 0x0008, PresentBit | IntGate_32,
-	              isr_stub_6); // Invalid Opcode (Undefined Opcode)
-	set_idt_entry(0x07, 0x0008, PresentBit | IntGate_32,
-	              isr_stub_7); // Device Not Available (Math Coprocessor)
-	set_idt_entry(0x08, 0x0008, PresentBit | IntGate_32,
-	              isr_stub_8); // Double Fault
-	set_idt_entry(0x09, 0x0008, PresentBit | IntGate_32,
-	              isr_stub_9); // Coprocessor Segment Overrun (reserved)
-	set_idt_entry(0x0A, 0x0008, PresentBit | IntGate_32,
-	              isr_stub_10); // Invalid TSS
-	set_idt_entry(0x0B, 0x0008, PresentBit | IntGate_32,
-	              isr_stub_11); // Segment Not Present
-	set_idt_entry(0x0C, 0x0008, PresentBit | IntGate_32,
-	              isr_stub_12); // Stack-Segment Fault
-	set_idt_entry(0x0D, 0x0008, PresentBit | IntGate_32,
-	              isr_stub_13); // General Protection
-	set_idt_entry(0x0E, 0x0008, PresentBit | IntGate_32,
-	              isr_stub_14); // Page Fault
-	set_idt_entry(0x0F, 0x0008, PresentBit | IntGate_32,
-	              isr_stub_15); // reserved. Do not use.
-	set_idt_entry(0x10, 0x0008, PresentBit | IntGate_32,
-	              isr_stub_16); // x87 FPU Floating-Point Error (Math Fault)
-	set_idt_entry(0x11, 0x0008, PresentBit | IntGate_32,
-	              isr_stub_17); // Alignment Check
-	set_idt_entry(0x12, 0x0008, PresentBit | IntGate_32,
-	              isr_stub_18); // Machine Check
-	set_idt_entry(0x13, 0x0008, PresentBit | IntGate_32,
-	              isr_stub_19); // SIMD Floating-Point Exception
-	set_idt_entry(0x14, 0x0008, PresentBit | IntGate_32,
-	              isr_stub_20); // Virtualization Exception
-	set_idt_entry(0x15, 0x0008, PresentBit | IntGate_32,
-	              isr_stub_21); // Control Protection Exception
-	set_idt_entry(0x16, 0x0008, PresentBit | IntGate_32, isr_stub_22); // |
-	set_idt_entry(0x17, 0x0008, PresentBit | IntGate_32, isr_stub_23); // |
-	set_idt_entry(0x18, 0x0008, PresentBit | IntGate_32, isr_stub_24); // |
-	set_idt_entry(0x19, 0x0008, PresentBit | IntGate_32, isr_stub_25); // |
-	set_idt_entry(0x1A, 0x0008, PresentBit | IntGate_32,
-	              isr_stub_26); // | reserved
-	set_idt_entry(0x1B, 0x0008, PresentBit | IntGate_32,
-	              isr_stub_27);                                        // | exceptions
-	set_idt_entry(0x1C, 0x0008, PresentBit | IntGate_32, isr_stub_28); // |
-	set_idt_entry(0x1D, 0x0008, PresentBit | IntGate_32, isr_stub_29); // |
-	set_idt_entry(0x1E, 0x0008, PresentBit | IntGate_32, isr_stub_30); // |
-	set_idt_entry(0x1F, 0x0008, PresentBit | IntGate_32, isr_stub_31); // |
+	idt_set_entry(0x00, 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)isr_0);
+	idt_set_entry(0x01, 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)isr_1);
+	idt_set_entry(0x02, 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)isr_2);
+	idt_set_entry(0x03, 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)isr_3);
+	idt_set_entry(0x04, 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)isr_4);
+	idt_set_entry(0x05, 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)isr_5);
+	idt_set_entry(0x06, 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)isr_6);
+	idt_set_entry(0x07, 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)isr_7);
+	idt_set_entry(0x08, 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)isr_8);
+	idt_set_entry(0x09, 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)isr_9);
+	idt_set_entry(0x0a, 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)isr_10);
+	idt_set_entry(0x0b, 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)isr_11);
+	idt_set_entry(0x0c, 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)isr_12);
+	idt_set_entry(0x0d, 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)isr_13);
+	idt_set_entry(0x0e, 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)isr_14);
+	idt_set_entry(0x0f, 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)isr_15);
+	idt_set_entry(0x10, 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)isr_16);
+	idt_set_entry(0x11, 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)isr_17);
+	idt_set_entry(0x12, 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)isr_18);
+	idt_set_entry(0x13, 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)isr_19);
+	idt_set_entry(0x14, 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)isr_20);
+	idt_set_entry(0x15, 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)isr_21);
+	idt_set_entry(0x16, 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)isr_22);
+	idt_set_entry(0x17, 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)isr_23);
+	idt_set_entry(0x18, 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)isr_24);
+	idt_set_entry(0x19, 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)isr_25);
+	idt_set_entry(0x1a, 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)isr_26);
+	idt_set_entry(0x1b, 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)isr_27);
+	idt_set_entry(0x1c, 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)isr_28);
+	idt_set_entry(0x1d, 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)isr_29);
+	idt_set_entry(0x1e, 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)isr_30);
+	idt_set_entry(0x1f, 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)isr_31);
 
-	set_idt_entry(0x21, 0x0008, PresentBit | IntGate_32, ax);
+	idt_set_entry(0x20, 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_0);
+	idt_set_entry(0x21, 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_1);
+	idt_set_entry(0x22, 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_2);
+	idt_set_entry(0x23, 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_3);
+	idt_set_entry(0x24, 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_4);
+	idt_set_entry(0x25, 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_5);
+	idt_set_entry(0x26, 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_6);
+	idt_set_entry(0x27, 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_7);
+	idt_set_entry(0x28, 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_8);
+	idt_set_entry(0x29, 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_9);
+	idt_set_entry(0x2a, 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_10);
+	idt_set_entry(0x2b, 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_11);
+	idt_set_entry(0x2c, 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_12);
+	idt_set_entry(0x2d, 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_13);
+	idt_set_entry(0x2e, 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_14);
+	idt_set_entry(0x2f, 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_15);
+
+	idtr.limit = sizeof(idt_entry) * (IDT_SIZE - 1);
+	idtr.base  = IDT_BASE;
 
 	__asm__ volatile("lidt %0" : : "m"(idtr));
 	__asm__ volatile("sti");
