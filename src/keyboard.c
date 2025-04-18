@@ -10,7 +10,7 @@
 // } KeyCategory;
 
 static bool caps_lock   = false;
-static bool left_shift  = false;
+static bool left_shift  = true;
 static bool right_shift = false;
 
 #define MAX_CLI_LEN 253
@@ -25,7 +25,7 @@ static char keyboard_get_shifted_value(keyboard_key_t key)
 	bool shift = left_shift || right_shift;
 	char ascii = key.value;
 	if (key.value >= 'a' && key.value <= 'z') {
-		if (shift ^ caps_lock)
+		if (shift != caps_lock)
 			ascii = key.shifted_value;
 	} else if (shift)
 		ascii = key.shifted_value;
@@ -45,16 +45,13 @@ static void keyboard_printable_handler(keyboard_key_t key)
 static void keyboard_init_printable_group()
 {
 	for (int i = 0; i < 256; i++) {
-		if (printable_table[i]) {
-			scancode_routine_t new_entry = {
-			    .category = KEY_ALPHANUMERIC,
-			    .handler  = keyboard_printable_handler,
-			    .key      = {
-			             .keycode       = i,
-			             .value         = printable_table[i],
-			             .shifted_value = i < 64 ? printable_shifted_table[i] : 0,
-                }};
-			current_layout[i] = new_entry;
+		if (printable_table[i].normal) {
+			scancode_routine_t new_entry = {.category = KEY_ALPHANUMERIC,
+			                                .handler  = keyboard_printable_handler,
+			                                .key      = {.keycode       = i,
+			                                             .value         = printable_table[i].normal,
+			                                             .shifted_value = printable_table[i].shifted}};
+			current_layout[i]            = new_entry;
 		}
 	}
 }
@@ -68,7 +65,7 @@ static void keyboard_init_printable_group()
 static group_init_funs_t init_fun[] = {keyboard_init_printable_group, NULL};
 
 // TODO : register dimamically when memory is implemented
-void keyboard_register_routine(KeyCategory    category, void (*handler)(keyboard_key_t *value),
+void keyboard_register_routine(KeyCategory    category, void (*handler)(keyboard_key_t key),
                                keyboard_key_t key)
 {
 	if (key.keycode > 256 || !handler)
