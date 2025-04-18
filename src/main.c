@@ -1,4 +1,5 @@
 #include "gdt.h"
+#include "keyboard.h"
 #include "keymap.h"
 #include "printk.h"
 #include "tty.h"
@@ -14,6 +15,7 @@ static void debug_printing()
 static void init_builtin(void)
 {
 	// debug_printing();
+	keyboard_init_default_layout();
 	init_ttys();
 }
 
@@ -21,6 +23,6 @@ void kernel_main(void)
 {
 	init_builtin();
 	while (true) {
-		handle_keyboard();
+		keyboard_handle();
 	}
 }

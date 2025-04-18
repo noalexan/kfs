@@ -1,9 +1,8 @@
+<!-- ? Add printk KERN_* support -->
 
-- [ ] Improve Project Architecture
+- [x] Improve Project Architecture
+- [x] Implement Idt
+- [x] Fix le clear qui reset le mode du tty
 - [ ] Handle Backspace
 - [ ] Create Qwerty layout
 - [ ] Add TSS
-- [ ] Implement Idt
-<!-- ? Add printk KERN_* support -->
-
-- [ ] Fix le clear qui reset le mode du tty
