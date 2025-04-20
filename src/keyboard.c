@@ -3,17 +3,21 @@
 // typedef enum {
 // UNDEFINED = 0,
 // KEY_ALPHANUMERIC,
-// KEY_NAVIGATION,
 // KEY_CONTROL,
+// KEY_NAVIGATION,
 // KEY_FUNCTION,
 // KEY_SPECIAL
 // } KeyCategory;
 
-static bool caps_lock   = false;
-static bool left_shift  = true;
-static bool right_shift = false;
-
 #define MAX_CLI_LEN 253
+
+static bool caps_lock   = false;
+static bool left_shift  = false;
+static bool right_shift = false;
+static bool left_ctrl   = false;
+static bool left_alt    = false;
+static bool num_lock    = false;
+static bool scroll_lock = false;
 
 scancode_routine_t current_layout[256] = {0};
 
@@ -34,6 +38,8 @@ static char keyboard_get_shifted_value(keyboard_key_t key)
 
 static void keyboard_printable_handler(keyboard_key_t key)
 {
+	if (key.undergroup == NUM_PAD && !num_lock && key.shifted_value == 0)
+		return;
 	char     ascii   = keyboard_get_shifted_value(key);
 	char    *cmd     = &current_tty->cli[3];
 	uint32_t cmd_len = ft_strlen(cmd);
@@ -50,7 +56,9 @@ static void keyboard_init_printable_group()
 			                                .handler  = keyboard_printable_handler,
 			                                .key      = {.keycode       = i,
 			                                             .value         = printable_table[i].normal,
-			                                             .shifted_value = printable_table[i].shifted}};
+			                                             .shifted_value = printable_table[i].shifted,
+			                                             .state_ptr     = NULL,
+			                                             .undergroup = printable_table[i].undergroup}};
 			current_layout[i]            = new_entry;
 		}
 	}
@@ -60,13 +68,91 @@ static void keyboard_init_printable_group()
 /////////////////////////////////////////////////////////////////////////////////////////////
 
 /////////////////////////////////////////////////////////////////////////////////////////////
+// Control Group
+
+static bool *keyboard_get_control_global(ControlKeys keyname)
+{
+	switch (keyname) {
+	case LEFT_CTRL:
+		return &left_ctrl;
+	case LEFT_SHIFT:
+		return &left_shift;
+	case RIGHT_SHIFT:
+		return &right_shift;
+	case LEFT_ALT:
+		return &left_alt;
+	case CAPS_LOCK:
+		return &caps_lock;
+	case NUM_LOCK:
+		return &num_lock;
+	case SCROLL_LOCK:
+		return &scroll_lock;
+	default:
+		printk("ControlKeys %d doesn't exist on global control key\n", keyname);
+		return NULL;
+	}
+}
+static void keyboard_toggle_handler(keyboard_key_t key)
+{
+	if (key.state_ptr)
+		*(key.state_ptr) = !*(key.state_ptr);
+}
+
+static void keyboard_press_handler(keyboard_key_t key)
+{
+	if (key.state_ptr && *(key.state_ptr) == false)
+		*(key.state_ptr) = true;
+}
+
+static void keyboard_release_handler(keyboard_key_t key)
+{
+	if (key.state_ptr && *(key.state_ptr) == true)
+		*(key.state_ptr) = false;
+}
+
+key_handler_t keyboard_get_control_handler(uint8_t state)
+{
+	switch (state) {
+	case KEY_PRESS:
+		return keyboard_press_handler;
+	case KEY_RELEASE:
+		return keyboard_release_handler;
+	case KEY_LOCK:
+		return keyboard_toggle_handler;
+	default:
+		return NULL;
+	}
+}
+
+static void keyboard_init_control_group()
+{
+	for (int i = 0; i < 256; i++) {
+		if (control_table[i].keyname) {
+			uint8_t            undergroup = control_table[i].undergroup;
+			scancode_routine_t new_entry  = {
+			     .category = KEY_CONTROL,
+			     .handler  = keyboard_get_control_handler(undergroup),
+			     .key      = {.undergroup    = undergroup,
+			                  .keycode       = i,
+			                  .value         = 0,
+			                  .shifted_value = 0,
+			                  .state_ptr     = keyboard_get_control_global(control_table[i].keyname)}};
+			current_layout[i] = new_entry;
+		}
+	}
+}
+
+// Control Group
+/////////////////////////////////////////////////////////////////////////////////////////////
+
+/////////////////////////////////////////////////////////////////////////////////////////////
 // External API
 
-static group_init_funs_t init_fun[] = {keyboard_init_printable_group, NULL};
+static group_init_funs_t init_fun[] = {keyboard_init_printable_group, keyboard_init_control_group,
+                                       NULL};
 
 // TODO : register dimamically when memory is implemented
-void keyboard_register_routine(KeyCategory    category, void (*handler)(keyboard_key_t key),
-                               keyboard_key_t key)
+void keyboard_bind_key(KeyCategory category, key_handler_t handler, keyboard_key_t key)
 {
 	if (key.keycode > 256 || !handler)
 		kpanic("ERROR: bad parameters to keyboard_register_routine\n");
@@ -75,7 +161,7 @@ void keyboard_register_routine(KeyCategory    category, void (*handler)(keyboard
 }
 
 // TODO : use free when memory
-void keyboard_unregister_routine(uint8_t keycode) { current_layout[keycode] = UNDEFINED_KEY; }
+void keyboard_unbind_key(uint8_t keycode) { current_layout[keycode] = UNDEFINED_KEY; }
 
 void keyboard_init_default_layout(void)
 {

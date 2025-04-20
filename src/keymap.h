@@ -6,7 +6,7 @@
 #include "types.h"
 #include "vga.h"
 
-typedef bool (*key_handler_t)(uint8_t);
+// typedef bool (*key_handler_t)(uint8_t);
 
 extern TTY *current_tty;
 
