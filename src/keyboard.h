@@ -51,13 +51,13 @@ typedef struct keyboard_key {
 	bool         *state_ptr;
 } keyboard_key_t;
 
-typedef struct scancode_routine {
-	keyboard_key_t key;
-	void (*handler)(keyboard_key_t key);
-} scancode_routine_t;
-
 typedef void (*group_init_funs_t)(void);
 typedef void (*key_handler_t)(keyboard_key_t);
+
+typedef struct scancode_routine {
+	keyboard_key_t key;
+	key_handler_t  handler;
+} scancode_routine_t;
 
 static bool caps_lock   = false;
 static bool left_shift  = false;
