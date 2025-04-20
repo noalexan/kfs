@@ -19,7 +19,8 @@ void init_tty(TTY *tty);
 void switch_tty(TTY *tty);
 void tty_switch_color(uint8_t mode);
 void tty_cli_handle_ascii(char ascii);
-void tty_cli_hanlde_nl(void);
+void tty_cli_handle_nl(void);
+void tty_prompt(void);
 
 extern TTY *current_tty;
 extern TTY  ttys[MAX_TTY];

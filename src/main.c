@@ -1,6 +1,5 @@
 #include "gdt.h"
 #include "keyboard.h"
-#include "keymap.h"
 #include "printk.h"
 #include "tty.h"
 #include "vga.h"

@@ -36,7 +36,7 @@ void print_help(void)
 	printk("  help       Display this help message\n\n");
 }
 
-void tty_cli_hanlde_nl(void)
+void tty_cli_handle_nl(void)
 {
 	char    *cmd     = &current_tty->cli[3];
 	uint32_t cmd_len = ft_strlen(cmd);

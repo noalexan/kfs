@@ -2,6 +2,8 @@
 
 #define MAX_CLI_LEN 253
 
+TTY               *current_tty;
+TTY                ttys[12];
 scancode_routine_t current_layout[256] = {0};
 
 /////////////////////////////////////////////////////////////////////////////////////////////
@@ -15,7 +17,7 @@ static char keyboard_get_shifted_value(keyboard_key_t key)
 		return (shift ^ caps_lock) ? key.alt_value : key.value;
 	} else if (key.category == KEY_ALPHANUMERIC) {
 		return shift ? key.alt_value : key.value;
-	} else if (key.category == KEY_NAVIGATION && num_lock) {
+	} else if (key.category == KEY_NAVIGATION && key.undergroup == NUM_PAD && num_lock) {
 		return key.alt_value;
 	}
 	return key.value;
@@ -55,7 +57,7 @@ static void keyboard_release_handler(keyboard_key_t key)
 		*(key.state_ptr) = false;
 }
 
-key_handler_t keyboard_get_control_handler(uint8_t state)
+static key_handler_t keyboard_get_control_handler(uint8_t state)
 {
 	switch (state) {
 	case PRESS:
@@ -71,17 +73,68 @@ key_handler_t keyboard_get_control_handler(uint8_t state)
 
 // Control Group
 /////////////////////////////////////////////////////////////////////////////////////////////
+
+/////////////////////////////////////////////////////////////////////////////////////////////
 // Navigation Group
 
 static void keyboard_navigation_handler(keyboard_key_t key)
 {
-	if (!num_lock)
+	if (!*(key.state_ptr))
 		tty_switch_color(key.value);
 	else
 		keyboard_printable_handler(key);
 }
 
 // Navigation Group
+/////////////////////////////////////////////////////////////////////////////////////////////
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+// Function Group
+
+static void keyboard_function_handler(keyboard_key_t key)
+{
+	TTY *tty = ttys + key.value;
+	save_tty(current_tty);
+	current_tty = tty;
+	load_tty(tty);
+}
+
+// Function Group
+/////////////////////////////////////////////////////////////////////////////////////////////
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+// Special Group
+
+static void keyboard_enter_handler(keyboard_key_t key)
+{
+	(void)key;
+	tty_cli_handle_nl();
+	tty_prompt();
+}
+
+static void keyboard_escape_handler(keyboard_key_t key)
+{
+	(void)key;
+	shutdown();
+}
+// TODO: create and add backspace handler
+static key_handler_t keyboard_get_special_handler(uint8_t undergroup)
+{
+	switch (undergroup) {
+	case ENTER:
+		return keyboard_enter_handler;
+	case ESCAPE:
+		return keyboard_escape_handler;
+	case BACKSPACE:
+		return NULL;
+	default:
+		return NULL;
+	}
+}
+
+// Special Group
+/////////////////////////////////////////////////////////////////////////////////////////////
+
 /////////////////////////////////////////////////////////////////////////////////////////////
 // Internal API
 
@@ -90,10 +143,14 @@ static key_handler_t keyboard_get_key_handler(keyboard_key_t key)
 	switch (key.category) {
 	case KEY_ALPHANUMERIC:
 		return keyboard_printable_handler;
-	case KEY_CONTROL:
-		return keyboard_get_control_handler(key.undergroup);
 	case KEY_NAVIGATION:
 		return keyboard_navigation_handler;
+	case KEY_FUNCTION:
+		return keyboard_function_handler;
+	case KEY_CONTROL:
+		return keyboard_get_control_handler(key.undergroup);
+	case KEY_SPECIAL:
+		return keyboard_get_special_handler(key.undergroup);
 	default:
 		kpanic("Error: key Invalid when called keyboard_get_key_handler fun\n");
 		break;
@@ -103,7 +160,8 @@ static key_handler_t keyboard_get_key_handler(keyboard_key_t key)
 
 static void keyboard_init_default_table(void)
 {
-	keyboard_key_t *groups[] = {printable_keys, control_keys, navigation_keys, NULL};
+	keyboard_key_t *groups[] = {printable_keys, control_keys, navigation_keys,
+	                            function_keys,  special_keys, NULL};
 
 	for (uint32_t g = 0; groups[g] != NULL; g++) {
 		for (uint32_t i = 0; groups[g][i].keycode != UNDEFINED; i++) {

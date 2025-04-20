@@ -1,5 +1,5 @@
-#include "keymap.h"
 #include "panic.h"
+#include "tty.h"
 #include <libft.h>
 #include <types.h>
 
@@ -34,6 +34,9 @@ typedef enum {
 	PRESS,
 	RELEASE,
 	TOGGLE,
+	BACKSPACE,
+	ENTER,
+	ESCAPE
 } KeyUndergroup;
 
 typedef struct keyboard_key {
@@ -60,8 +63,6 @@ static bool left_ctrl   = false;
 static bool left_alt    = false;
 static bool num_lock    = false;
 static bool scroll_lock = false;
-
-// void keyboard_rebind_as_default(int keycode);
 
 static keyboard_key_t default_key_table[256];
 /* ---------------------------------------------------------------------------
@@ -137,23 +138,23 @@ static keyboard_key_t printable_keys[] = {
  */
 static keyboard_key_t control_keys[] = {
     // Press
-    {0, 0, 0x1D, KEY_CONTROL, PRESS, &left_ctrl},
-    {0, 0, 0x2A, KEY_CONTROL, PRESS, &left_shift},
-    {0, 0, 0x36, KEY_CONTROL, PRESS, &right_shift},
-    {0, 0, 0x38, KEY_CONTROL, PRESS, &left_alt},
+    {UNDEFINED, UNDEFINED, 0x1D, KEY_CONTROL, PRESS, &left_ctrl},
+    {UNDEFINED, UNDEFINED, 0x2A, KEY_CONTROL, PRESS, &left_shift},
+    {UNDEFINED, UNDEFINED, 0x36, KEY_CONTROL, PRESS, &right_shift},
+    {UNDEFINED, UNDEFINED, 0x38, KEY_CONTROL, PRESS, &left_alt},
     // Release
-    {0, 0, 0x9D, KEY_CONTROL, RELEASE, &left_ctrl},
-    {0, 0, 0xAA, KEY_CONTROL, RELEASE, &left_shift},
-    {0, 0, 0xB6, KEY_CONTROL, RELEASE, &right_shift},
-    {0, 0, 0xB8, KEY_CONTROL, RELEASE, &left_alt},
+    {UNDEFINED, UNDEFINED, 0x9D, KEY_CONTROL, RELEASE, &left_ctrl},
+    {UNDEFINED, UNDEFINED, 0xAA, KEY_CONTROL, RELEASE, &left_shift},
+    {UNDEFINED, UNDEFINED, 0xB6, KEY_CONTROL, RELEASE, &right_shift},
+    {UNDEFINED, UNDEFINED, 0xB8, KEY_CONTROL, RELEASE, &left_alt},
     // Toggle
     /* TODO :
      * Actually Lock key are toggled on release but need to improve the logic the file doc/idea.md
      * contain a good way to start
      */
-    {0, 0, 0xBA, KEY_CONTROL, TOGGLE, &caps_lock},
-    {0, 0, 0xC5, KEY_CONTROL, TOGGLE, &num_lock},
-    {0, 0, 0xC6, KEY_CONTROL, TOGGLE, &scroll_lock},
+    {UNDEFINED, UNDEFINED, 0xBA, KEY_CONTROL, TOGGLE, &caps_lock},
+    {UNDEFINED, UNDEFINED, 0xC5, KEY_CONTROL, TOGGLE, &num_lock},
+    {UNDEFINED, UNDEFINED, 0xC6, KEY_CONTROL, TOGGLE, &scroll_lock},
     UNDEFINED_KEY, // Endof array
 };
 
@@ -182,20 +183,23 @@ typedef enum {
 
 static keyboard_key_t navigation_keys[] = {
     // Arrow keys
-    {COLOR_UP, '8', 0x48, KEY_NAVIGATION, NONE, &num_lock},    // Pavé num 8 = Flèche Haut
-    {COLOR_DOWN, '2', 0x50, KEY_NAVIGATION, NONE, &num_lock},  // Pavé num 2 = Flèche Bas
-    {COLOR_LEFT, '4', 0x4B, KEY_NAVIGATION, NONE, &num_lock},  // Pavé num 4 = Flèche Gauche
-    {COLOR_RIGHT, '6', 0x4D, KEY_NAVIGATION, NONE, &num_lock}, // Pavé num 6 = Flèche Droite
+    {COLOR_UP, '8', 0x48, KEY_NAVIGATION, NUM_PAD, &num_lock},    // Pavé num 8 = Flèche Haut
+    {COLOR_DOWN, '2', 0x50, KEY_NAVIGATION, NUM_PAD, &num_lock},  // Pavé num 2 = Flèche Bas
+    {COLOR_LEFT, '4', 0x4B, KEY_NAVIGATION, NUM_PAD, &num_lock},  // Pavé num 4 = Flèche Gauche
+    {COLOR_RIGHT, '6', 0x4D, KEY_NAVIGATION, NUM_PAD, &num_lock}, // Pavé num 6 = Flèche Droite
 
     // Home, End, Page Up, Page Down
-    {COLOR_HOME, '7', 0x47, KEY_NAVIGATION, NONE, &num_lock}, // Pavé num 7 = Home
-    {COLOR_END, '1', 0x4F, KEY_NAVIGATION, NONE, &num_lock},  // Pavé num 1 = End
-    {COLOR_PGUP, '9', 0x49, KEY_NAVIGATION, NONE, &num_lock}, // Pavé num 9 = PgUp
-    {COLOR_PGDN, '3', 0x51, KEY_NAVIGATION, NONE, &num_lock}, // Pavé num 3 = PgDn
+    {COLOR_HOME, '7', 0x47, KEY_NAVIGATION, NUM_PAD, &num_lock}, // Pavé num 7 = Home
+    {COLOR_END, '1', 0x4F, KEY_NAVIGATION, NUM_PAD, &num_lock},  // Pavé num 1 = End
+    {COLOR_PGUP, '9', 0x49, KEY_NAVIGATION, NUM_PAD, &num_lock}, // Pavé num 9 = PgUp
+    {COLOR_PGDN, '3', 0x51, KEY_NAVIGATION, NUM_PAD, &num_lock}, // Pavé num 3 = PgDn
 
     // Insert, Delete
-    {COLOR_INS, '0', 0x52, KEY_NAVIGATION, NONE, &num_lock}, // Pavé num 0 = Insert
-    {COLOR_DEL, '.', 0x53, KEY_NAVIGATION, NONE, &num_lock}, // Pavé num . = Delete
+    {COLOR_INS, '0', 0x52, KEY_NAVIGATION, NUM_PAD, &num_lock}, // Pavé num 0 = Insert
+    {COLOR_DEL, '.', 0x53, KEY_NAVIGATION, NUM_PAD, &num_lock}, // Pavé num . = Delete
+
+    {COLOR_CENTER, '5', 0x4C, KEY_NAVIGATION, NUM_PAD,
+     &num_lock}, // Pavé num 5 = Not a nav key but here for consistency
 
     UNDEFINED_KEY // End of array
 };
@@ -208,6 +212,21 @@ static keyboard_key_t navigation_keys[] = {
  * Function group
  */
 
+static keyboard_key_t function_keys[] = {
+    {0, UNDEFINED, 0x3B, KEY_FUNCTION, NONE, NULL},  // f1
+    {1, UNDEFINED, 0x3C, KEY_FUNCTION, NONE, NULL},  // f2
+    {2, UNDEFINED, 0x3D, KEY_FUNCTION, NONE, NULL},  // f3
+    {3, UNDEFINED, 0x3E, KEY_FUNCTION, NONE, NULL},  // f4
+    {4, UNDEFINED, 0x3F, KEY_FUNCTION, NONE, NULL},  // f5
+    {5, UNDEFINED, 0x40, KEY_FUNCTION, NONE, NULL},  // f6
+    {6, UNDEFINED, 0x41, KEY_FUNCTION, NONE, NULL},  // f7
+    {7, UNDEFINED, 0x42, KEY_FUNCTION, NONE, NULL},  // f8
+    {8, UNDEFINED, 0x43, KEY_FUNCTION, NONE, NULL},  // f9
+    {9, UNDEFINED, 0x44, KEY_FUNCTION, NONE, NULL},  // f10
+    {10, UNDEFINED, 0x57, KEY_FUNCTION, NONE, NULL}, // f11
+    {11, UNDEFINED, 0x58, KEY_FUNCTION, NONE, NULL}, // f12
+    UNDEFINED_KEY                                    // End of array
+};
 /*
  * Function group
  * ---------------------------------------------------------------------------
@@ -215,6 +234,12 @@ static keyboard_key_t navigation_keys[] = {
  * ---------------------------------------------------------------------------
  * Special group
  */
+
+static keyboard_key_t special_keys[] = {
+    // {UNDEFINED, UNDEFINED, 0x0E, KEY_SPECIAL, BACKSPACE, NULL}, // BACKSPACE
+    {UNDEFINED, UNDEFINED, 0x1C, KEY_SPECIAL, ENTER, NULL},  // ENTER
+    {UNDEFINED, UNDEFINED, 0x01, KEY_SPECIAL, ESCAPE, NULL}, // ESCAPE
+    UNDEFINED_KEY};
 
 /*
  * Special group
@@ -227,3 +252,5 @@ void keyboard_unbind_key(uint8_t keycode);
 void keyboard_handle(void);
 void keyboard_init(void);
 void keyboard_remap_layout(keyboard_key_t *table, uint32_t size);
+
+// void keyboard_rebind_as_default(int keycode);
