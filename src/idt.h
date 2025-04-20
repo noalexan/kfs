@@ -4,8 +4,7 @@
 
 #define IDT_BASE 0x00000000
 #define IDT_SIZE 0xFF
-
-#define IDT_ENTRY(indx) ((idt_entry *)IDT_BASE + indx)
+#define IDT_ENTRY(indx) (idt_entries + (indx))
 
 typedef struct __attribute__((packed)) {
 	uint16_t offset_1;
@@ -42,6 +41,7 @@ typedef struct {
 	uint32_t eip, cs, eflags, useresp, ss;
 } __attribute__((packed)) REGISTERS;
 
+idt_entry *idt_entries;
 extern const char *interrupt_names[];
 
 void idt_init(void);

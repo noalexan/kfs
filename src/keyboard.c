@@ -1,4 +1,5 @@
 #include "keyboard.h"
+#include "io.h"
 
 #define MAX_CLI_LEN 253
 
@@ -94,9 +95,9 @@ static void keyboard_navigation_handler(keyboard_key_t key)
 static void keyboard_function_handler(keyboard_key_t key)
 {
 	TTY *tty = ttys + key.value;
-	save_tty(current_tty);
+	tty_save(current_tty);
 	current_tty = tty;
-	load_tty(tty);
+	tty_load(tty);
 }
 
 // Function Group

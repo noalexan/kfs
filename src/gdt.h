@@ -4,7 +4,7 @@
 
 #define GDT_MAX_ENTRIES 7
 #define GDT_ADDR        0x00000800
-#define GDT_ENTRY(indx) ((segment_descriptor_t *)gdt_entries + (indx))
+#define GDT_ENTRY(indx) (gdt_entries + (indx))
 #define GDT_FLAGS       (SEGMENT_SIZE_BIT | GRANULARITY_BIT)
 
 enum Gdt_Access_Byte {

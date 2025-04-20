@@ -4,7 +4,7 @@
 void kernel_main(void)
 {
 	keyboard_init();
-	init_ttys();
+	ttys_init();
 
 	while (true) // hang
 		;
