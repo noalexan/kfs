@@ -138,7 +138,7 @@ static key_handler_t keyboard_get_special_handler(uint8_t undergroup)
 /////////////////////////////////////////////////////////////////////////////////////////////
 // Internal API
 
-static key_handler_t keyboard_get_key_handler(keyboard_key_t key)
+static key_handler_t keyboard_get_default_key_handler(keyboard_key_t key)
 {
 	switch (key.category) {
 	case KEY_ALPHANUMERIC:
@@ -176,10 +176,19 @@ static void keyboard_init_default_table(void)
 
 void keyboard_remap_layout(keyboard_key_t *table, uint32_t size)
 {
-	for (uint32_t i = 0; i <= size; i++) {
-		if (table[i].keycode != UNDEFINED) {
-			key_handler_t handler = keyboard_get_key_handler(table[i]);
+	if (size == STOP_WHEN_UNDEFINED) {
+		uint32_t i = 0;
+		while (table[i].keycode != UNDEFINED) {
+			key_handler_t handler = keyboard_get_default_key_handler(table[i]);
 			keyboard_bind_key(handler, table[i]);
+			i++;
+		}
+	} else {
+		for (uint32_t i = 0; i <= size; i++) {
+			if (table[i].keycode != UNDEFINED) {
+				key_handler_t handler = keyboard_get_default_key_handler(table[i]);
+				keyboard_bind_key(handler, table[i]);
+			}
 		}
 	}
 }

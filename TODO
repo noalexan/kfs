@@ -3,6 +3,7 @@
 - [x] Improve Project Architecture
 - [x] Implement Idt
 - [x] Fix le clear qui reset le mode du tty
+- [x] Create Different layout
 - [ ] Handle Backspace
-- [ ] Create Qwerty layout
+- [ ] Gerer les toggles key pour quelle s'active en press et pas en release
 - [ ] Add TSS

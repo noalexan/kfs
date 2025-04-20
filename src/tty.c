@@ -1,5 +1,7 @@
 #include "tty.h"
 #include "acpi.h"
+#include "keyboard.h"
+#include "layout.h"
 #include "printk.h"
 #include <libft.h>
 
@@ -33,7 +35,18 @@ void print_help(void)
 	printk("  halt       Halt the system\n");
 	printk("  reboot     Reboot the system\n");
 	printk("  clear      Clear display\n");
+	printk("  azerty     Switch layout to azerty\n");
+	printk("  qwerty     Switch layout to qwerty\n");
 	printk("  help       Display this help message\n\n");
+}
+
+void tty_switch_layout(char *layout_name, keyboard_key_t *layout_bind)
+{
+	if (layout_bind != NULL && layout_name != NULL) {
+		printk("\nSwitching layout to %s", layout_name);
+		keyboard_remap_layout(layout_bind, STOP_WHEN_UNDEFINED);
+	} else
+		printk("Error: Bad parameters tty_switch_layout\n");
 }
 
 void tty_cli_handle_nl(void)
@@ -52,7 +65,11 @@ void tty_cli_handle_nl(void)
 	else if (ft_strequ(cmd, "clear")) {
 		vga_setup_default_screen(current_tty->mode);
 		return;
-	} else if (cmd_len)
+	} else if (ft_strequ(cmd, "azerty"))
+		tty_switch_layout("azerty", azerty_layout);
+	else if (ft_strequ(cmd, "qwerty"))
+		tty_switch_layout("qwerty", printable_keys);
+	else if (cmd_len)
 		printk("\nk1tOS: command not found: %s", cmd);
 	printk("%c", NEW_LINE);
 }

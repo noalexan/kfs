@@ -1,10 +1,13 @@
+#pragma once
+
 #include "panic.h"
 #include "tty.h"
 #include <libft.h>
 #include <types.h>
 
-#define UNDEFINED 0
-#define KEY_MAX   0xff
+#define UNDEFINED           0
+#define STOP_WHEN_UNDEFINED 0
+#define KEY_MAX             0xff
 
 #define UNDEFINED_KEY                                                                              \
 	((keyboard_key_t){.value      = UNDEFINED,                                                     \
