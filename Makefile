@@ -18,14 +18,14 @@ LDFLAGS=-z noexecstack -nostdlib -nodefaultlibs -static
 LDLIBS=-L./lib/libft -lft
 
 QEMU=qemu-system-i386
-QEMUFLAGS=-serial mon:stdio
+QEMUFLAGS=-monitor stdio
 
 DOCKERIMAGENAME=noalexan/cross-compiler
 DOCKERIMAGETAG=ubuntu
 
 OBJ=$(patsubst src/%,$(BINDIR)/%,$(shell find src -regex '.*\(\.c\|\.cpp\|\.s\)' | sed 's/\(\.c\|\.cpp\|\.s\)/.o/g'))
 
-LIBFT_OBJ=    \
+LIBFT_OBJ=      \
 	ft_bzero.o  \
 	ft_memset.o \
 	ft_memcpy.o \
@@ -46,10 +46,10 @@ $(BINDIR)/%.o: src/%.cpp
 
 .PHONY: all
 ifeq ($(IN_DOCKER),1)
-all: format $(BUILDDIR)/boot.iso
+all: $(BUILDDIR)/boot.iso
 else
 all:
-	docker run --rm -t -v .:/kfs -e IN_DOCKER=1 $(DOCKERIMAGENAME):$(DOCKERIMAGETAG)
+	docker run --rm --user=$(shell id -u):$(shell id -g) -t -v .:/kfs -e IN_DOCKER=1 $(DOCKERIMAGENAME):$(DOCKERIMAGETAG)
 endif
 
 $(BUILDDIR)/boot.iso: $(ISODIR)/boot/kernel $(ISODIR)/boot/grub/grub.cfg

@@ -22,6 +22,12 @@ void vga_enable_cursor(uint8_t cursor_start, uint8_t cursor_end)
 	outb(0x3D5, (inb(0x3D5) & 0xE0) | cursor_end);
 }
 
+void vga_disable_cursor(void)
+{
+	outb(0x3D4, 0x0A);
+	outb(0x3D5, 0x20);
+}
+
 void vga_set_cursor_position(uint8_t x, uint8_t y)
 {
 	g_cursor     = (struct s_cursor){x, y};
@@ -46,7 +52,7 @@ void vga_scroll_down(void)
 		*VGA_ENTRY(x, VGA_HEIGHT - 1) = (vga_entry){0, vga_mode};
 }
 
-void vga_set_screen_mode(uint8_t mode)
+void vga_set_screen_mode(enum vga_color mode)
 {
 	vga_mode = mode;
 	for (int y = 0; y < VGA_HEIGHT; y++)
@@ -54,4 +60,11 @@ void vga_set_screen_mode(uint8_t mode)
 			VGA_ENTRY(x, y)->mode = vga_mode;
 }
 
-void vga_clear(void) { ft_bzero(VGA_BUFFER, 2 * VGA_WIDTH * VGA_HEIGHT); }
+void vga_set_mode(enum vga_color mode) { vga_mode = mode; }
+
+void vga_clear(void)
+{
+	for (int y = 0; y < VGA_HEIGHT; y++)
+		for (int x = 0; x < VGA_WIDTH; x++)
+			*VGA_ENTRY(x, y) = (vga_entry){.character = 0x00, .mode = vga_mode};
+}

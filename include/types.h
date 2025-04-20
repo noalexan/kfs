@@ -3,8 +3,8 @@
 
 #define NULL (void *)0
 
-#define bool  _Bool
-#define true  1
+#define bool _Bool
+#define true 1
 #define false 0
 
 typedef unsigned char  uint8_t;
