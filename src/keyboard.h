@@ -3,180 +3,227 @@
 #include <libft.h>
 #include <types.h>
 
+#define UNDEFINED 0
+#define KEY_MAX   0xff
+
+#define UNDEFINED_KEY                                                                              \
+	((keyboard_key_t){.value      = UNDEFINED,                                                     \
+	                  .alt_value  = UNDEFINED,                                                     \
+	                  .keycode    = UNDEFINED,                                                     \
+	                  .category   = UNDEFINED,                                                     \
+	                  .undergroup = UNDEFINED,                                                     \
+	                  .state_ptr  = NULL})
+
+#define UNDEFINED_ROUTINE ((scancode_routine_t){.key = UNDEFINED_KEY, .handler = NULL})
+
 typedef enum {
-	UNDEFINED = 0,
-	KEY_ALPHANUMERIC,
+	KEY_ALPHANUMERIC = 0,
 	KEY_CONTROL,
 	KEY_NAVIGATION,
 	KEY_FUNCTION,
 	KEY_SPECIAL
 } KeyCategory;
 
+typedef enum {
+	NONE = 0,
+	LETTER,
+	TOP_KEY,
+	PUNCTUATION,
+	SPACE,
+	NUM_PAD,
+	PRESS,
+	RELEASE,
+	TOGGLE,
+} KeyUndergroup;
+
 typedef struct keyboard_key {
-	uint8_t  undergroup;
-	uint16_t value;
-	uint16_t shifted_value;
-	uint16_t keycode;
-	bool    *state_ptr;
+	uint16_t      value;
+	uint16_t      alt_value;
+	uint16_t      keycode;
+	KeyCategory   category;
+	KeyUndergroup undergroup;
+	bool         *state_ptr;
 } keyboard_key_t;
 
 typedef struct scancode_routine {
 	keyboard_key_t key;
-	KeyCategory    category;
 	void (*handler)(keyboard_key_t key);
 } scancode_routine_t;
 
 typedef void (*group_init_funs_t)(void);
 typedef void (*key_handler_t)(keyboard_key_t);
 
-#define UNDEFINED_KEY                                                                              \
-	((scancode_routine_t){.key      = {.keycode = 0, .value = 0, .shifted_value = 0},              \
-	                      .category = UNDEFINED,                                                   \
-	                      .handler  = NULL})
+static bool caps_lock   = false;
+static bool left_shift  = false;
+static bool right_shift = false;
+static bool left_ctrl   = false;
+static bool left_alt    = false;
+static bool num_lock    = false;
+static bool scroll_lock = false;
 
-void keyboard_bind_key(KeyCategory category, key_handler_t handler, keyboard_key_t key);
-void keyboard_unbind_key(uint8_t keycode);
-void keyboard_handle(void);
-void keyboard_init_default_layout(void);
-// void keyboard_remap_layout(void);
 // void keyboard_rebind_as_default(int keycode);
 
-extern scancode_routine_t current_layout[256];
-
-/* -----------------------------------------
+static keyboard_key_t default_key_table[256];
+/* ---------------------------------------------------------------------------
  * Printable/Alphanumeric Key group
  */
-typedef enum {
-	LETTER,
-	TOP_KEY,
-	SPECIAL,
-	SPACE,
-	NUM_PAD,
-} PrintableKeys;
+static keyboard_key_t printable_keys[] = {
 
-typedef struct {
-	char          normal;
-	char          shifted;
-	PrintableKeys undergroup;
-} printable_entry_t;
-
-static const printable_entry_t printable_table[256] = {
     // letters
-    [0x1E] = {'a', 'A', LETTER},
-    [0x30] = {'b', 'B', LETTER},
-    [0x2E] = {'c', 'C', LETTER},
-    [0x20] = {'d', 'D', LETTER},
-    [0x12] = {'e', 'E', LETTER},
-    [0x21] = {'f', 'F', LETTER},
-    [0x22] = {'g', 'G', LETTER},
-    [0x23] = {'h', 'H', LETTER},
-    [0x17] = {'i', 'I', LETTER},
-    [0x24] = {'j', 'J', LETTER},
-    [0x25] = {'k', 'K', LETTER},
-    [0x26] = {'l', 'L', LETTER},
-    [0x32] = {'m', 'M', LETTER},
-    [0x31] = {'n', 'N', LETTER},
-    [0x18] = {'o', 'O', LETTER},
-    [0x19] = {'p', 'P', LETTER},
-    [0x10] = {'q', 'Q', LETTER},
-    [0x13] = {'r', 'R', LETTER},
-    [0x1F] = {'s', 'S', LETTER},
-    [0x14] = {'t', 'T', LETTER},
-    [0x16] = {'u', 'U', LETTER},
-    [0x2F] = {'v', 'V', LETTER},
-    [0x11] = {'w', 'W', LETTER},
-    [0x2D] = {'x', 'X', LETTER},
-    [0x15] = {'y', 'Y', LETTER},
-    [0x2C] = {'z', 'Z', LETTER},
-
+    {'a', 'A', 0x1E, KEY_ALPHANUMERIC, LETTER, NULL},
+    {'b', 'B', 0x30, KEY_ALPHANUMERIC, LETTER, NULL},
+    {'c', 'C', 0x2E, KEY_ALPHANUMERIC, LETTER, NULL},
+    {'d', 'D', 0x20, KEY_ALPHANUMERIC, LETTER, NULL},
+    {'e', 'E', 0x12, KEY_ALPHANUMERIC, LETTER, NULL},
+    {'f', 'F', 0x21, KEY_ALPHANUMERIC, LETTER, NULL},
+    {'g', 'G', 0x22, KEY_ALPHANUMERIC, LETTER, NULL},
+    {'h', 'H', 0x23, KEY_ALPHANUMERIC, LETTER, NULL},
+    {'i', 'I', 0x17, KEY_ALPHANUMERIC, LETTER, NULL},
+    {'j', 'J', 0x24, KEY_ALPHANUMERIC, LETTER, NULL},
+    {'k', 'K', 0x25, KEY_ALPHANUMERIC, LETTER, NULL},
+    {'l', 'L', 0x26, KEY_ALPHANUMERIC, LETTER, NULL},
+    {'m', 'M', 0x32, KEY_ALPHANUMERIC, LETTER, NULL},
+    {'n', 'N', 0x31, KEY_ALPHANUMERIC, LETTER, NULL},
+    {'o', 'O', 0x18, KEY_ALPHANUMERIC, LETTER, NULL},
+    {'p', 'P', 0x19, KEY_ALPHANUMERIC, LETTER, NULL},
+    {'q', 'Q', 0x10, KEY_ALPHANUMERIC, LETTER, NULL},
+    {'r', 'R', 0x13, KEY_ALPHANUMERIC, LETTER, NULL},
+    {'s', 'S', 0x1F, KEY_ALPHANUMERIC, LETTER, NULL},
+    {'t', 'T', 0x14, KEY_ALPHANUMERIC, LETTER, NULL},
+    {'u', 'U', 0x16, KEY_ALPHANUMERIC, LETTER, NULL},
+    {'v', 'V', 0x2F, KEY_ALPHANUMERIC, LETTER, NULL},
+    {'w', 'W', 0x11, KEY_ALPHANUMERIC, LETTER, NULL},
+    {'x', 'X', 0x2D, KEY_ALPHANUMERIC, LETTER, NULL},
+    {'y', 'Y', 0x15, KEY_ALPHANUMERIC, LETTER, NULL},
+    {'z', 'Z', 0x2C, KEY_ALPHANUMERIC, LETTER, NULL},
     // top keys
-    [0x02] = {'1', '!', TOP_KEY},
-    [0x03] = {'2', '@', TOP_KEY},
-    [0x04] = {'3', '#', TOP_KEY},
-    [0x05] = {'4', '$', TOP_KEY},
-    [0x06] = {'5', '%', TOP_KEY},
-    [0x07] = {'6', '^', TOP_KEY},
-    [0x08] = {'7', '&', TOP_KEY},
-    [0x09] = {'8', '*', TOP_KEY},
-    [0x0A] = {'9', '(', TOP_KEY},
-    [0x0B] = {'0', ')', TOP_KEY},
-
+    {'1', '!', 0x02, KEY_ALPHANUMERIC, TOP_KEY, NULL},
+    {'2', '@', 0x03, KEY_ALPHANUMERIC, TOP_KEY, NULL},
+    {'3', '#', 0x04, KEY_ALPHANUMERIC, TOP_KEY, NULL},
+    {'4', '$', 0x05, KEY_ALPHANUMERIC, TOP_KEY, NULL},
+    {'5', '%', 0x06, KEY_ALPHANUMERIC, TOP_KEY, NULL},
+    {'6', '^', 0x07, KEY_ALPHANUMERIC, TOP_KEY, NULL},
+    {'7', '&', 0x08, KEY_ALPHANUMERIC, TOP_KEY, NULL},
+    {'8', '*', 0x09, KEY_ALPHANUMERIC, TOP_KEY, NULL},
+    {'9', '(', 0x0A, KEY_ALPHANUMERIC, TOP_KEY, NULL},
+    {'0', ')', 0x0B, KEY_ALPHANUMERIC, TOP_KEY, NULL},
     // specials
-    [0x0C] = {'-', '_', SPECIAL},
-    [0x0D] = {'=', '+', SPECIAL},
-    [0x1A] = {'[', '{', SPECIAL},
-    [0x1B] = {']', '}', SPECIAL},
-    [0x27] = {';', ':', SPECIAL},
-    [0x28] = {'\'', '"', SPECIAL},
-    [0x29] = {'`', '~', SPECIAL},
-    [0x2B] = {'\\', '|', SPECIAL},
-    [0x33] = {',', '<', SPECIAL},
-    [0x34] = {'.', '>', SPECIAL},
-    [0x35] = {'/', '?', SPECIAL},
-
+    {'-', '_', 0x0C, KEY_ALPHANUMERIC, PUNCTUATION, NULL},
+    {'=', '+', 0x0D, KEY_ALPHANUMERIC, PUNCTUATION, NULL},
+    {'[', '{', 0x1A, KEY_ALPHANUMERIC, PUNCTUATION, NULL},
+    {']', '}', 0x1B, KEY_ALPHANUMERIC, PUNCTUATION, NULL},
+    {';', ':', 0x27, KEY_ALPHANUMERIC, PUNCTUATION, NULL},
+    {'\'', '"', 0x28, KEY_ALPHANUMERIC, PUNCTUATION, NULL},
+    {'`', '~', 0x29, KEY_ALPHANUMERIC, PUNCTUATION, NULL},
+    {'\\', '|', 0x2B, KEY_ALPHANUMERIC, PUNCTUATION, NULL},
+    {',', '<', 0x33, KEY_ALPHANUMERIC, PUNCTUATION, NULL},
+    {'.', '>', 0x34, KEY_ALPHANUMERIC, PUNCTUATION, NULL},
+    {'/', '?', 0x35, KEY_ALPHANUMERIC, PUNCTUATION, NULL},
     // spaces
-    [0x39] = {' ', ' ', SPACE},
-    [0x0F] = {'\t', '\t', SPACE},
-
-    // Num pad
-    [0x52] = {'0', 0, NUM_PAD},
-    [0x4F] = {'1', 0, NUM_PAD},
-    [0x50] = {'2', 0, NUM_PAD},
-    [0x51] = {'3', 0, NUM_PAD},
-    [0x4B] = {'4', 0, NUM_PAD},
-    [0x4C] = {'5', 0, NUM_PAD},
-    [0x4D] = {'6', 0, NUM_PAD},
-    [0x47] = {'7', 0, NUM_PAD},
-    [0x48] = {'8', 0, NUM_PAD},
-    [0x49] = {'9', 0, NUM_PAD},
-    [0x37] = {'*', '*', NUM_PAD},
-    [0x4A] = {'-', '-', NUM_PAD},
-    [0x4E] = {'+', '+', NUM_PAD},
-    [0x53] = {'.', '.', NUM_PAD},
+    {' ', ' ', 0x39, KEY_ALPHANUMERIC, SPACE, NULL},
+    {'\t', '\t', 0x0F, KEY_ALPHANUMERIC, SPACE, NULL},
+    // Num pad other are handled on nav group
+    {'*', '*', 0x37, KEY_ALPHANUMERIC, NUM_PAD, NULL},
+    {'-', '-', 0x4A, KEY_ALPHANUMERIC, NUM_PAD, NULL},
+    {'+', '+', 0x4E, KEY_ALPHANUMERIC, NUM_PAD, NULL},
+    UNDEFINED_KEY, // Endof array
 };
-
-/* -----------------------------------------
+/*
+ * Printable/Alphanumeric Key group
+ * ---------------------------------------------------------------------------
+ *
+ * ---------------------------------------------------------------------------
  * Control Key group
  */
-typedef enum {
-	KEY_PRESS = 0,
-	KEY_REPEAT,
-	KEY_RELEASE,
-	KEY_LOCK,
-} KeyState;
-
-typedef enum {
-	LEFT_CTRL,
-	LEFT_SHIFT,
-	RIGHT_SHIFT,
-	LEFT_ALT,
-	CAPS_LOCK,
-	NUM_LOCK,
-	SCROLL_LOCK,
-} ControlKeys;
-
-typedef struct {
-	ControlKeys keyname;
-	KeyState    undergroup;
-} control_entry_t;
-
-static const control_entry_t control_table[256] = {
-    // Control keys (press)
-    [0x1D] = {LEFT_CTRL, KEY_PRESS},
-    [0x2A] = {LEFT_SHIFT, KEY_PRESS},
-    [0x36] = {RIGHT_SHIFT, KEY_PRESS},
-    [0x38] = {LEFT_ALT, KEY_PRESS},
-    // Control keys (release)
-    [0x9D] = {LEFT_CTRL, KEY_RELEASE},
-    [0xAA] = {LEFT_SHIFT, KEY_RELEASE},
-    [0xB6] = {RIGHT_SHIFT, KEY_RELEASE},
-    [0xB8] = {LEFT_ALT, KEY_RELEASE},
-    // Control Toggle Key
-    [0xBA] = {CAPS_LOCK, KEY_LOCK},
-    [0xC5] = {NUM_LOCK, KEY_LOCK},
-    [0xC6] = {SCROLL_LOCK, KEY_LOCK},
+static keyboard_key_t control_keys[] = {
+    // Press
+    {0, 0, 0x1D, KEY_CONTROL, PRESS, &left_ctrl},
+    {0, 0, 0x2A, KEY_CONTROL, PRESS, &left_shift},
+    {0, 0, 0x36, KEY_CONTROL, PRESS, &right_shift},
+    {0, 0, 0x38, KEY_CONTROL, PRESS, &left_alt},
+    // Release
+    {0, 0, 0x9D, KEY_CONTROL, RELEASE, &left_ctrl},
+    {0, 0, 0xAA, KEY_CONTROL, RELEASE, &left_shift},
+    {0, 0, 0xB6, KEY_CONTROL, RELEASE, &right_shift},
+    {0, 0, 0xB8, KEY_CONTROL, RELEASE, &left_alt},
+    // Toggle
     /* TODO :
      * Actually Lock key are toggled on release but need to improve the logic the file doc/idea.md
      * contain a good way to start
      */
+    {0, 0, 0xBA, KEY_CONTROL, TOGGLE, &caps_lock},
+    {0, 0, 0xC5, KEY_CONTROL, TOGGLE, &num_lock},
+    {0, 0, 0xC6, KEY_CONTROL, TOGGLE, &scroll_lock},
+    UNDEFINED_KEY, // Endof array
 };
+
+/*
+ * Control Key group
+ * ---------------------------------------------------------------------------
+ *
+ * ---------------------------------------------------------------------------
+ * Navigation group
+ */
+
+typedef enum {
+	COLOR_HOME   = VGA_COLOR(VGA_COLOR_WHITE, VGA_COLOR_GREEN),       // 0x47
+	COLOR_UP     = VGA_COLOR(VGA_COLOR_LIGHT_GREEN, VGA_COLOR_RED),   // 0x48
+	COLOR_PGUP   = VGA_COLOR(VGA_COLOR_RED, VGA_COLOR_LIGHT_MAGENTA), // 0x49
+	COLOR_LEFT   = VGA_COLOR(VGA_COLOR_LIGHT_GREEN, VGA_COLOR_BROWN), // 0x4B
+	COLOR_CENTER = VGA_COLOR(VGA_COLOR_YELLOW, VGA_COLOR_GREEN),      // 0x4C
+	COLOR_RIGHT  = VGA_COLOR(VGA_COLOR_BLACK, VGA_COLOR_MAGENTA),     // 0x4D
+	COLOR_END    = VGA_COLOR(VGA_COLOR_BLUE, VGA_COLOR_LIGHT_CYAN),   // 0x4F
+	COLOR_DOWN   = VGA_COLOR(VGA_COLOR_BLUE, VGA_COLOR_BLACK),        // 0x50
+	COLOR_PGDN   = VGA_COLOR(VGA_COLOR_MAGENTA, VGA_COLOR_YELLOW),    // 0x51
+	COLOR_INS    = VGA_COLOR(VGA_COLOR_BROWN, VGA_COLOR_WHITE),       // 0x52
+	COLOR_DEL    = VGA_COLOR(VGA_COLOR_RED, VGA_COLOR_YELLOW),        // 0x53
+	COLOR_NONE   = VGA_COLOR(VGA_COLOR_BLACK, VGA_COLOR_LIGHT_GREY)
+} nav_color_t;
+
+static keyboard_key_t navigation_keys[] = {
+    // Arrow keys
+    {COLOR_UP, '8', 0x48, KEY_NAVIGATION, NONE, &num_lock},    // Pavé num 8 = Flèche Haut
+    {COLOR_DOWN, '2', 0x50, KEY_NAVIGATION, NONE, &num_lock},  // Pavé num 2 = Flèche Bas
+    {COLOR_LEFT, '4', 0x4B, KEY_NAVIGATION, NONE, &num_lock},  // Pavé num 4 = Flèche Gauche
+    {COLOR_RIGHT, '6', 0x4D, KEY_NAVIGATION, NONE, &num_lock}, // Pavé num 6 = Flèche Droite
+
+    // Home, End, Page Up, Page Down
+    {COLOR_HOME, '7', 0x47, KEY_NAVIGATION, NONE, &num_lock}, // Pavé num 7 = Home
+    {COLOR_END, '1', 0x4F, KEY_NAVIGATION, NONE, &num_lock},  // Pavé num 1 = End
+    {COLOR_PGUP, '9', 0x49, KEY_NAVIGATION, NONE, &num_lock}, // Pavé num 9 = PgUp
+    {COLOR_PGDN, '3', 0x51, KEY_NAVIGATION, NONE, &num_lock}, // Pavé num 3 = PgDn
+
+    // Insert, Delete
+    {COLOR_INS, '0', 0x52, KEY_NAVIGATION, NONE, &num_lock}, // Pavé num 0 = Insert
+    {COLOR_DEL, '.', 0x53, KEY_NAVIGATION, NONE, &num_lock}, // Pavé num . = Delete
+
+    UNDEFINED_KEY // End of array
+};
+
+/*
+ * Navigation group
+ * ---------------------------------------------------------------------------
+ *
+ * ---------------------------------------------------------------------------
+ * Function group
+ */
+
+/*
+ * Function group
+ * ---------------------------------------------------------------------------
+ *
+ * ---------------------------------------------------------------------------
+ * Special group
+ */
+
+/*
+ * Special group
+ *///-------------------------------------------------------------------------
+
+extern scancode_routine_t current_layout[256];
+
+void keyboard_bind_key(key_handler_t handler, keyboard_key_t key);
+void keyboard_unbind_key(uint8_t keycode);
+void keyboard_handle(void);
+void keyboard_init(void);
+void keyboard_remap_layout(keyboard_key_t *table, uint32_t size);

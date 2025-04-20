@@ -15,7 +15,7 @@ static void debug_printing()
 static void init_builtin(void)
 {
 	// debug_printing();
-	keyboard_init_default_layout();
+	keyboard_init();
 	init_ttys();
 }
 

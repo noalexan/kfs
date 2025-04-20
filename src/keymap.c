@@ -14,45 +14,6 @@ TTY  ttys[12];
 // #define BACKSPACE 0x0E
 // #define NEW_LINE  0x1C
 
-// bool special_key(uint8_t keycode)
-// {
-// 	switch (keycode) {
-// 	case 0x01:
-// 		shutdown();
-// 		break; // echap
-// 	case 0x1D:
-// 		return true;
-// 		break; // left control
-// 	case 0x2A:
-// 		left_shift = true;
-// 		break; // left shift
-// 	case 0x36:
-// 		right_shift = true;
-// 		break; // right shift
-// 	case 0xAA:
-// 		left_shift = false;
-// 		break; // left shift
-// 	case 0xB6:
-// 		right_shift = false;
-// 		break; // right shift
-// 	case 0x38:
-// 		return true;
-// 		break; // left alt
-// 	case 0x3A:
-// 		caps_lock = !caps_lock;
-// 		break; // CapsLock
-// 	case 0x45:
-// 		return true;
-// 		break; // NumberLock
-// 	case 0x46:
-// 		return true;
-// 		break; // ScrollLock
-// 	default:
-// 		return false;
-// 	}
-// 	return true;
-// }
-
 // bool switch_tty_key(uint8_t keycode)
 // {
 // 	uint8_t ret;
