@@ -3,11 +3,10 @@
 #include <libft.h>
 
 struct s_cursor g_cursor;
-static uint8_t  vga_mode;
+static uint8_t  vga_mode = VGA_DEFAULT_MODE;
 
-void vga_setup_default_screen(uint8_t mode)
+void vga_setup_default_screen()
 {
-	vga_set_mode(VGA_COLOR(VGA_COLOR_BLUE, VGA_COLOR_WHITE));
 	vga_clear();
 	vga_enable_cursor(14, 15);
 	vga_set_cursor_position(0, 1);

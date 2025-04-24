@@ -4,7 +4,8 @@
 gdt_ptr_t             gdtr;
 segment_descriptor_t *gdt_entries = (segment_descriptor_t *)GDT_ADDR;
 
-static inline void gdt_set_entry(segment_descriptor_t *gdt_entry, uint32_t base, uint32_t limit, uint8_t access, uint8_t flags)
+static inline void gdt_set_entry(segment_descriptor_t *gdt_entry, uint32_t base, uint32_t limit,
+                                 uint8_t access, uint8_t flags)
 {
 	gdt_entry->limit_low   = (limit & 0xFFFF);
 	gdt_entry->base_low    = (base & 0xFFFF);

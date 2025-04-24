@@ -7,7 +7,7 @@
 #define VGA_WIDTH       80
 #define VGA_HEIGHT      25
 #define VGA_BUFFER      ((vga_entry *)0xB8000)
-#define VGA_ENTRY(x, y) (VGA_BUFFER + ((y)*VGA_WIDTH + (x)))
+#define VGA_ENTRY(x, y) (VGA_BUFFER + ((y) * VGA_WIDTH + (x)))
 
 #define VGA_COLOR(bg, fg) ((bg) << 4 | (fg))
 
@@ -41,7 +41,7 @@ struct s_cursor {
 	uint8_t y;
 };
 
-#define DEFAULT_COLORS VGA_COLOR(VGA_COLOR_BLUE, VGA_COLOR_WHITE)
+#define VGA_DEFAULT_MODE VGA_COLOR(VGA_COLOR_BLUE, VGA_COLOR_WHITE)
 
 extern struct s_cursor g_cursor;
 
@@ -53,6 +53,6 @@ void vga_scroll_down(void);
 void vga_set_screen_mode(enum vga_color mode);
 void vga_set_mode(enum vga_color mode);
 void vga_clear(void);
-void vga_setup_default_screen(uint8_t mode);
+void vga_setup_default_screen();
 
 #endif

@@ -1,8 +1,6 @@
 #include "keyboard.h"
 #include "io.h"
 
-#define MAX_CLI_LEN 253
-
 TTY               *current_tty;
 TTY                ttys[12];
 scancode_routine_t current_layout[256] = {0};
@@ -26,11 +24,14 @@ static char keyboard_get_shifted_value(keyboard_key_t key)
 
 static void keyboard_printable_handler(keyboard_key_t key)
 {
-	char     ascii   = keyboard_get_shifted_value(key);
-	char    *cmd     = &current_tty->cli[3];
-	uint32_t cmd_len = ft_strlen(cmd);
-	if (cmd_len < MAX_CLI_LEN)
-		cmd[cmd_len] = ascii;
+	char   ascii   = keyboard_get_shifted_value(key);
+	size_t cmd_len = ft_strlen(current_tty->cli);
+
+	if (cmd_len < MAX_CMD_LEN) {
+		current_tty->cli[cmd_len]     = ascii;
+		current_tty->cli[cmd_len + 1] = 0;
+	}
+
 	printk("%c", ascii);
 }
 
@@ -94,10 +95,9 @@ static void keyboard_navigation_handler(keyboard_key_t key)
 
 static void keyboard_function_handler(keyboard_key_t key)
 {
-	TTY *tty = ttys + key.value;
 	tty_save(current_tty);
-	current_tty = tty;
-	tty_load(tty);
+	current_tty = ttys + key.value;
+	tty_load(current_tty);
 }
 
 // Function Group
@@ -110,7 +110,6 @@ static void keyboard_enter_handler(keyboard_key_t key)
 {
 	(void)key;
 	tty_cli_handle_nl();
-	tty_prompt();
 }
 
 static void keyboard_escape_handler(keyboard_key_t key)
@@ -118,7 +117,32 @@ static void keyboard_escape_handler(keyboard_key_t key)
 	(void)key;
 	shutdown();
 }
-// TODO: create and add backspace handler
+
+static void keyboard_backspace_handler(keyboard_key_t key)
+{
+	int len = ft_strlen(current_tty->cli);
+
+	(void)key;
+
+	if (len) {
+		current_tty->cli[len - 1] = 0;
+
+		if (g_cursor.x == 0) {
+			if (g_cursor.y > 0) {
+				g_cursor.x = VGA_WIDTH - 1;
+				g_cursor.y--;
+			}
+		}
+
+		else {
+			g_cursor.x--;
+		}
+
+		vga_set_cursor_position(g_cursor.x, g_cursor.y);
+		VGA_ENTRY(g_cursor.x, g_cursor.y)->character = 0;
+	}
+}
+
 static key_handler_t keyboard_get_special_handler(uint8_t undergroup)
 {
 	switch (undergroup) {
@@ -127,7 +151,7 @@ static key_handler_t keyboard_get_special_handler(uint8_t undergroup)
 	case ESCAPE:
 		return keyboard_escape_handler;
 	case BACKSPACE:
-		return NULL;
+		return keyboard_backspace_handler;
 	default:
 		return NULL;
 	}

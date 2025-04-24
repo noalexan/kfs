@@ -1,12 +1,12 @@
 #include "idt.h"
 #include "acpi.h"
 #include "io.h"
+#include "keyboard.h"
 #include "printk.h"
 #include "vga.h"
-#include "keyboard.h"
 #include <libft.h>
 
-idtr_t idtr;
+idtr_t     idtr;
 idt_entry *idt_entries = (idt_entry *)IDT_BASE;
 
 const char *interrupt_names[] = {"Divide Error",
