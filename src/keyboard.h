@@ -42,10 +42,7 @@ typedef enum {
 	ESCAPE
 } KeyUndergroup;
 
-typedef enum {
-	QWERTY = 0,
-    AZERTY
-} Layout;
+typedef enum { QWERTY = 0, AZERTY } Layout;
 
 typedef struct keyboard_key {
 	uint16_t      value;

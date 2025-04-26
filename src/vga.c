@@ -1,7 +1,7 @@
 #include "vga.h"
 #include "io.h"
-#include <libft.h>
 #include "printk.h"
+#include <libft.h>
 
 struct s_cursor g_cursor;
 static uint8_t  vga_mode = VGA_DEFAULT_MODE;

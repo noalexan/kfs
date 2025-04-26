@@ -145,7 +145,8 @@ static keyboard_key_t navigation_keys[] = {
     {COLOR_INS, '0', 0x52, KEY_NAVIGATION, NUM_PAD, &num_lock}, // Pavé num 0 = Insert
     {COLOR_DEL, '.', 0x53, KEY_NAVIGATION, NUM_PAD, &num_lock}, // Pavé num . = Delete
 
-    {COLOR_CENTER, '5', 0x4C, KEY_NAVIGATION, NUM_PAD, &num_lock}, // Pavé num 5 = Not a nav key but here for consistency
+    {COLOR_CENTER, '5', 0x4C, KEY_NAVIGATION, NUM_PAD,
+     &num_lock}, // Pavé num 5 = Not a nav key but here for consistency
 
     UNDEFINED_KEY // End of array
 };
@@ -183,14 +184,13 @@ static keyboard_key_t function_keys[] = {
 
 static keyboard_key_t special_keys[] = {
     {UNDEFINED, UNDEFINED, 0x0E, KEY_SPECIAL, BACKSPACE, NULL}, // BACKSPACE
-    {UNDEFINED, UNDEFINED, 0x1C, KEY_SPECIAL, ENTER, NULL},  // ENTER
-    {UNDEFINED, UNDEFINED, 0x01, KEY_SPECIAL, ESCAPE, NULL}, // ESCAPE
+    {UNDEFINED, UNDEFINED, 0x1C, KEY_SPECIAL, ENTER, NULL},     // ENTER
+    {UNDEFINED, UNDEFINED, 0x01, KEY_SPECIAL, ESCAPE, NULL},    // ESCAPE
     UNDEFINED_KEY};
 
 /*
  * Special group
  *///-------------------------------------------------------------------------
-
 
 keyboard_key_t azerty_layout[] = {
     // Top Key
