@@ -1,6 +1,7 @@
 #include "vga.h"
 #include "io.h"
 #include <libft.h>
+#include "printk.h"
 
 struct s_cursor g_cursor;
 static uint8_t  vga_mode = VGA_DEFAULT_MODE;
@@ -10,6 +11,7 @@ void vga_setup_default_screen()
 	vga_clear();
 	vga_enable_cursor(14, 15);
 	vga_set_cursor_position(0, 1);
+	printk("$> ");
 }
 
 void vga_enable_cursor(uint8_t cursor_start, uint8_t cursor_end)

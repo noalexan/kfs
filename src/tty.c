@@ -1,13 +1,10 @@
 #include "tty.h"
 #include "acpi.h"
 #include "keyboard.h"
-#include "layout.h"
 #include "printk.h"
 #include <libft.h>
 
 #define NEW_LINE '\n'
-
-const char tty_prompt[] = TTY_PROMPT;
 
 static bool ft_strequ(const char *s1, const char *s2)
 {
@@ -34,15 +31,6 @@ static void print_help(void)
 	printk("  help       Display this help message\n\n");
 }
 
-static void tty_switch_layout(char *layout_name, keyboard_key_t *layout_bind)
-{
-	if (layout_bind != NULL && layout_name != NULL) {
-		printk("\nSwitching layout to %s", layout_name);
-		keyboard_remap_layout(layout_bind, STOP_WHEN_UNDEFINED);
-	} else
-		printk("Error: Bad parameters tty_switch_layout\n");
-}
-
 void tty_cli_handle_nl(void)
 {
 	size_t cmd_len = ft_strlen(current_tty->cli);
@@ -57,17 +45,16 @@ void tty_cli_handle_nl(void)
 		print_help();
 	} else if (ft_strequ(current_tty->cli, "clear")) {
 		vga_setup_default_screen(current_tty->mode);
+		current_tty->cli[0] = 0;
 		return;
 	} else if (ft_strequ(current_tty->cli, "azerty")) {
-		tty_switch_layout("azerty", azerty_layout);
+		keyboard_switch_layout(AZERTY);
 	} else if (ft_strequ(current_tty->cli, "qwerty")) {
-		tty_switch_layout("qwerty", printable_keys);
+		keyboard_switch_layout(QWERTY);
 	} else if (cmd_len) {
 		printk("\nk1tOS: command not found: %s", current_tty->cli);
 	}
-
 	printk("\n%s", TTY_PROMPT);
-
 	current_tty->cli[0] = 0;
 }
 
@@ -88,11 +75,10 @@ void tty_switch_color(uint8_t mode)
 
 void ttys_init(void)
 {
-	vga_setup_default_screen();
-	printk("%s", TTY_PROMPT);
 	for (unsigned long i = 0; i < sizeof(ttys) / sizeof(TTY); i++)
 		tty_init(ttys + i);
 	current_tty = ttys;
+	vga_setup_default_screen();
 }
 
 void tty_load(TTY *tty)

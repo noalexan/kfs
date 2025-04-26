@@ -1,9 +1,12 @@
 #include "keyboard.h"
 #include "io.h"
+#include "layout.h"
 
-TTY               *current_tty;
-TTY                ttys[12];
-scancode_routine_t current_layout[256] = {0};
+TTY               	*current_tty;
+TTY                	ttys[12];
+Layout				current_layout_type = QWERTY;
+scancode_routine_t 	current_layout[256] = {0};
+
 
 /////////////////////////////////////////////////////////////////////////////////////////////
 // Printable Group
@@ -198,6 +201,23 @@ static void keyboard_init_default_table(void)
 
 /////////////////////////////////////////////////////////////////////////////////////////////
 // External API
+
+void keyboard_switch_layout(Layout new_layout)
+{
+	if (current_layout_type == new_layout){
+		printk("\nkeyboard: Layout already set");
+		return ;
+	}
+	else if (new_layout == QWERTY) {
+		printk("\nkeyboard: Switching layout to QWERTY");
+		keyboard_remap_layout(default_key_table, 256);
+	}
+	else if (new_layout == AZERTY) {
+		printk("\nkeyboard: Switching layout to AZERTY");
+		keyboard_remap_layout(azerty_layout, STOP_WHEN_UNDEFINED);
+	}
+	current_layout_type = new_layout;
+}
 
 void keyboard_remap_layout(keyboard_key_t *table, uint32_t size)
 {
