@@ -65,7 +65,7 @@ extern scancode_routine_t current_layout[256];
 
 void keyboard_bind_key(key_handler_t handler, keyboard_key_t key);
 void keyboard_unbind_key(uint8_t keycode);
-void keyboard_handle(void);
+void keyboard_handle(void *arg);
 void keyboard_init(void);
 void keyboard_remap_layout(keyboard_key_t *table, uint32_t size);
 void keyboard_switch_layout(Layout new_layout);

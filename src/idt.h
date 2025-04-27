@@ -41,7 +41,10 @@ typedef struct {
 	uint32_t eip, cs, eflags, useresp, ss;
 } __attribute__((packed)) REGISTERS;
 
-idt_entry         *idt_entries;
+// idt_entry         *idt_entries;
 extern const char *interrupt_names[];
 
+typedef void (*irqHandler)(void *);
+
 void idt_init(void);
+void idt_register_interrupt_handler(uint8_t num, irqHandler handler);

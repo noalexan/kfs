@@ -2,12 +2,14 @@
 #include "acpi.h"
 #include "io.h"
 #include "keyboard.h"
+#include "panic.h"
 #include "printk.h"
 #include "vga.h"
 #include <libft.h>
 
 idtr_t     idtr;
 idt_entry *idt_entries = (idt_entry *)IDT_BASE;
+irqHandler irq_handlers[256];
 
 const char *interrupt_names[] = {"Divide Error",
                                  "Debug Exception",
@@ -85,9 +87,13 @@ extern void irq_15(void);
 void exception_handler(REGISTERS *regs)
 {
 	vga_set_mode(VGA_COLOR(VGA_COLOR_DARK_GREY, VGA_COLOR_YELLOW));
-	printk("%s", interrupt_names[regs->interrupt]);
 	vga_disable_cursor();
-	halt();
+	kpanic(interrupt_names[regs->interrupt]);
+}
+
+void idt_register_interrupt_handler(uint8_t num, irqHandler handler)
+{
+	irq_handlers[num] = handler;
 }
 
 void interrupt_handler(REGISTERS *regs)
@@ -96,19 +102,8 @@ void interrupt_handler(REGISTERS *regs)
 		outb(0xA0, 0x20);
 	outb(0x20, 0x20);
 
-	switch (regs->interrupt) {
-	case 32:
-		// printk("timer\n");
-		break;
-
-	case 33:
-		keyboard_handle();
-		break;
-
-	default:
-		printk("interrupt %d\n", regs->interrupt);
-		break;
-	}
+	if (irq_handlers[regs->interrupt] != NULL)
+		irq_handlers[regs->interrupt](regs);
 }
 
 static void init_pic(void)

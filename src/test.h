@@ -1,5 +1,6 @@
 #pragma once
 
+#include "keyboard.h"
 #include "printk.h"
 #include <stdint.h>
 #include <types.h>
@@ -22,3 +23,6 @@ void test_idt_overflow(void);
 void test_idt_invalid_opcode(void);
 void test_idt_all_exceptions(void);
 void test_idt_page_fault(void);
+
+// debug
+void register_scroll_lock_on_debug();

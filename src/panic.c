@@ -1,42 +1,43 @@
 #include "panic.h"
 
-static void print_ptr(uint32_t *ptr) { printk("  %p: 0x%x\n", ptr, *ptr); }
+static uint8_t stack_snapshot[4096];
+
+void save_stack(void)
+{
+	uint32_t *ebp, *esp;
+	asm volatile("mov %%ebp, %0" : "=r"(ebp));
+	asm volatile("mov %%esp, %0" : "=r"(esp));
+
+	for (int i = 0; i < 4096 && esp < ebp; i++)
+		stack_snapshot[i] = *(uint8_t *)(esp++);
+}
 
 void print_stack_frame()
 {
 	uint32_t *ebp, *esp;
-
 	asm volatile("mov %%ebp, %0" : "=r"(ebp));
 	asm volatile("mov %%esp, %0" : "=r"(esp));
 
 	printk("\nStack trace:\n");
-	print_memory_frame(esp, ebp);
+	memory_dump((uint32_t)esp, (uint32_t)ebp);
 
+	printk("ESP = %p | EBP = %p\n", esp, ebp);
 	uint32_t eip = *(ebp + 1);
 	printk("Return address: 0x%x\n", eip);
 }
 
-void print_memory_frame(uint32_t *start, uint32_t *end)
+void memory_dump(uint32_t addr_start, uint32_t addr_end)
 {
-	if (start >= end) {
-		printk("Error: Invalid memory frame arguments (%p >= %p)\n", start, end);
-		return;
+	uint32_t addr = addr_start;
+	while (addr < addr_end) {
+		if (addr % 8 == 0 || addr == addr_start)
+			printk("%p:  \t", addr);
+		if (*(uint8_t *)addr < 0x10)
+			printk("0");
+		printk("%x ", *(uint8_t *)(addr++));
+		if (addr % 8 == 0)
+			printk("\n");
 	}
-
-	printk("Memory frame from %p to %p:\n", start, end);
-	for (uint32_t *ptr = end; ptr >= start; ptr--) {
-		if ((uint32_t)ptr % sizeof(uint32_t) != 0)
-			continue;
-		print_ptr(ptr);
-	}
-}
-
-void kpanic(char *error_msg)
-{
-	asm volatile("cli");
-	printk("\n------------------------------------\n");
-	print_stack_frame();
-	printk("------------------------------------\n");
-	printk("PANIC: %s\n", error_msg);
-	halt();
+	if (addr % 8)
+		printk("\n");
 }

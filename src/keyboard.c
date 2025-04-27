@@ -1,4 +1,5 @@
 #include "keyboard.h"
+#include "idt.h"
 #include "io.h"
 #include "layout.h"
 
@@ -179,7 +180,7 @@ static key_handler_t keyboard_get_default_key_handler(keyboard_key_t key)
 	case KEY_SPECIAL:
 		return keyboard_get_special_handler(key.undergroup);
 	default:
-		kpanic("Error: key Invalid when called keyboard_get_key_handler fun\n");
+		// kpanic("Error: key Invalid when called keyboard_get_key_handler fun\n");
 		break;
 	}
 	return NULL;
@@ -238,24 +239,16 @@ void keyboard_remap_layout(keyboard_key_t *table, uint32_t size)
 // TODO : register dimamically when memory is implemented
 void keyboard_bind_key(key_handler_t handler, keyboard_key_t key)
 {
-	if (key.keycode > 256 || !handler)
-		kpanic("ERROR: bad parameters to keyboard_register_routine\n");
 	current_layout[key.keycode] = (scancode_routine_t){.handler = handler, .key = key};
 }
 
 // TODO : use free when memory
 void keyboard_unbind_key(uint8_t keycode) { current_layout[keycode] = UNDEFINED_ROUTINE; }
 
-void keyboard_init(void)
-{
-	for (int i = 0; i < 256; ++i)
-		current_layout[i] = UNDEFINED_ROUTINE;
-	keyboard_init_default_table();
-	keyboard_remap_layout(default_key_table, KEY_MAX);
-}
 // TODO: improve to add statement handling + init dynamically when memory is implemented
-void keyboard_handle(void)
+void keyboard_handle(void *arg)
 {
+	(void)arg;
 	if (inb(0x64) & 0x01) {          // read status
 		uint8_t keycode = inb(0x60); // read data
 		if (current_layout[keycode].handler) {
@@ -263,4 +256,13 @@ void keyboard_handle(void)
 			current_layout[keycode].handler(key);
 		}
 	}
+}
+
+void keyboard_init(void)
+{
+	for (int i = 0; i < 256; ++i)
+		current_layout[i] = UNDEFINED_ROUTINE;
+	keyboard_init_default_table();
+	keyboard_remap_layout(default_key_table, KEY_MAX);
+	idt_register_interrupt_handler(33, keyboard_handle);
 }

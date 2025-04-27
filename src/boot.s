@@ -36,6 +36,7 @@ header_end:
 
 _start:
 	lea esp, [0x00090000]
+	mov ebp, esp
 
 	call gdt_init
 	call idt_init
