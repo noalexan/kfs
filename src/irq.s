@@ -17,9 +17,7 @@ interrupt_routine:
 	mov fs, ax
 	mov gs, ax
 
-	push esp
 	call interrupt_handler
-	pop esp
 
 	pop ebx
 	mov ds, bx

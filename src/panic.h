@@ -6,7 +6,6 @@
 
 #define kpanic(msg)                                                                                \
 	do {                                                                                           \
-		asm volatile("cli");                                                                       \
 		printk("\n------------------------------------\n");                                        \
 		print_stack_frame();                                                                       \
 		printk("------------------------------------\n");                                          \

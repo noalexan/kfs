@@ -84,11 +84,11 @@ extern void irq_13(void);
 extern void irq_14(void);
 extern void irq_15(void);
 
-void exception_handler(REGISTERS *regs)
+void exception_handler(REGISTERS regs)
 {
-	vga_set_mode(VGA_COLOR(VGA_COLOR_DARK_GREY, VGA_COLOR_YELLOW));
+	vga_set_mode(VGA_COLOR(VGA_COLOR_BLACK, VGA_COLOR_RED));
 	vga_disable_cursor();
-	kpanic(interrupt_names[regs->interrupt]);
+	kpanic(interrupt_names[regs.interrupt]);
 }
 
 void idt_register_interrupt_handler(uint8_t num, irqHandler handler)
@@ -96,14 +96,14 @@ void idt_register_interrupt_handler(uint8_t num, irqHandler handler)
 	irq_handlers[num] = handler;
 }
 
-void interrupt_handler(REGISTERS *regs)
+void interrupt_handler(REGISTERS regs)
 {
-	if (regs->interrupt >= 40)
+	if (regs.interrupt >= 40)
 		outb(0xA0, 0x20);
 	outb(0x20, 0x20);
 
-	if (irq_handlers[regs->interrupt] != NULL)
-		irq_handlers[regs->interrupt](regs);
+	if (irq_handlers[regs.interrupt] != NULL)
+		irq_handlers[regs.interrupt](&regs);
 }
 
 static void init_pic(void)

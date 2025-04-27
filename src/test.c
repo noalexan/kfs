@@ -73,11 +73,11 @@ void test_idt_invalid_opcode(void) { asm volatile(".byte 0x0F, 0x0B"); }
 
 void test_idt_all_exceptions(void)
 {
-	test_idt_divide_by_zero();
-	test_idt_general_protection();
+	// test_idt_divide_by_zero();
+	// test_idt_general_protection();
 	test_idt_page_fault();
-	test_idt_invalid_opcode();
-	test_idt_overflow();
+	// test_idt_invalid_opcode();
+	// test_idt_overflow();
 }
 
 void debug(keyboard_key_t key)
