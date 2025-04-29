@@ -69,20 +69,20 @@ extern void isr_31(void);
 
 extern void irq_0(void);
 extern void irq_1(void);
-extern void irq_2(void);
-extern void irq_3(void);
-extern void irq_4(void);
-extern void irq_5(void);
-extern void irq_6(void);
-extern void irq_7(void);
-extern void irq_8(void);
-extern void irq_9(void);
-extern void irq_10(void);
-extern void irq_11(void);
-extern void irq_12(void);
-extern void irq_13(void);
-extern void irq_14(void);
-extern void irq_15(void);
+// extern void irq_2(void);
+// extern void irq_3(void);
+// extern void irq_4(void);
+// extern void irq_5(void);
+// extern void irq_6(void);
+// extern void irq_7(void);
+// extern void irq_8(void);
+// extern void irq_9(void);
+// extern void irq_10(void);
+// extern void irq_11(void);
+// extern void irq_12(void);
+// extern void irq_13(void);
+// extern void irq_14(void);
+// extern void irq_15(void);
 
 void exception_handler(REGISTERS regs)
 {
@@ -178,20 +178,20 @@ void idt_init(void)
 
 	idt_set_entry(IDT_ENTRY(0x20), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_0);
 	idt_set_entry(IDT_ENTRY(0x21), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_1);
-	idt_set_entry(IDT_ENTRY(0x22), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_2);
-	idt_set_entry(IDT_ENTRY(0x23), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_3);
-	idt_set_entry(IDT_ENTRY(0x24), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_4);
-	idt_set_entry(IDT_ENTRY(0x25), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_5);
-	idt_set_entry(IDT_ENTRY(0x26), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_6);
-	idt_set_entry(IDT_ENTRY(0x27), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_7);
-	idt_set_entry(IDT_ENTRY(0x28), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_8);
-	idt_set_entry(IDT_ENTRY(0x29), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_9);
-	idt_set_entry(IDT_ENTRY(0x2a), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_10);
-	idt_set_entry(IDT_ENTRY(0x2b), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_11);
-	idt_set_entry(IDT_ENTRY(0x2c), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_12);
-	idt_set_entry(IDT_ENTRY(0x2d), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_13);
-	idt_set_entry(IDT_ENTRY(0x2e), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_14);
-	idt_set_entry(IDT_ENTRY(0x2f), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_15);
+	// idt_set_entry(IDT_ENTRY(0x20), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_2);
+	// idt_set_entry(IDT_ENTRY(0x21), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_3);
+	// idt_set_entry(IDT_ENTRY(0x20), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_4);
+	// idt_set_entry(IDT_ENTRY(0x21), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_5);
+	// idt_set_entry(IDT_ENTRY(0x20), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_6);
+	// idt_set_entry(IDT_ENTRY(0x21), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_7);
+	// idt_set_entry(IDT_ENTRY(0x20), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_8);
+	// idt_set_entry(IDT_ENTRY(0x21), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_9);
+	// idt_set_entry(IDT_ENTRY(0x20), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_10);
+	// idt_set_entry(IDT_ENTRY(0x21), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_11);
+	// idt_set_entry(IDT_ENTRY(0x20), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_12);
+	// idt_set_entry(IDT_ENTRY(0x21), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_13);
+	// idt_set_entry(IDT_ENTRY(0x20), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_14);
+	// idt_set_entry(IDT_ENTRY(0x21), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_15);
 
 	idtr.limit = sizeof(idt_entry) * (IDT_SIZE - 1);
 	idtr.base  = IDT_BASE;

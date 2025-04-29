@@ -15,12 +15,11 @@ typedef struct TTY {
 } TTY;
 
 void ttys_init(void);
+void tty_init(TTY *tty);
 void tty_load(TTY *tty);
 void tty_save(TTY *tty);
-void tty_init(TTY *tty);
 void tty_switch(TTY *tty);
 void tty_switch_color(uint8_t mode);
-void tty_cli_handle_ascii(char ascii);
 void tty_cli_handle_nl(void);
 
 extern TTY *current_tty;

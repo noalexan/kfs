@@ -77,10 +77,10 @@ void tty_switch_color(uint8_t mode)
 
 void ttys_init(void)
 {
+	vga_setup_default_screen();
 	for (unsigned long i = 0; i < sizeof(ttys) / sizeof(TTY); i++)
 		tty_init(ttys + i);
 	current_tty = ttys;
-	vga_setup_default_screen();
 }
 
 void tty_load(TTY *tty)
