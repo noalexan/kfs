@@ -7,6 +7,27 @@
 #include "vga.h"
 #include <libft.h>
 
+#define PIC1         0x20 // IO base address for master PIC
+#define PIC2         0xA0 // IO base address for slave PIC
+#define PIC1_COMMAND PIC1
+#define PIC1_DATA    (PIC1 + 1)
+#define PIC2_COMMAND PIC2
+#define PIC2_DATA    (PIC2 + 1)
+
+#define PIC_EOI 0x20 // End-of-interrupt command code
+
+#define ICW1_ICW4      0x01 // Indicates that ICW4 will be present
+#define ICW1_SINGLE    0x02 // Single (cascade) mode
+#define ICW1_INTERVAL4 0x04 // Call address interval 4 (8)
+#define ICW1_LEVEL     0x08 // Level triggered (edge) mode
+#define ICW1_INIT      0x10 // Initialization - required!
+
+#define ICW4_8086       0x01 // 8086/88 (MCS-80/85) mode
+#define ICW4_AUTO       0x02 // Auto (normal) EOI
+#define ICW4_BUF_SLAVE  0x08 // Buffered mode/slave
+#define ICW4_BUF_MASTER 0x0C // Buffered mode/master
+#define ICW4_SFNM       0x10 // Special fully nested (not)
+
 idtr_t     idtr;
 idt_entry *idt_entries = (idt_entry *)IDT_BASE;
 irqHandler irq_handlers[256];
@@ -99,34 +120,35 @@ void idt_register_interrupt_handler(uint8_t num, irqHandler handler)
 void interrupt_handler(REGISTERS regs)
 {
 	if (regs.interrupt >= 40)
-		outb(0xA0, 0x20);
-	outb(0x20, 0x20);
+		outb(PIC2_COMMAND, PIC_EOI);
+	outb(PIC1_COMMAND, PIC_EOI);
 
-	if (irq_handlers[regs.interrupt] != NULL)
+	if (irq_handlers[regs.interrupt] != NULL) {
 		irq_handlers[regs.interrupt](&regs);
+	}
 }
 
 static void init_pic(void)
 {
 	/* Initialization of ICW1 */
-	outb(0x20, 0x11);
-	outb(0xA0, 0x11);
+	outb(PIC1_COMMAND, ICW1_INIT | ICW1_ICW4);
+	outb(PIC2_COMMAND, ICW1_INIT | ICW1_ICW4);
 
 	/* Initialization of ICW2 */
-	outb(0x21, 0x20); /* start vector = 32 */
-	outb(0xA1, 0x28); /* start vector = 96 */
+	outb(PIC1_DATA, 0x20);
+	outb(PIC2_DATA, 0x28);
 
 	/* Initialization of ICW3 */
-	outb(0x21, 0x04);
-	outb(0xA1, 0x02);
+	outb(PIC1_DATA, 0x04);
+	outb(PIC2_DATA, 0x02);
 
 	/* Initialization of ICW4 */
-	outb(0x21, 0x01);
-	outb(0xA1, 0x01);
+	outb(PIC1_DATA, ICW4_8086);
+	outb(PIC2_DATA, ICW4_8086);
 
 	/* mask interrupts */
-	outb(0x21, 0x0);
-	outb(0xA1, 0x0);
+	outb(PIC1_DATA, 0x00);
+	outb(PIC2_DATA, 0x00);
 }
 
 static inline void idt_set_entry(idt_entry *ptr, uint16_t selector, uint8_t type, uint32_t offset)
