@@ -105,12 +105,7 @@ extern void irq_1(void);
 // extern void irq_14(void);
 // extern void irq_15(void);
 
-void exception_handler(REGISTERS regs)
-{
-	vga_set_mode(VGA_COLOR(VGA_COLOR_BLACK, VGA_COLOR_RED));
-	vga_disable_cursor();
-	kpanic(interrupt_names[regs.interrupt]);
-}
+void exception_handler(REGISTERS regs) { kpanic(interrupt_names[regs.interrupt]); }
 
 void idt_register_interrupt_handler(uint8_t num, irqHandler handler)
 {
