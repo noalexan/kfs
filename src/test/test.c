@@ -3,7 +3,7 @@
 void test_gdt_loaded(void)
 {
 	gdt_ptr_t gdt_ptr;
-	asm volatile("sgdt %0" : "=m"(gdt_ptr));
+	__asm__ volatile("sgdt %0" : "=m"(gdt_ptr));
 	printk("GDT loaded: base=0x%x, limit=0x%x\n", gdt_ptr.base, gdt_ptr.limit);
 }
 
@@ -17,19 +17,19 @@ void test_gdt_access(void)
 static inline uint16_t get_cs(void)
 {
 	uint16_t v;
-	asm volatile("mov %%cs,%0" : "=r"(v));
+	__asm__ volatile("mov %%cs,%0" : "=r"(v));
 	return v;
 }
 static inline uint16_t get_ds(void)
 {
 	uint16_t v;
-	asm volatile("mov %%ds,%0" : "=r"(v));
+	__asm__ volatile("mov %%ds,%0" : "=r"(v));
 	return v;
 }
 static inline uint16_t get_ss(void)
 {
 	uint16_t v;
-	asm volatile("mov %%ss,%0" : "=r"(v));
+	__asm__ volatile("mov %%ss,%0" : "=r"(v));
 	return v;
 }
 
@@ -50,7 +50,7 @@ void test_idt_divide_by_zero(void)
 	(void)c;
 }
 
-void test_idt_general_protection(void) { asm volatile("int $13"); }
+void test_idt_general_protection(void) { __asm__ volatile("int $13"); }
 
 void test_idt_page_fault(void)
 {
@@ -61,15 +61,15 @@ void test_idt_page_fault(void)
 
 void test_idt_overflow(void)
 {
-	asm volatile("add $0x7F, %%al\n\t"
-	             "add $0x7F, %%al\n\t"
-	             "into\n\t"
-	             :
-	             :
-	             : "al");
+	__asm__ volatile("add $0x7F, %%al\n\t"
+	                 "add $0x7F, %%al\n\t"
+	                 "into\n\t"
+	                 :
+	                 :
+	                 : "al");
 }
 
-void test_idt_invalid_opcode(void) { asm volatile(".byte 0x0F, 0x0B"); }
+void test_idt_invalid_opcode(void) { __asm__ volatile(".byte 0x0F, 0x0B"); }
 
 void test_idt_all_exceptions(void)
 {

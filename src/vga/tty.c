@@ -1,10 +1,9 @@
-#include "tty.h"
-#include "acpi.h"
-#include "keyboard.h"
-#include "printk.h"
 #include <libft.h>
 
-#define NEW_LINE '\n'
+#include "../acpi.h"
+#include "../keyboard.h"
+#include "../printk/printk.h"
+#include "tty.h"
 
 static bool ft_strequ(const char *s1, const char *s2)
 {
@@ -54,6 +53,7 @@ void tty_cli_handle_nl(void)
 	} else if (cmd_len) {
 		printk("\nk1tOS: command not found: %s", current_tty->cli);
 	}
+
 	printk("\n%s", TTY_PROMPT);
 	current_tty->cli[0] = 0;
 }
@@ -75,10 +75,10 @@ void tty_switch_color(uint8_t mode)
 
 void ttys_init(void)
 {
+	vga_setup_default_screen();
 	for (unsigned long i = 0; i < sizeof(ttys) / sizeof(TTY); i++)
 		tty_init(ttys + i);
 	current_tty = ttys;
-	vga_setup_default_screen();
 }
 
 void tty_load(TTY *tty)

@@ -1,7 +1,8 @@
-#include "vga.h"
 #include <stdarg.h>
 #include <types.h>
 #include <utils.h>
+
+#include "../vga/vga.h"
 
 static int ft_putchar(char c)
 {
