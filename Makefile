@@ -6,19 +6,23 @@ AS=i686-linux-gnu-as
 ASFLAGS=
 
 CC=i686-linux-gnu-gcc
-CFLAGS=-fno-builtin -fno-exceptions -fno-stack-protector -O3 -Wall -Wextra -I./include -I./lib/libft 
+CFLAGS=-fno-builtin -fno-exceptions -fno-stack-protector
+CFLAGS+=-Wall -Wextra # -Werror
+CFLAGS+=-I./include -I./lib/libft
 
 CXX=i686-linux-gnu-g++
-CXXFLAGS=-fno-builtin -fno-exceptions -fno-stack-protector -fno-rtti -O3 -Wall -Wextra -I./include -I./lib/libft
+CXXFLAGS=-fno-builtin -fno-exceptions -fno-stack-protector -fno-rtti
+CXXFLAGS+=-Wall -Wextra # -Werror
+CXXFLAGS+=-I./include -I./lib/libft
 
 AR=i686-linux-gnu-ar
 
 LD=$(CC)
-LDFLAGS=-z noexecstack -nostdlib -nodefaultlibs -static 
+LDFLAGS=-nostdlib -nodefaultlibs -static -s
 LDLIBS=-L./lib/libft -lft
 
 QEMU=qemu-system-i386
-QEMUFLAGS=-monitor stdio
+QEMUFLAGS=-m 4G -smp 4 -cpu host -enable-kvm -net nic -net user -daemonize
 
 DOCKERIMAGENAME=noalexan/cross-compiler
 DOCKERIMAGETAG=ubuntu
@@ -49,7 +53,7 @@ ifeq ($(IN_DOCKER),1)
 all: $(BUILDDIR)/boot.iso
 else
 all:
-	docker run --rm -t -v .:/kfs -e IN_DOCKER=1 $(DOCKERIMAGENAME):$(DOCKERIMAGETAG)
+	docker run --rm --user 1000:1000 -t -v .:/kfs -e IN_DOCKER=1 $(DOCKERIMAGENAME):$(DOCKERIMAGETAG)
 endif
 
 $(BUILDDIR)/boot.iso: $(ISODIR)/boot/kernel $(ISODIR)/boot/grub/grub.cfg
