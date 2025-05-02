@@ -2,6 +2,8 @@
 
 #include <types.h>
 
+#include "register.h"
+
 #define IDT_BASE        0x00000000
 #define IDT_SIZE        0xFF
 #define IDT_ENTRY(indx) (idt_entries + (indx))
@@ -34,17 +36,10 @@ enum IDTTypeAttributes {
 	PresentBit = 0x01 << 7
 };
 
-typedef struct {
-	uint32_t ds;
-	uint32_t edi, esi, ebp, esp, ebx, edx, ecx, eax;
-	uint32_t interrupt, error;
-	uint32_t eip, cs, eflags, useresp, ss;
-} __attribute__((packed)) REGISTERS;
-
-// idt_entry         *idt_entries;
+extern idt_entry  *idt_entries;
 extern const char *interrupt_names[];
 
-typedef void (*irqHandler)(void *);
+typedef void (*irqHandler)(REGISTERS *);
 
 void idt_init(void);
 void idt_register_interrupt_handler(uint8_t num, irqHandler handler);

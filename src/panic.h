@@ -1,8 +1,9 @@
 #pragma once
 
-#include "acpi.h"
-#include "printk.h"
 #include <types.h>
+
+#include "acpi.h"
+#include "printk/printk.h"
 
 #define kpanic(msg)                                                                                \
 	do {                                                                                           \

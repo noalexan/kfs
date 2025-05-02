@@ -246,9 +246,8 @@ void keyboard_bind_key(key_handler_t handler, keyboard_key_t key)
 void keyboard_unbind_key(uint8_t keycode) { current_layout[keycode] = UNDEFINED_ROUTINE; }
 
 // TODO: improve to add statement handling + init dynamically when memory is implemented
-void keyboard_handle(void *arg)
+void keyboard_handle()
 {
-	(void)arg;
 	if (inb(0x64) & 0x01) {          // read status
 		uint8_t keycode = inb(0x60); // read data
 		if (current_layout[keycode].handler) {
@@ -264,5 +263,5 @@ void keyboard_init(void)
 		current_layout[i] = UNDEFINED_ROUTINE;
 	keyboard_init_default_table();
 	keyboard_remap_layout(default_key_table, KEY_MAX);
-	idt_register_interrupt_handler(33, keyboard_handle);
+	idt_register_interrupt_handler(33, (irqHandler)keyboard_handle);
 }

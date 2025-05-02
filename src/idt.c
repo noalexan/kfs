@@ -1,11 +1,12 @@
-#include "idt.h"
+#include <libft.h>
+
 #include "acpi.h"
+#include "idt.h"
 #include "io.h"
 #include "keyboard.h"
 #include "panic.h"
-#include "printk.h"
-#include "vga.h"
-#include <libft.h>
+#include "printk/printk.h"
+#include "vga/vga.h"
 
 #define PIC1         0x20 // IO base address for master PIC
 #define PIC2         0xA0 // IO base address for slave PIC
