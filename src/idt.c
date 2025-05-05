@@ -29,33 +29,6 @@
 #define ICW4_BUF_MASTER 0x0C // Buffered mode/master
 #define ICW4_SFNM       0x10 // Special fully nested (not)
 
-idtr_t     idtr;
-idt_entry *idt_entries = (idt_entry *)IDT_BASE;
-irqHandler irq_handlers[256];
-
-const char *interrupt_names[] = {"Divide Error",
-                                 "Debug Exception",
-                                 "NMI Interrupt",
-                                 "Breakpoint",
-                                 "Overflow",
-                                 "BOUND Range Exceeded",
-                                 "Invalid Opcode (Undefined Opcode)",
-                                 "Device Not Available (Math Coprocessor)",
-                                 "Double Fault",
-                                 "Coprocessor Segment Overrun (reserved)",
-                                 "Invalid TSS",
-                                 "Segment Not Present",
-                                 "Stack-Segment Fault",
-                                 "General Protection",
-                                 "Page Fault",
-                                 "reserved. Do not use.",
-                                 "x87 FPU Floating-Point Error (Math Fault)",
-                                 "Alignment Check",
-                                 "Machine Check",
-                                 "SIMD Floating-Point Exception",
-                                 "Virtualization Exception",
-                                 "Control Protection Exception"};
-
 extern void isr_0(void);
 extern void isr_1(void);
 extern void isr_2(void);
@@ -89,39 +62,64 @@ extern void isr_29(void);
 extern void isr_30(void);
 extern void isr_31(void);
 
-extern void irq_0(void);
-extern void irq_1(void);
-// extern void irq_2(void);
-// extern void irq_3(void);
-// extern void irq_4(void);
-// extern void irq_5(void);
-// extern void irq_6(void);
-// extern void irq_7(void);
-// extern void irq_8(void);
-// extern void irq_9(void);
-// extern void irq_10(void);
-// extern void irq_11(void);
-// extern void irq_12(void);
-// extern void irq_13(void);
-// extern void irq_14(void);
-// extern void irq_15(void);
+extern void irq_32(void);
+extern void irq_33(void);
+extern void irq_34(void);
+extern void irq_35(void);
+extern void irq_36(void);
+extern void irq_37(void);
+extern void irq_38(void);
+extern void irq_39(void);
+extern void irq_40(void);
+extern void irq_41(void);
+extern void irq_42(void);
+extern void irq_43(void);
+extern void irq_44(void);
+extern void irq_45(void);
+extern void irq_46(void);
+extern void irq_47(void);
+// [...]
+extern void irq_128(void);
 
-void exception_handler(REGISTERS regs) { kpanic(interrupt_names[regs.interrupt]); }
+extern void syscall_dispatcher(REGISTERS, int, int);
 
-void idt_register_interrupt_handler(uint8_t num, irqHandler handler)
+idt_entry *const idt_entries = (idt_entry *)IDT_BASE;
+idtr_t           idtr        = {.limit = sizeof(idt_entry) * (IDT_SIZE - 1), .base = idt_entries};
+
+irqHandler interrupt_handlers[256] = {
+    [0x80] = syscall_dispatcher,
+};
+
+syscallHandler syscall_handlers[256] = {};
+
+const char *interrupt_names[] = {"Divide Error",
+                                 "Debug Exception",
+                                 "NMI Interrupt",
+                                 "Breakpoint",
+                                 "Overflow",
+                                 "BOUND Range Exceeded",
+                                 "Invalid Opcode (Undefined Opcode)",
+                                 "Device Not Available (Math Coprocessor)",
+                                 "Double Fault",
+                                 "Coprocessor Segment Overrun (reserved)",
+                                 "Invalid TSS",
+                                 "Segment Not Present",
+                                 "Stack-Segment Fault",
+                                 "General Protection",
+                                 "Page Fault",
+                                 "reserved. Do not use.",
+                                 "x87 FPU Floating-Point Error (Math Fault)",
+                                 "Alignment Check",
+                                 "Machine Check",
+                                 "SIMD Floating-Point Exception",
+                                 "Virtualization Exception",
+                                 "Control Protection Exception"};
+
+void exception_handler(REGISTERS, int interrupt, int) { kpanic(interrupt_names[interrupt]); }
+
+inline void idt_register_interrupt_handlers(uint8_t num, irqHandler handler)
 {
-	irq_handlers[num] = handler;
-}
-
-void interrupt_handler(REGISTERS regs)
-{
-	if (regs.interrupt >= 40)
-		outb(PIC2_COMMAND, PIC_EOI);
-	outb(PIC1_COMMAND, PIC_EOI);
-
-	if (irq_handlers[regs.interrupt] != NULL) {
-		irq_handlers[regs.interrupt](&regs);
-	}
+	interrupt_handlers[num] = handler;
 }
 
 static void init_pic(void)
@@ -194,26 +192,24 @@ void idt_init(void)
 	idt_set_entry(IDT_ENTRY(0x1e), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)isr_30);
 	idt_set_entry(IDT_ENTRY(0x1f), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)isr_31);
 
-	idt_set_entry(IDT_ENTRY(0x20), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_0);
-	idt_set_entry(IDT_ENTRY(0x21), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_1);
-	// idt_set_entry(IDT_ENTRY(0x20), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_2);
-	// idt_set_entry(IDT_ENTRY(0x21), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_3);
-	// idt_set_entry(IDT_ENTRY(0x20), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_4);
-	// idt_set_entry(IDT_ENTRY(0x21), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_5);
-	// idt_set_entry(IDT_ENTRY(0x20), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_6);
-	// idt_set_entry(IDT_ENTRY(0x21), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_7);
-	// idt_set_entry(IDT_ENTRY(0x20), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_8);
-	// idt_set_entry(IDT_ENTRY(0x21), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_9);
-	// idt_set_entry(IDT_ENTRY(0x20), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_10);
-	// idt_set_entry(IDT_ENTRY(0x21), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_11);
-	// idt_set_entry(IDT_ENTRY(0x20), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_12);
-	// idt_set_entry(IDT_ENTRY(0x21), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_13);
-	// idt_set_entry(IDT_ENTRY(0x20), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_14);
-	// idt_set_entry(IDT_ENTRY(0x21), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_15);
+	idt_set_entry(IDT_ENTRY(0x20), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_32);
+	idt_set_entry(IDT_ENTRY(0x21), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_33);
+	idt_set_entry(IDT_ENTRY(0x22), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_34);
+	idt_set_entry(IDT_ENTRY(0x23), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_35);
+	idt_set_entry(IDT_ENTRY(0x24), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_36);
+	idt_set_entry(IDT_ENTRY(0x25), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_37);
+	idt_set_entry(IDT_ENTRY(0x26), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_38);
+	idt_set_entry(IDT_ENTRY(0x27), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_39);
+	idt_set_entry(IDT_ENTRY(0x28), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_40);
+	idt_set_entry(IDT_ENTRY(0x29), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_41);
+	idt_set_entry(IDT_ENTRY(0x2a), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_42);
+	idt_set_entry(IDT_ENTRY(0x2b), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_43);
+	idt_set_entry(IDT_ENTRY(0x2c), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_44);
+	idt_set_entry(IDT_ENTRY(0x2d), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_45);
+	idt_set_entry(IDT_ENTRY(0x2e), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_46);
+	idt_set_entry(IDT_ENTRY(0x2f), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_47);
+	// [...]
+	idt_set_entry(IDT_ENTRY(0x80), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)irq_128);
 
-	idtr.limit = sizeof(idt_entry) * (IDT_SIZE - 1);
-	idtr.base  = IDT_BASE;
-
-	__asm__ volatile("lidt %0" : : "m"(idtr));
-	__asm__ volatile("sti");
+	__asm__ volatile("lidt %0; sti" : : "m"(idtr));
 }

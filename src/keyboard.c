@@ -263,5 +263,5 @@ void keyboard_init(void)
 		current_layout[i] = UNDEFINED_ROUTINE;
 	keyboard_init_default_table();
 	keyboard_remap_layout(default_key_table, KEY_MAX);
-	idt_register_interrupt_handler(33, (irqHandler)keyboard_handle);
+	idt_register_interrupt_handlers(33, (irqHandler)keyboard_handle);
 }

@@ -2,5 +2,3 @@
 
 - [ ] Create get_line
 - [ ] Add TSS
-
-Set dispatcher for interrupts and syscalls
