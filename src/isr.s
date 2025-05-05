@@ -46,7 +46,6 @@ exception_routine:
 
 	add esp, 8
 
-	sti
 	iret
 
 isr_no_err_stub  0  # Division by Zero
@@ -72,7 +71,7 @@ isr_no_err_stub 19  # SIMD Floating-Point
 isr_no_err_stub 20  # Virtualization
 isr_no_err_stub 21  # Control Protection
 isr_no_err_stub 22  # Reserved
-isr_no_err_stub 23  # Reserved  
+isr_no_err_stub 23  # Reserved
 isr_no_err_stub 24  # Reserved
 isr_no_err_stub 25  # Reserved
 isr_no_err_stub 26  # Reserved

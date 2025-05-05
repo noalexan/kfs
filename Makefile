@@ -18,11 +18,11 @@ CXXFLAGS+=-I./include -I./lib/libft
 AR=i686-linux-gnu-ar
 
 LD=$(CC)
-LDFLAGS=-nostdlib -nodefaultlibs -static -s
+LDFLAGS=-z noexecstack -nostdlib -nodefaultlibs -static # -s
 LDLIBS=-L./lib/libft -lft
 
 QEMU=qemu-system-i386
-QEMUFLAGS=-m 4G -smp 4 -cpu host -enable-kvm -net nic -net user -daemonize
+QEMUFLAGS=-m 4G -smp 4 -cpu host -enable-kvm -net nic -net user -s -daemonize
 
 DOCKERIMAGENAME=noalexan/cross-compiler
 DOCKERIMAGETAG=ubuntu
@@ -53,7 +53,7 @@ ifeq ($(IN_DOCKER),1)
 all: $(BUILDDIR)/boot.iso
 else
 all:
-	docker run --rm --user 1000:1000 -t -v .:/kfs -e IN_DOCKER=1 $(DOCKERIMAGENAME):$(DOCKERIMAGETAG)
+	docker run --rm -t -v .:/kfs -e IN_DOCKER=1 $(DOCKERIMAGENAME):$(DOCKERIMAGETAG)
 endif
 
 $(BUILDDIR)/boot.iso: $(ISODIR)/boot/kernel $(ISODIR)/boot/grub/grub.cfg
@@ -74,7 +74,11 @@ libft:
 
 .PHONY: format
 format:
+ifeq ($(IN_DOCKER),1)
 	@clang-format --verbose --Werror -i $(shell find ./src ./include -regex '.*\.\(c\|h\|cpp\|hpp\)')
+else
+	docker run --rm -t -v .:/kfs -e IN_DOCKER=1 $(DOCKERIMAGENAME):$(DOCKERIMAGETAG) format
+endif
 
 .PHONY: run
 run: all

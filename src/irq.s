@@ -2,12 +2,40 @@
 .code32
 
 .section .text
-	.extern interrupt_handler
+	.global syscall_dispatcher
+	.global interrupt_dispatcher
+	.extern syscall_handlers
+	.extern interrupt_handlers
+
+syscall_dispatcher:
+	mov eax, [esp+36]
+	shl eax, 2
+	mov eax, [syscall_handlers+eax]
+
+	test eax, eax
+	jz .no_sys_handler
+
+	jmp eax
+
+.no_sys_handler:
+	ret
+
+interrupt_dispatcher:
+	mov eax, [esp+40]
+	shl eax, 2
+	mov eax, [interrupt_handlers+eax]
+
+	test eax, eax
+	jz .no_int_handler
+
+	jmp eax
+
+.no_int_handler:
+	ret
 
 interrupt_routine:
 	pusha
 
-	xor eax, eax
 	mov ax, ds
 	push eax
 
@@ -17,41 +45,52 @@ interrupt_routine:
 	mov fs, ax
 	mov gs, ax
 
-	call interrupt_handler
+	mov eax, [esp+36]
+	cmp eax, 40
+	jl .skip_pic2
 
-	pop ebx
-	mov ds, bx
-	mov es, bx
-	mov fs, bx
-	mov gs, bx
+	mov al, 0x20
+	out 0xA0, al
+
+.skip_pic2:
+	mov al, 0x20
+	out 0x20, al
+
+	call interrupt_dispatcher
+
+	pop eax
+	mov ds, ax
+	mov es, ax
+	mov fs, ax
+	mov gs, ax
 
 	popa
-	add esp, 0x08
-	sti
+	add esp, 4
 	iret
 
-.macro isq_stub num, vector
+.macro irq_stub num
 .global irq_\num
 irq_\num:
 	cli
-	push 0
-	push \vector
+	push \num
 	jmp interrupt_routine
 .endm
 
-isq_stub  0, 32
-isq_stub  1, 33
-isq_stub  2, 34
-isq_stub  3, 35
-isq_stub  4, 36
-isq_stub  5, 37
-isq_stub  6, 38
-isq_stub  7, 39
-isq_stub  8, 40
-isq_stub  9, 41
-isq_stub 10, 42
-isq_stub 11, 43
-isq_stub 12, 44
-isq_stub 13, 45
-isq_stub 14, 46
-isq_stub 15, 47
+irq_stub 32
+irq_stub 33
+irq_stub 34
+irq_stub 35
+irq_stub 36
+irq_stub 37
+irq_stub 38
+irq_stub 39
+irq_stub 40
+irq_stub 41
+irq_stub 42
+irq_stub 43
+irq_stub 44
+irq_stub 45
+irq_stub 46
+irq_stub 47
+# [...]
+irq_stub 128

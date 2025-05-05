@@ -1,7 +1,8 @@
 #pragma once
 
+#include <register.h>
+
 #include "io.h"
-#include "register.h"
 
 static inline void shutdown(void)
 {

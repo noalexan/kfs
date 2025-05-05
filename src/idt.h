@@ -2,7 +2,7 @@
 
 #include <types.h>
 
-#include "register.h"
+#include <register.h>
 
 #define IDT_BASE        0x00000000
 #define IDT_SIZE        0xFF
@@ -17,8 +17,8 @@ typedef struct __attribute__((packed)) {
 } idt_entry;
 
 typedef struct __attribute__((packed)) {
-	uint16_t limit;
-	uint32_t base;
+	uint16_t   limit;
+	idt_entry *base;
 } idtr_t;
 
 enum IDTTypeAttributes {
@@ -36,10 +36,11 @@ enum IDTTypeAttributes {
 	PresentBit = 0x01 << 7
 };
 
-extern idt_entry  *idt_entries;
-extern const char *interrupt_names[];
+extern idt_entry *const idt_entries;
+extern const char      *interrupt_names[];
 
-typedef void (*irqHandler)(REGISTERS *);
+typedef void (*irqHandler)(REGISTERS registers, int interrupt, int error);
+typedef void (*syscallHandler)(REGISTERS registers);
 
 void idt_init(void);
-void idt_register_interrupt_handler(uint8_t num, irqHandler handler);
+void idt_register_interrupt_handlers(uint8_t num, irqHandler handler);

@@ -24,7 +24,7 @@ void vga_setup_default_screen()
 	vga_enable_cursor(14, 15);
 	vga_set_cursor_position(0, 1);
 
-	printk(/* KERNEL_BANNER "\n" */ TTY_PROMPT);
+	printk(KERNEL_BANNER "\n" TTY_PROMPT);
 }
 
 void vga_enable_cursor(uint8_t cursor_start, uint8_t cursor_end)
