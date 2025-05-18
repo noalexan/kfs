@@ -1,7 +1,7 @@
 #include "readline.h"
 #include "keyboard.h"
-#include "printk.h"
-#include "tty.h"
+#include "printk/printk.h"
+#include "vga/tty.h"
 
 volatile bool new_cmd = false;
 char          readline_buffer[256];

@@ -1,11 +1,10 @@
-#include "tty.h"
-#include "acpi.h"
-#include "keyboard.h"
-#include "printk.h"
-#include "readline.h"
 #include <libft.h>
 
-#define NEW_LINE '\n'
+#include "../acpi.h"
+#include "../keyboard.h"
+#include "../printk/printk.h"
+#include "../readline.h"
+#include "tty.h"
 
 static bool ft_strequ(const char *s1, const char *s2)
 {
@@ -20,16 +19,16 @@ static bool ft_strequ(const char *s1, const char *s2)
 
 static void print_help(void)
 {
-	printk("\nUsage: [command] [options]\n\n");
-	printk("Available commands:\n");
-	printk("  shutdown   Shut down the system\n");
-	printk("  poweroff   Shut down the system\n");
-	printk("  halt       Halt the system\n");
-	printk("  reboot     Reboot the system\n");
-	printk("  clear      Clear display\n");
-	printk("  azerty     Switch layout to azerty\n");
-	printk("  qwerty     Switch layout to qwerty\n");
-	printk("  help       Display this help message\n\n");
+	printk("\nUsage: [command] [options]\n\n"
+	       "Available commands:\n"
+	       "  shutdown   Shut down the system\n"
+	       "  poweroff   Shut down the system\n"
+	       "  halt       Halt the system\n"
+	       "  reboot     Reboot the system\n"
+	       "  clear      Clear display\n"
+	       "  azerty     Switch layout to azerty\n"
+	       "  qwerty     Switch layout to qwerty\n"
+	       "  help       Display this help message\n");
 }
 
 void tty_cli_handle_nl(void)
@@ -56,6 +55,7 @@ void tty_cli_handle_nl(void)
 	} else if (cmd_len) {
 		printk("\nk1tOS: command not found: %s", current_tty->cli);
 	}
+
 	printk("\n%s", TTY_PROMPT);
 	ft_bzero(current_tty->cli, 256);
 }

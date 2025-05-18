@@ -5,8 +5,8 @@ static uint8_t stack_snapshot[4096];
 void save_stack(void)
 {
 	uint32_t *ebp, *esp;
-	asm volatile("mov %%ebp, %0" : "=r"(ebp));
-	asm volatile("mov %%esp, %0" : "=r"(esp));
+	__asm__ volatile("mov %%ebp, %0" : "=r"(ebp));
+	__asm__ volatile("mov %%esp, %0" : "=r"(esp));
 
 	for (int i = 0; i < 4096 && esp < ebp; i++)
 		stack_snapshot[i] = *(uint8_t *)(esp++);
@@ -15,8 +15,9 @@ void save_stack(void)
 void print_stack_frame()
 {
 	uint32_t *ebp, *esp;
-	asm volatile("mov %%ebp, %0" : "=r"(ebp));
-	asm volatile("mov %%esp, %0" : "=r"(esp));
+
+	__asm__ volatile("mov %%ebp, %0" : "=r"(ebp));
+	__asm__ volatile("mov %%esp, %0" : "=r"(esp));
 
 	printk("\nStack trace:\n");
 	memory_dump((uint32_t)esp, (uint32_t)ebp);
@@ -28,13 +29,13 @@ void print_stack_frame()
 
 void memory_dump(uint32_t addr_start, uint32_t addr_end)
 {
-	uint32_t addr = addr_start;
-	while (addr < addr_end) {
+	uint32_t addr = addr_end;
+	while (addr >= addr_start) {
 		if (addr % 8 == 0 || addr == addr_start)
-			printk("%p:  \t", addr);
+			printk("%p:\t", addr);
 		if (*(uint8_t *)addr < 0x10)
 			printk("0");
-		printk("%x ", *(uint8_t *)(addr++));
+		printk("%x ", *(uint8_t *)(addr--));
 		if (addr % 8 == 0)
 			printk("\n");
 	}

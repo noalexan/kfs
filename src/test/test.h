@@ -1,9 +1,10 @@
 #pragma once
 
-#include "keyboard.h"
-#include "printk.h"
 #include <stdint.h>
 #include <types.h>
+
+#include "../keyboard.h"
+#include "../printk/printk.h"
 
 // Structure pour le pointeur GDT
 typedef struct {

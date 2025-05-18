@@ -1,12 +1,4 @@
-<!-- ? Add printk KERN_* support -->
+? Add printk KERN_* support
 
-- [x] Improve Project Architecture
-- [x] Implement Idt
-- [x] Fix le clear qui reset le mode du tty
-- [x] Create Different layout
-- [x] Handle Backspace
-- [x] Clean registers + save stack + print stack on panic
-- [x] Add signal-callback system
-- [ ] Fix exception name
 - [ ] Create get_line
 - [ ] Add TSS

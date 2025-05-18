@@ -6,26 +6,30 @@ AS=i686-linux-gnu-as
 ASFLAGS=
 
 CC=i686-linux-gnu-gcc
-CFLAGS=-fno-builtin -fno-exceptions -fno-stack-protector -O3 -Wall -Wextra -I./include -I./lib/libft 
+CFLAGS=-ffreestanding -fno-builtin -fno-exceptions -fno-stack-protector
+CFLAGS+=-Wall -Wextra # -Werror
+CFLAGS+=-I./include -I./lib/libft
 
 CXX=i686-linux-gnu-g++
-CXXFLAGS=-fno-builtin -fno-exceptions -fno-stack-protector -fno-rtti -O3 -Wall -Wextra -I./include -I./lib/libft
+CXXFLAGS=-ffreestanding -fno-builtin -fno-exceptions -fno-stack-protector -fno-rtti
+CXXFLAGS+=-Wall -Wextra # -Werror
+CXXFLAGS+=-I./include -I./lib/libft
 
 AR=i686-linux-gnu-ar
 
 LD=$(CC)
-LDFLAGS=-z noexecstack -nostdlib -nodefaultlibs -static 
+LDFLAGS=-z noexecstack -nostdlib -nodefaultlibs -static # -s
 LDLIBS=-L./lib/libft -lft
 
 QEMU=qemu-system-i386
-QEMUFLAGS=-monitor stdio
+QEMUFLAGS=-m 4G -smp 4 -cpu host -enable-kvm -net nic -net user -s -daemonize
 
 DOCKERIMAGENAME=noalexan/cross-compiler
 DOCKERIMAGETAG=ubuntu
 
 OBJ=$(patsubst src/%,$(BINDIR)/%,$(shell find src -regex '.*\(\.c\|\.cpp\|\.s\)' | sed 's/\(\.c\|\.cpp\|\.s\)/.o/g'))
 
-LIBFT_OBJ=      \
+LIBFT_OBJ=    \
 	ft_bzero.o  \
 	ft_memset.o \
 	ft_memcpy.o \
@@ -70,7 +74,11 @@ libft:
 
 .PHONY: format
 format:
+ifeq ($(IN_DOCKER),1)
 	@clang-format --verbose --Werror -i $(shell find ./src ./include -regex '.*\.\(c\|h\|cpp\|hpp\)')
+else
+	docker run --rm -t -v .:/kfs -e IN_DOCKER=1 $(DOCKERIMAGENAME):$(DOCKERIMAGETAG) format
+endif
 
 .PHONY: run
 run: all
