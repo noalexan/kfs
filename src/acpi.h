@@ -13,7 +13,7 @@ static inline void shutdown(void)
 static inline void halt(void)
 {
 	clean_registers();
-	__asm__ volatile("hlt");
+	__asm__ volatile("cli; hlt");
 }
 
 static inline void reboot(void)
