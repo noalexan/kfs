@@ -2,6 +2,8 @@
 ////////////////////////////////////////////////////////////
 // Globals
 
+#define ALIGN8(x) (((x) + 7) & ~7)
+
 multiboot_info_t *mb2info = NULL;
 
 // Principal Header
@@ -37,18 +39,20 @@ const struct multiboot2_header_tag_end mb2_tag_end
 void mb2_init(uint32_t magic, uint32_t mbi_addr)
 {
 	/* Make sure the magic number matches for memory mapping*/
-	if (magic != MULTIBOOT2_BOOTLOADER_MAGIC)
+	if (magic == MULTIBOOT2_BOOTLOADER_MAGIC)
 		kpanic("Invalid magic number: expected 0x%x | used 0x%x\n", MULTIBOOT2_BOOTLOADER_MAGIC,
 		       magic);
 	mb2info = (multiboot_info_t *)mbi_addr;
 }
 
-void *mb2_get_tag(uint32_t tag)
+void *mb2_get_tag(uint32_t target)
 {
+	struct multiboot_tag *tag = (struct multiboot_tag *)&mb2info->tags[0];
 
-	// struct multiboot_tag* tag = (struct multiboot_tag*)&mb2info->tags[0];
-
-	// while (tag->type != 0) {
-
-	// }
+	while (tag->type != 0) {
+		if (tag->type == target)
+			return (void *)tag;
+		tag = (struct multiboot_tag *)((uint8_t *)tag + ALIGN8(tag->size));
+	}
+	return NULL;
 }
