@@ -8,6 +8,7 @@
 
 #define kpanic(msg, ...)                                                                           \
 	do {                                                                                           \
+		vga_clear();                                                                               \
 		vga_set_screen_mode(VGA_COLOR(VGA_COLOR_RED, VGA_COLOR_WHITE));                            \
 		vga_disable_cursor();                                                                      \
 		printk("\n------------------------------------\n");                                        \

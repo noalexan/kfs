@@ -1,8 +1,8 @@
 #include "mb2_info.h"
+#include "memory/map.h"
 ////////////////////////////////////////////////////////////
 // Globals
-
-#define ALIGN8(x) (((x) + 7) & ~7)
+#define TAGS_NEEDED 1
 
 multiboot_info_t *mb2info = NULL;
 
@@ -39,20 +39,26 @@ const struct multiboot2_header_tag_end mb2_tag_end
 void mb2_init(uint32_t magic, uint32_t mbi_addr)
 {
 	/* Make sure the magic number matches for memory mapping*/
-	if (magic == MULTIBOOT2_BOOTLOADER_MAGIC)
+	if (magic != MULTIBOOT2_BOOTLOADER_MAGIC)
 		kpanic("Invalid magic number: expected 0x%x | used 0x%x\n", MULTIBOOT2_BOOTLOADER_MAGIC,
 		       magic);
-	mb2info = (multiboot_info_t *)mbi_addr;
-}
-
-void *mb2_get_tag(uint32_t target)
-{
+	int tags_found            = 0;
+	mb2info                   = (multiboot_info_t *)mbi_addr;
 	struct multiboot_tag *tag = (struct multiboot_tag *)&mb2info->tags[0];
 
-	while (tag->type != 0) {
-		if (tag->type == target)
-			return (void *)tag;
-		tag = (struct multiboot_tag *)((uint8_t *)tag + ALIGN8(tag->size));
+	while (tag->type != MULTIBOOT_TAG_TYPE_END) {
+		switch (tag->type) {
+		case MULTIBOOT_TAG_TYPE_MMAP:
+			multiboot_tag_mmap_t *mmap = (multiboot_tag_mmap_t *)tag;
+			memory_map_init(mmap, (uint8_t *)mmap + mmap->size);
+			tags_found++;
+			break;
+
+		default:
+			break;
+		}
+		tag = (struct multiboot_tag *)((uint8_t *)tag + ALIGN(tag->size, 8));
 	}
-	return NULL;
+	if (tags_found != TAGS_NEEDED)
+		kpanic("Multiboot2: Not whole tags founded\n");
 }

@@ -41,12 +41,6 @@ _start:
     push ebx	# ptr on mb2 info
     push eax	# magic number set by grub for mb2 info
 
-	call mb2_init
-	call gdt_init
-	call idt_init
-
-
-
 	call kernel_main
 
 	hlt

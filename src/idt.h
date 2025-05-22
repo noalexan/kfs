@@ -36,6 +36,7 @@ enum IDTTypeAttributes {
 	PresentBit = 0x01 << 7
 };
 
+extern idtr_t           idtr;
 extern idt_entry *const idt_entries;
 extern const char      *interrupt_names[];
 

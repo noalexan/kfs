@@ -2,6 +2,7 @@ ENTRY(_start)
 
 SECTIONS {
     . = 1M;
+    PROVIDE(kernel_start = .);
 
     .multiboot2_header ALIGN(8) : {
         *(.multiboot2_header)
@@ -23,4 +24,5 @@ SECTIONS {
         *(COMMON)
         *(.bss)
     }
+    PROVIDE(kernel_end = .);
 }
