@@ -38,8 +38,9 @@ _start:
 	lea esp, [0x00090000]
 	mov ebp, esp
 
-	call gdt_init
-	call idt_init
+    push ebx	# ptr on mb2 info
+    push eax	# magic number set by grub for mb2 info
+
 	call kernel_main
 
 	hlt
