@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../mb2_info.h"
+#include "mb2_info.h"
 #include <multiboot2.h>
 #include <types.h>
 #include "memory.h"

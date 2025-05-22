@@ -1,6 +1,5 @@
 #pragma once
 
-#include "panic.h"
 #include <multiboot2.h>
 #include <types.h>
 #include <utils.h>

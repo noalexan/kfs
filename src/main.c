@@ -1,7 +1,8 @@
 #include "gdt.h"
 #include "idt.h"
 #include "keyboard.h"
-#include "mb2_info.h"
+#include "memory/mb2_info.h"
+#include "memory/paging.h"
 #include "memory/boot_allocator.h"
 #include "vga/tty.h"
 
@@ -31,9 +32,5 @@ void kernel_main(uint32_t magic, uint32_t mbi_addr)
 	keyboard_init();
 	ttys_init();
 	mb2_init(magic, mbi_addr);
-
-	// debug();
-	while (true) // hang
-		__asm__ volatile("hlt");
-	;
+	paging_init();
 }
