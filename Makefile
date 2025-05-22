@@ -10,11 +10,6 @@ CFLAGS=-ffreestanding -fno-builtin -fno-exceptions -fno-stack-protector
 CFLAGS+=-Wall -Wextra # -Werror
 CFLAGS+=-I./include -I./lib/libft
 
-CXX=i686-linux-gnu-g++
-CXXFLAGS=-ffreestanding -fno-builtin -fno-exceptions -fno-stack-protector -fno-rtti
-CXXFLAGS+=-Wall -Wextra # -Werror
-CXXFLAGS+=-I./include -I./lib/libft
-
 AR=i686-linux-gnu-ar
 
 LD=$(CC)
@@ -27,9 +22,9 @@ QEMUFLAGS=-m 4G -smp 4 -cpu host -enable-kvm -net nic -net user -s -daemonize
 DOCKERIMAGENAME=noalexan/cross-compiler
 DOCKERIMAGETAG=ubuntu
 
-OBJ=$(patsubst src/%,$(BINDIR)/%,$(shell find src -regex '.*\(\.c\|\.cpp\|\.s\)' | sed 's/\(\.c\|\.cpp\|\.s\)/.o/g'))
+OBJ=$(patsubst src/%,$(BINDIR)/%,$(shell find src -regex '.*\.\(c\|s\)' | sed 's/\.\(c\|s\)/.o/g'))
 
-LIBFT_OBJ=    \
+LIBFT_OBJ= \
 	ft_bzero.o  \
 	ft_memset.o \
 	ft_memcpy.o \
@@ -44,17 +39,24 @@ $(BINDIR)/%.o: src/%.c
 	@mkdir -pv $(@D)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-$(BINDIR)/%.o: src/%.cpp
-	@mkdir -pv $(@D)
-	$(CXX) $(CXXFLAGS) -c -o $@ $<
+ifneq ($(IN_DOCKER),1)
 
 .PHONY: all
-ifeq ($(IN_DOCKER),1)
-all: $(BUILDDIR)/boot.iso
-else
 all:
-	docker run --rm -t -v .:/kfs -e IN_DOCKER=1 $(DOCKERIMAGENAME):$(DOCKERIMAGETAG)
-endif
+	@docker run --rm -t -v .:/kfs -e IN_DOCKER=1 $(DOCKERIMAGENAME):$(DOCKERIMAGETAG) all
+
+.PHONY: format
+format:
+	@docker run --rm -t -v .:/kfs -e IN_DOCKER=1 $(DOCKERIMAGENAME):$(DOCKERIMAGETAG) format
+
+.PHONY: clean
+clean:
+	@docker run --rm -t -v .:/kfs -e IN_DOCKER=1 $(DOCKERIMAGENAME):$(DOCKERIMAGETAG) clean
+
+else
+
+.PHONY: all
+all: $(BUILDDIR)/boot.iso
 
 $(BUILDDIR)/boot.iso: $(ISODIR)/boot/kernel $(ISODIR)/boot/grub/grub.cfg
 	@mkdir -pv $(@D)
@@ -74,21 +76,19 @@ libft:
 
 .PHONY: format
 format:
-ifeq ($(IN_DOCKER),1)
-	@clang-format --verbose --Werror -i $(shell find ./src ./include -regex '.*\.\(c\|h\|cpp\|hpp\)')
-else
-	docker run --rm -t -v .:/kfs -e IN_DOCKER=1 $(DOCKERIMAGENAME):$(DOCKERIMAGETAG) format
+	@clang-format --verbose --Werror -i $(shell find ./src ./include -regex '.*\.\(c\|h\)')
+
+.PHONY: clean
+clean:
+	$(RM) -r $(BUILDDIR)
+
 endif
 
 .PHONY: run
 run: all
 	$(QEMU) $(QEMUFLAGS) -cdrom $(BUILDDIR)/boot.iso
 
-.PHONY: clean
-clean:
-	$(RM) -r $(BUILDDIR)
-
 .PHONY: re
 re: clean all
 
-.NOTPARALLEL: all clean
+.NOTPARALLEL: all clean format

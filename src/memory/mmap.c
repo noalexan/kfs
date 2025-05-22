@@ -1,13 +1,11 @@
-#include "map.h"
+#include <libft.h>
+
+#include "mmap.h"
 #include "../gdt.h"
 #include "../idt.h"
 #include "../panic.h"
 #include "../printk/printk.h"
 #include "utils.h"
-#include <libft.h>
-
-#define UNUSED_MEMORY   0
-#define RESERVED_MEMORY 1
 
 uint8_t        *bitmap;
 static uint32_t num_of_pages = 0;

@@ -1,5 +1,6 @@
 #include "mb2_info.h"
-#include "memory/map.h"
+#include "mmap.h"
+
 ////////////////////////////////////////////////////////////
 // Globals
 #define TAGS_NEEDED 1

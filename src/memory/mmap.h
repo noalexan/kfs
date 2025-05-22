@@ -1,9 +1,14 @@
 #pragma once
 
-#include "../mb2_info.h"
+#include "mb2_info.h"
 #include <multiboot2.h>
 
 #define MAX_REGIONS 32
+
+enum page_status {
+	UNUSED_MEMORY,
+	RESERVED_MEMORY
+};
 
 typedef struct region_s {
 	uintptr_t start;
