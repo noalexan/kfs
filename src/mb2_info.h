@@ -5,6 +5,10 @@
 #include <types.h>
 #include <utils.h>
 
+typedef struct multiboot_tag_mmap multiboot_tag_mmap_t;
+
+typedef void (*entry_handler_t)(uintptr_t start, uintptr_t end);
+
 /* Struct for mb2 parsing*/
 
 typedef struct multiboot_info {
@@ -30,5 +34,5 @@ struct multiboot2_header_tag_information_request {
 
 extern multiboot_info_t *mb2info;
 
-void *mb2_get_tag(uint32_t tag);
-void  mb2_init(uint32_t magic, uint32_t mbi_addr);
+void mb2_mmap_iter(multiboot_tag_mmap_t *mmap, uint8_t *mmap_end, entry_handler_t handler, bool free);
+void mb2_init(uint32_t magic, uint32_t mbi_addr);
