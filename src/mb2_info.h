@@ -34,5 +34,6 @@ struct multiboot2_header_tag_information_request {
 
 extern multiboot_info_t *mb2info;
 
-void mb2_mmap_iter(multiboot_tag_mmap_t *mmap, uint8_t *mmap_end, entry_handler_t handler, bool free);
+void mb2_mmap_iter(multiboot_tag_mmap_t *mmap, uint8_t *mmap_end, entry_handler_t handler,
+                   bool free);
 void mb2_init(uint32_t magic, uint32_t mbi_addr);

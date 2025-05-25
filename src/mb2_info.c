@@ -36,18 +36,25 @@ const struct multiboot2_header_tag_end mb2_tag_end
 ////////////////////////////////////////////////////////////
 // Functions
 
-void mb2_mmap_iter(multiboot_tag_mmap_t *mmap, uint8_t *mmap_end, entry_handler_t handler, bool free) {
-	for (multiboot_memory_map_t *entry = mmap->entries; 
-		(uint8_t *)entry < mmap_end;
-	    entry = next_entry(entry, mmap)) {
+static inline multiboot_memory_map_t *next_entry(multiboot_memory_map_t *mmap_entry,
+                                                 multiboot_tag_mmap_t   *mmap)
+{
+	return (multiboot_memory_map_t *)((uint8_t *)mmap_entry + mmap->entry_size);
+}
+
+void mb2_mmap_iter(multiboot_tag_mmap_t *mmap, uint8_t *mmap_end, entry_handler_t handler,
+                   bool free)
+{
+	for (multiboot_memory_map_t *entry = mmap->entries; (uint8_t *)entry < mmap_end;
+	     entry                         = next_entry(entry, mmap)) {
 
 		if (entry->type != 1 && free == true)
 			continue;
 		else if (entry->type == 1 && free != true)
-			continue ;
+			continue;
 
-        uintptr_t region_start = (uintptr_t)entry->addr;
-        uintptr_t region_end   = (uintptr_t)entry->addr + entry->len;
+		uintptr_t region_start = (uintptr_t)entry->addr;
+		uintptr_t region_end   = (uintptr_t)entry->addr + entry->len;
 		handler(region_start, region_end);
 	}
 }

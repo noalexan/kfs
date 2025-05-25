@@ -5,7 +5,7 @@
 #include <register.h>
 
 #define IDT_BASE        0x00000000
-#define IDT_SIZE        0xFF
+#define IDT_SIZE        256
 #define IDT_ENTRY(indx) (idt_entries + (indx))
 
 typedef struct __attribute__((packed)) {
@@ -17,8 +17,8 @@ typedef struct __attribute__((packed)) {
 } idt_entry;
 
 typedef struct __attribute__((packed)) {
-	uint16_t   limit;
-	idt_entry *base;
+	uint16_t limit;
+	uint32_t base;
 } idtr_t;
 
 enum IDTTypeAttributes {

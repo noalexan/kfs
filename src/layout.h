@@ -2,6 +2,8 @@
 
 #include "keyboard.h"
 
+#define SCROLL_LOCK_KEY 0xC6
+
 /* ---------------------------------------------------------------------------
  * Printable/Alphanumeric Key group
  */
