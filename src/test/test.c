@@ -80,7 +80,7 @@ void test_idt_all_exceptions(void)
 	// test_idt_overflow();
 }
 
-void debug(keyboard_key_t key)
+void debugkey(keyboard_key_t key)
 {
 	(void)key;
 	kpanic("test");
@@ -89,5 +89,5 @@ void debug(keyboard_key_t key)
 void register_scroll_lock_on_debug()
 {
 	keyboard_key_t key = {0, 0, 0x46, 0, 0, NULL}; // Scroll lock
-	keyboard_bind_key(debug, key);
+	keyboard_bind_key(debugkey, key);
 }
