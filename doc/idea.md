@@ -46,4 +46,4 @@ Follow Os dev to implement TSS
 
 ## Handle framgmentation on bitmap
 
-Use a buddy allocator alg
+[ ] Use a buddy allocator alg

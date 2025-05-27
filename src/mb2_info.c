@@ -1,5 +1,5 @@
 #include "mb2_info.h"
-#include "memory/map.h"
+#include "memory/boot_allocator.h"
 ////////////////////////////////////////////////////////////
 // Globals
 #define TAGS_NEEDED 1
@@ -36,6 +36,29 @@ const struct multiboot2_header_tag_end mb2_tag_end
 ////////////////////////////////////////////////////////////
 // Functions
 
+static inline multiboot_memory_map_t *next_entry(multiboot_memory_map_t *mmap_entry,
+                                                 multiboot_tag_mmap_t   *mmap)
+{
+	return (multiboot_memory_map_t *)((uint8_t *)mmap_entry + mmap->entry_size);
+}
+
+void mb2_mmap_iter(multiboot_tag_mmap_t *mmap, uint8_t *mmap_end, entry_handler_t handler,
+                   bool free)
+{
+	for (multiboot_memory_map_t *entry = mmap->entries; (uint8_t *)entry < mmap_end;
+	     entry                         = next_entry(entry, mmap)) {
+
+		if (entry->type != 1 && free == true)
+			continue;
+		else if (entry->type == 1 && free != true)
+			continue;
+
+		uintptr_t region_start = (uintptr_t)entry->addr;
+		uintptr_t region_end   = (uintptr_t)entry->addr + entry->len;
+		handler(region_start, region_end);
+	}
+}
+
 void mb2_init(uint32_t magic, uint32_t mbi_addr)
 {
 	/* Make sure the magic number matches for memory mapping*/
@@ -50,7 +73,7 @@ void mb2_init(uint32_t magic, uint32_t mbi_addr)
 		switch (tag->type) {
 		case MULTIBOOT_TAG_TYPE_MMAP:
 			multiboot_tag_mmap_t *mmap = (multiboot_tag_mmap_t *)tag;
-			memory_map_init(mmap, (uint8_t *)mmap + mmap->size);
+			boot_allocator_init(mmap, (uint8_t *)mmap + mmap->size);
 			tags_found++;
 			break;
 
