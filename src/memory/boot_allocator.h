@@ -3,6 +3,7 @@
 #include "../mb2_info.h"
 #include <multiboot2.h>
 #include <types.h>
+#include "memory.h"
 
 #define MAX_REGIONS 256
 #define END         0x00000000
