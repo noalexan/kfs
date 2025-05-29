@@ -44,29 +44,31 @@ typedef enum {
 
 // STRUCT
 
-struct page {
-	uint32_t     flags;
-	uint32_t     order;
-	struct page *next;
-	uint32_t     reserved;
-};
+// Forward declarations for internals types
 
+struct boot_allocator;
+typedef struct boot_allocator boot_allocator_t;
+
+struct page;
 typedef struct page page_t;
 
 // ============================================================================
 // VARIABLES GLOBALES
 // ============================================================================
 
-extern page_t *page_descriptors;
+extern boot_allocator_t bootmem;
+extern page_t          *page_descriptors;
 
 // ============================================================================
-// EXTERNAK APIs
+// EXTERNAL APIs
 // ============================================================================
 
 // Boot Allocator
 
 void  boot_allocator_printer(void);
-void  boot_allocator_init(multiboot_tag_mmap_t *mmap, uint8_t *mmap_end);
 void *boot_alloc(uint32_t size);
+void  boot_allocator_init(multiboot_tag_mmap_t *mmap, uint8_t *mmap_end);
+
+// Pages
 
 // Buddy Allocator

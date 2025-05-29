@@ -4,7 +4,7 @@
 #include <types.h>
 
 #include "panic.h"
-#include "vga/tty.h"
+#include "tty.h"
 
 #define UNDEFINED           0
 #define STOP_WHEN_UNDEFINED 0

@@ -1,9 +1,8 @@
 #include <libft.h>
 
-#include "../acpi.h"
-#include "../keyboard.h"
-#include "../printk/printk.h"
-#include "../readline.h"
+#include "acpi.h"
+#include "keyboard.h"
+#include "printk/printk.h"
 #include "tty.h"
 
 static bool ft_strequ(const char *s1, const char *s2)
@@ -34,8 +33,6 @@ static void print_help(void)
 void tty_cli_handle_nl(void)
 {
 	size_t cmd_len = ft_strlen(current_tty->cli);
-	ft_memcpy(readline_buffer, current_tty->cli, cmd_len + 1);
-	new_cmd = true;
 	if (ft_strequ(current_tty->cli, "shutdown") || ft_strequ(current_tty->cli, "poweroff")) {
 		shutdown();
 	} else if (ft_strequ(current_tty->cli, "reboot")) {
