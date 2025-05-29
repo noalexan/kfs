@@ -17,7 +17,6 @@ extern uint8_t   kernel_end[];
 boot_allocator_t bootmem;
 
 ////////////////////////////////////////////////
-// Need refactor
 
 // APIs
 

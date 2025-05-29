@@ -1,7 +1,7 @@
 #include <libft.h>
 
-#include "../io.h"
-#include "../printk/printk.h"
+#include "io.h"
+#include "printk.h"
 #include "tty.h"
 #include "vga.h"
 

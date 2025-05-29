@@ -3,8 +3,8 @@
 #include <types.h>
 
 #include "acpi.h"
-#include "printk/printk.h"
-#include "vga/vga.h"
+#include "printk.h"
+#include "vga.h"
 
 #define kpanic(msg, ...)                                                                           \
 	do {                                                                                           \
