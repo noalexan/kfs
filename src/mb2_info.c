@@ -1,5 +1,9 @@
 #include "mb2_info.h"
-#include "memory/boot_allocator.h"
+#include "panic.h"
+#include <types.h>
+#include <utils.h>
+#include <memory.h>
+
 ////////////////////////////////////////////////////////////
 // Globals
 #define TAGS_NEEDED 1

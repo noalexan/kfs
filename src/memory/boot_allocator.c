@@ -1,8 +1,9 @@
 #include "boot_allocator.h"
-#include "../gdt.h"
-#include "../idt.h"
-#include "../panic.h"
+#include "gdt.h"
+#include "idt.h"
+#include "panic.h"
 #include <libft.h>
+#include <memory.h>
 
 /*
  *  The following APIs are used to store precoce allocations and to keep a track of evry used memory

@@ -3,8 +3,8 @@
 // IMCLUDES
 // ============================================================================
 
-#include "boot_allocator.h"
-#include "buddy.h"
+#include <types.h>
+#include "mb2_info.h"
 
 // ============================================================================
 // DEFINE AND MACRO
@@ -58,7 +58,16 @@ typedef struct page page_t;
 // VARIABLES GLOBALES
 // ============================================================================
 
-extern boot_allocator_t bootmem;
-extern buddy_allocator_t buddy[MAX_ORDER];
 extern page_t *page_descriptors;
 
+// ============================================================================
+// EXTERNAK APIs
+// ============================================================================
+
+// Boot Allocator
+
+void  boot_allocator_printer(void);
+void  boot_allocator_init(multiboot_tag_mmap_t *mmap, uint8_t *mmap_end);
+void *boot_alloc(uint32_t size);
+
+// Buddy Allocator

@@ -1,9 +1,11 @@
-#include "../panic.h"
-#include "../printk/printk.h"
+#include "panic.h"
+#include "printk.h"
 #include "utils.h"
 #include <libft.h>
+#include "buddy.h"
+#include "boot_allocator.h"
 
-page_t *page_descriptors;
+
 buddy_allocator_t buddy[MAX_ORDER];
 
 // TODO: get full free size + init all page descriptors
