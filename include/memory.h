@@ -1,16 +1,24 @@
 #pragma once
-
 // ============================================================================
 // IMCLUDES
 // ============================================================================
 
-#include <memory.h>
+#include "mb2_info.h"
+#include <types.h>
 
 // ============================================================================
 // DEFINE AND MACRO
 // ============================================================================
 
-// Defines
+// Define
+
+#define PAGE_SIZE  4096
+#define PAGE_SHIFT 12
+#define MAX_ORDER  11
+
+#define PAGE_FREE      0x01
+#define PAGE_BUDDY     0x02
+#define PAGE_ALLOCATED 0x04
 
 // Macros
 
@@ -18,29 +26,47 @@
 // STRUCT
 // ============================================================================
 
-// Enums
+// ENUM
 
-// Structures
+typedef enum {
+	ORDER_4KIB = 0,
+	ORDER_8KIB,
+	ORDER_16KIB,
+	ORDER_32KIB,
+	ORDER_64KIB,
+	ORDER_128KIB,
+	ORDER_256KIB,
+	ORDER_512KIB,
+	ORDER_1MIB,
+	ORDER_2MIB,
+	ORDER_4MIB
+} OrderType;
 
-struct list_head {
-	struct list_head *next, *prev;
+// STRUCT
+
+struct page {
+	uint32_t     flags;
+	uint32_t     order;
+	struct page *next;
+	uint32_t     reserved;
 };
 
-struct buddy_free_area {
-	struct list_head free_list;
-	uint32_t         nr_free;
-};
-
-// Typedefs
-
-typedef struct buddy_free_area buddy_allocator_t;
+typedef struct page page_t;
 
 // ============================================================================
 // VARIABLES GLOBALES
 // ============================================================================
 
-extern buddy_allocator_t buddy[MAX_ORDER];
+extern page_t *page_descriptors;
 
 // ============================================================================
-// EXTERNAL APIs
+// EXTERNAK APIs
 // ============================================================================
+
+// Boot Allocator
+
+void  boot_allocator_printer(void);
+void  boot_allocator_init(multiboot_tag_mmap_t *mmap, uint8_t *mmap_end);
+void *boot_alloc(uint32_t size);
+
+// Buddy Allocator

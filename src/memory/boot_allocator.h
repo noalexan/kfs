@@ -1,15 +1,37 @@
 #pragma once
 
-#include "../mb2_info.h"
-#include "memory.h"
-#include <multiboot2.h>
+// ============================================================================
+// IMCLUDES
+// ============================================================================
+
 #include <types.h>
+
+// ============================================================================
+// DEFINE AND MACRO
+// ============================================================================
+
+// Defines
 
 #define MAX_REGIONS 256
 #define END         0x00000000
 
+// Macros
+
+// Only in if statement
+#define BOOT_ALLOCATOR_IS_REGION_UNMAPPED(start, end)                                              \
+	(!(boot_allocator_overlaps((start), (end), RESERVED_MEMORY) ||                                 \
+	   boot_allocator_overlaps((start), (end), FREE_MEMORY)))
+
+// ============================================================================
+// STRUCT
+// ============================================================================
+
+// Enums
+
 enum mem_type { FREE_MEMORY = 0, RESERVED_MEMORY };
 enum allocator_state { ACTIVE = 0, FROZEN };
+
+// Structures
 
 typedef struct region_s {
 	uintptr_t start;
@@ -24,13 +46,16 @@ typedef struct boot_allocator {
 	region_t reserved_regions[MAX_REGIONS];
 } boot_allocator_t;
 
+// Typedefs
+
 typedef void (*regions_foreach_fn)(region_t *regions);
 
-// Only in if statement
-#define BOOT_ALLOCATOR_IS_REGION_UNMAPPED(start, end)                                              \
-	(!(boot_allocator_overlaps((start), (end), RESERVED_MEMORY) ||                                 \
-	   boot_allocator_overlaps((start), (end), FREE_MEMORY)))
+// ============================================================================
+// VARIABLES GLOBALES
+// ============================================================================
 
-void  boot_allocator_printer(void);
-void  boot_allocator_init(multiboot_tag_mmap_t *mmap, uint8_t *mmap_end);
-void *boot_alloc(uint32_t size);
+extern boot_allocator_t bootmem;
+
+// ============================================================================
+// EXTERNAL APIs
+// ============================================================================

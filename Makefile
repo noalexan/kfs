@@ -2,18 +2,24 @@ BUILDDIR=build
 BINDIR=$(BUILDDIR)/bin
 ISODIR=$(BUILDDIR)/iso
 
+SRC_HEADERS:= $(shell find src -name "*.h" -exec dirname {} \;)
+
 AS=i686-linux-gnu-as
 ASFLAGS=
 
 CC=i686-linux-gnu-gcc
 CFLAGS=-ffreestanding -fno-builtin -fno-exceptions -fno-stack-protector
 CFLAGS+=-Wall -Wextra # -Werror
-CFLAGS+=-I./include -I./lib/libft
+CFLAGS+=-I./include -I./lib/libft $(addprefix -I./,$(SRC_HEADERS))
+
+SRC_INCLUDE_DIRS := $(shell find src -type d)
+CFLAGS += $(addprefix -I, $(SRC_INCLUDE_DIRS))
 
 CXX=i686-linux-gnu-g++
 CXXFLAGS=-ffreestanding -fno-builtin -fno-exceptions -fno-stack-protector -fno-rtti
 CXXFLAGS+=-Wall -Wextra # -Werror
 CXXFLAGS+=-I./include -I./lib/libft
+CXXFLAGS += $(addprefix -I, $(SRC_INCLUDE_DIRS))
 
 AR=i686-linux-gnu-ar
 
