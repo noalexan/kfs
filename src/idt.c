@@ -84,7 +84,7 @@ extern void irq_128(void);
 extern void syscall_dispatcher(REGISTERS, int, int);
 
 idt_entry *const idt_entries = (idt_entry *)IDT_BASE;
-idtr_t           idtr        = {.limit = sizeof(idt_entry) * IDT_SIZE - 1, .base = idt_entries};
+idtr_t           idtr = {.limit = sizeof(idt_entry) * IDT_SIZE - 1, .base = (uint32_t)idt_entries};
 
 irqHandler interrupt_handlers[256] = {
     [0x80] = syscall_dispatcher,

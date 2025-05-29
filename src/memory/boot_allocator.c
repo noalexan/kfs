@@ -75,27 +75,6 @@ static bool boot_allocator_range_overlaps(uintptr_t start, uintptr_t end, enum m
 	return false;
 }
 
-/*
- * Checks if a given address overlaps
- */
-
-static bool boot_allocator_addr_overlaps(uint32_t addr)
-{
-	for (uint32_t i = 0; i < bootmem.reserved_count; i++) {
-		region_t res = bootmem.reserved_regions[i];
-		if (addr >= res.start && addr < res.end) {
-			return true;
-		}
-	}
-	for (uint32_t i = 0; i < bootmem.free_count; i++) {
-		region_t fr = bootmem.free_regions[i];
-		if (addr >= fr.start && addr < fr.end) {
-			return true;
-		}
-	}
-	return false;
-}
-
 ////////////////////////////////////////////////////////////////////////////////////////////
 
 static void boot_allocator_sort_regions(region_t *reg, uint32_t count)
@@ -113,7 +92,6 @@ static void boot_allocator_sort_regions(region_t *reg, uint32_t count)
 static void boot_allocator_free_handler(uintptr_t start, uintptr_t end)
 {
 	uintptr_t cur = start;
-	printk("Free area : s %p | e %p\n", start, end);
 	for (uint32_t i = 0; i < bootmem.reserved_count; i++) {
 		region_t res = bootmem.reserved_regions[i];
 
@@ -194,10 +172,12 @@ void boot_allocator_init(multiboot_tag_mmap_t *mmap, uint8_t *mmap_end)
 {
 	bootmem.free_count     = 0;
 	bootmem.reserved_count = 0;
-	boot_allocator_add_region(&bootmem, kernel_start, kernel_end, RESERVED_MEMORY);
+	boot_allocator_add_region(&bootmem, (uintptr_t)kernel_start, (uintptr_t)kernel_end,
+	                          RESERVED_MEMORY);
 	boot_allocator_add_region(&bootmem, gdtr.base, (gdtr.base + gdtr.limit + 1), RESERVED_MEMORY);
 	boot_allocator_add_region(&bootmem, idtr.base, (idtr.base + idtr.limit + 1), RESERVED_MEMORY);
-	boot_allocator_add_region(&bootmem, mb2info, (mb2info + mb2info->total_size), RESERVED_MEMORY);
+	boot_allocator_add_region(&bootmem, (uintptr_t)mb2info,
+	                          (uintptr_t)(mb2info + mb2info->total_size), RESERVED_MEMORY);
 	mb2_mmap_iter(mmap, mmap_end, boot_allocator_reserved_wrapper, false);
 	boot_allocator_sort_regions(bootmem.reserved_regions, bootmem.reserved_count);
 	mb2_mmap_iter(mmap, mmap_end, boot_allocator_free_handler, true);
@@ -229,7 +209,7 @@ void *boot_alloc(uint32_t size)
 			reg->start += size;
 
 			if (reg->start == reg->end) {
-				for (int j = i; j < bootmem.free_count - 1; j++)
+				for (uint32_t j = (uint32_t)i; j < bootmem.free_count - 1; j++)
 					bootmem.free_regions[j] = bootmem.free_regions[j + 1];
 				bootmem.free_count -= 1;
 			}

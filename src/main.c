@@ -2,8 +2,8 @@
 #include "idt.h"
 #include "keyboard.h"
 #include "mb2_info.h"
-#include "memory/boot_allocator.h"
-#include "vga/tty.h"
+#include "tty.h"
+#include <memory.h>
 
 void debug(void)
 {
