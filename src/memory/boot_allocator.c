@@ -13,6 +13,7 @@
 
 // Globals
 
+uint32_t total_pages = 0;
 uint32_t total_RAM = 0;
 boot_allocator_t bootmem;
 extern uint8_t   kernel_start[];
@@ -55,23 +56,6 @@ static void boot_allocator_add_region(boot_allocator_t *alloc, uintptr_t start, 
 void boot_allocator_reserved_wrapper(uintptr_t start, uintptr_t end)
 {
 	boot_allocator_add_region(&bootmem, start, end, RESERVED_MEMORY);
-}
-
-/*
- * Checks if a given address range overlaps with any region of the specified memory type
- */
-
-static bool boot_allocator_range_overlaps(uintptr_t start, uintptr_t end, enum mem_type type)
-{
-    uint32_t count = bootmem.count[type];
-    region_t *regions = bootmem.regions[type];
-    
-    for (uint32_t i = 0; i < count; i++) {
-        if (!(end <= regions[i].start || start >= regions[i].end)) {
-            return true;
-        }
-    }
-    return false;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////
@@ -152,23 +136,22 @@ static void boot_allocator_for_each_regions(regions_foreach_fn handler, region_t
 	}
 }
 
-static region_t *boot_allocator_get_all_regions(void)
+static region_t *boot_allocator_get_all_regions(boot_allocator_t *alloc)
 {
     uint32_t idx = 0;
     
     for (uint32_t type = 0; type < REGION_TYPE_COUNT; type++) {
-        for (uint32_t i = 0; i < bootmem.count[type]; i++) {
-            ft_memcpy(&all_reg_g[idx++], &bootmem.regions[type][i], sizeof(region_t));
+        for (uint32_t i = 0; i < alloc->count[type]; i++) {
+            ft_memcpy(&all_reg_g[idx++], &alloc->regions[type][i], sizeof(region_t));
         }
     }
     return all_reg_g;
 }
 
-
 static void boot_allocator_fill_gaps_as_holes(void)
 {
     uint32_t total_reg = BOOT_ALLOC_RESERVED_COUNT(&bootmem) + BOOT_ALLOC_FREE_COUNT(&bootmem);
-    region_t *all_reg = boot_allocator_get_all_regions();
+    region_t *all_reg = boot_allocator_get_all_regions(&bootmem);
 
 	BOOT_ALLOCATOR_SORT_AND_MERGE(all_reg, total_reg);
 
@@ -188,8 +171,42 @@ static void boot_allocator_init_total_size(uintptr_t start, uintptr_t end)
 	total_RAM += end - start;
 }
 
+static uint32_t boot_allocator_get_total_visibale_ram(boot_allocator_t *alloc)
+{
+	uint32_t total_count = BOOT_ALLOC_FREE_COUNT(alloc) + 
+						BOOT_ALLOC_RESERVED_COUNT(alloc) + 
+						BOOT_ALLOC_HOLE_COUNT(alloc);
+
+    if (total_count <= 0)
+        kpanic("Error: %s: this function cannot be called before memory parsing\n", __func__);
+
+	region_t *all_reg = boot_allocator_get_all_regions(alloc);
+	BOOT_ALLOCATOR_SORT_AND_MERGE(all_reg, total_count);
+	uintptr_t end = all_reg[total_count - 1].end;
+	if (end == 0)
+		return 0xffffffff;
+	return end;
+}
+
 //////////////////////////////////////////////////////////////////////////////////////////
 // External APis
+
+/*
+ * Checks if a given address range overlaps with any region of the specified memory type
+ */
+
+bool boot_allocator_range_overlaps(uintptr_t start, uintptr_t end, enum mem_type type)
+{
+    uint32_t count = bootmem.count[type];
+    region_t *regions = bootmem.regions[type];
+    
+    for (uint32_t i = 0; i < count; i++) {
+        if (!(end <= regions[i].start || start >= regions[i].end)) {
+            return true;
+        }
+    }
+    return false;
+}
 
 void boot_allocator_printer(void)
 {
@@ -227,6 +244,8 @@ void boot_allocator_init(multiboot_tag_mmap_t *mmap, uint8_t *mmap_end)
 	boot_allocator_fill_gaps_as_holes();
 	mb2_mmap_iter(mmap, mmap_end, boot_allocator_init_total_size, false);
 	mb2_mmap_iter(mmap, mmap_end, boot_allocator_init_total_size, true);
+
+	total_pages = boot_allocator_get_total_visibale_ram(&bootmem) / PAGE_SIZE;
 	// boot_allocator_printer();
 }
 
@@ -259,6 +278,7 @@ void *boot_alloc(uint32_t size)
 
 			boot_allocator_add_region(&bootmem, (uintptr_t)ret, (uintptr_t)ret + size,
 			                          RESERVED_MEMORY);
+			BOOT_ALLOCATOR_SORT_AND_MERGE(bootmem.regions[RESERVED_MEMORY], bootmem.count[RESERVED_MEMORY]);
 			return ret;
 		}
 	}

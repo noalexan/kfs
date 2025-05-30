@@ -43,9 +43,6 @@
 
 // Enums
 
-enum mem_type { FREE_MEMORY = 0, RESERVED_MEMORY , HOLES_MEMORY};
-enum allocator_state { ACTIVE = 0, FROZEN };
-
 // Structures
 
 typedef struct region_s {
