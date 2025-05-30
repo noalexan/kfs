@@ -4,6 +4,7 @@
 // ============================================================================
 
 #include <types.h>
+#include <utils.h>
 #include "mb2_info.h"
 
 // ============================================================================
@@ -20,7 +21,13 @@
 #define PAGE_BUDDY      0x02
 #define PAGE_ALLOCATED  0x04
 
+#define KiB_SIZE        (1UL << 10)
+#define MiB_SIZE        (1UL << 20)
+#define GiB_SIZE        (1UL << 30)
+
 // Macros 
+
+
 
 // ============================================================================
 // STRUCT
@@ -44,7 +51,6 @@ typedef enum {
 
 // STRUCT
 
-
 // Forward declarations for internals types
 
 struct boot_allocator;
@@ -59,6 +65,7 @@ typedef struct page page_t;
 
 extern boot_allocator_t bootmem;
 extern page_t *page_descriptors;
+extern uint32_t total_RAM;
 
 // ============================================================================
 // EXTERNAL APIs
