@@ -12,39 +12,36 @@
 
 // Defines
 
-#define MAX_REGIONS 			256
-#define END         			0x00000000
-#define REGION_TYPE_COUNT		3
+#define MAX_REGIONS       256
+#define END               0x00000000
+#define REGION_TYPE_COUNT 3
 
 // Macros
 
-#define BOOT_ALLOCATOR_SORT_AND_MERGE(regions, count) \
-    do { \
-        boot_allocator_sort_regions((regions), (count)); \
-        (count) = boot_allocator_merge_contiguous_regions((regions), (count)); \
-    } while(0)
+#define BOOT_ALLOCATOR_SORT_AND_MERGE(regions, count)                                              \
+	do {                                                                                           \
+		boot_allocator_sort_regions((regions), (count));                                           \
+		(count) = boot_allocator_merge_contiguous_regions((regions), (count));                     \
+	} while (0)
 
 // Only in if statement
 #define BOOT_ALLOCATOR_IS_REGION_UNMAPPED(start, end)                                              \
 	(!(boot_allocator_overlaps((start), (end), RESERVED_MEMORY) ||                                 \
 	   boot_allocator_overlaps((start), (end), FREE_MEMORY)))
 
-#define BOOT_ALLOC_FREE_COUNT(alloc)        ((alloc)->count[FREE_MEMORY])
-#define BOOT_ALLOC_RESERVED_COUNT(alloc)    ((alloc)->count[RESERVED_MEMORY])
-#define BOOT_ALLOC_HOLE_COUNT(alloc)        ((alloc)->count[HOLES_MEMORY])
+#define BOOT_ALLOC_FREE_COUNT(alloc)     ((alloc)->count[FREE_MEMORY])
+#define BOOT_ALLOC_RESERVED_COUNT(alloc) ((alloc)->count[RESERVED_MEMORY])
+#define BOOT_ALLOC_HOLE_COUNT(alloc)     ((alloc)->count[HOLES_MEMORY])
 
-#define BOOT_ALLOC_FREE_REGIONS(alloc)      ((alloc)->regions[FREE_MEMORY])
-#define BOOT_ALLOC_RESERVED_REGIONS(alloc)  ((alloc)->regions[RESERVED_MEMORY])
-#define BOOT_ALLOC_HOLE_REGIONS(alloc)      ((alloc)->regions[HOLES_MEMORY])
+#define BOOT_ALLOC_FREE_REGIONS(alloc)     ((alloc)->regions[FREE_MEMORY])
+#define BOOT_ALLOC_RESERVED_REGIONS(alloc) ((alloc)->regions[RESERVED_MEMORY])
+#define BOOT_ALLOC_HOLE_REGIONS(alloc)     ((alloc)->regions[HOLES_MEMORY])
 
 // ============================================================================
 // STRUCT
 // ============================================================================
 
 // Enums
-
-enum mem_type { FREE_MEMORY = 0, RESERVED_MEMORY , HOLES_MEMORY};
-enum allocator_state { ACTIVE = 0, FROZEN };
 
 // Structures
 
