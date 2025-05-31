@@ -84,6 +84,12 @@ bool  boot_allocator_range_overlaps(uintptr_t start, uintptr_t end, enum mem_typ
 
 // page.c
 
-void page_descriptor_init(void);
+void      page_print_info(page_t *page);
+void      page_descriptor_init(void);
+bool      page_addr_is_same_page(uintptr_t addr1, uintptr_t addr2);
+page_t   *page_get_with_addr(uintptr_t addr);
+page_t   *page_get_with_index(uint32_t idx);
+uint32_t  page_get_index(page_t *page);
+uintptr_t page_get_addr(page_t *page);
 
 // buddy.c

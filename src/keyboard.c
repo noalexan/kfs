@@ -15,10 +15,8 @@ static char keyboard_get_shifted_value(keyboard_key_t key)
 {
 	bool shift = left_shift || right_shift;
 
-	if (key.value >= 'a' && key.value <= 'z') {
-		return (shift ^ caps_lock) ? key.alt_value : key.value;
-	} else if (key.category == KEY_ALPHANUMERIC) {
-		return shift ? key.alt_value : key.value;
+	if (key.category == KEY_ALPHANUMERIC) {
+		return (caps_lock || shift) ? key.alt_value : key.value;
 	} else if (key.category == KEY_NAVIGATION && key.undergroup == NUM_PAD && num_lock) {
 		return key.alt_value;
 	}

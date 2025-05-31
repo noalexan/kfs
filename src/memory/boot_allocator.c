@@ -149,15 +149,22 @@ static region_t *boot_allocator_get_all_regions(boot_allocator_t *alloc)
 
 static void boot_allocator_fill_gaps_as_holes(void)
 {
-	uint32_t  total_reg = BOOT_ALLOC_RESERVED_COUNT(&bootmem) + BOOT_ALLOC_FREE_COUNT(&bootmem);
-	region_t *all_reg   = boot_allocator_get_all_regions(&bootmem);
+	uint32_t total_reg = BOOT_ALLOC_RESERVED_COUNT(&bootmem) + BOOT_ALLOC_FREE_COUNT(&bootmem);
+
+	if (total_reg == 0) {
+		printk("No regions to process\n");
+		return;
+	}
+
+	region_t *all_reg = boot_allocator_get_all_regions(&bootmem);
 
 	BOOT_ALLOCATOR_SORT_AND_MERGE(all_reg, total_reg);
 
-	region_t cur = all_reg[0];
-	for (uint32_t i = 1; i < total_reg; i++) {
-		boot_allocator_add_region(&bootmem, cur.end, all_reg[i].start, HOLES_MEMORY);
-		cur = all_reg[i];
+	for (uint32_t i = 0; i < total_reg - 1; i++) {
+		uintptr_t gap_start = all_reg[i].end;
+		uintptr_t gap_end   = all_reg[i + 1].start;
+		if (gap_start < gap_end)
+			boot_allocator_add_region(&bootmem, gap_start, gap_end, HOLES_MEMORY);
 	}
 
 	BOOT_ALLOCATOR_SORT_AND_MERGE(bootmem.regions[HOLES_MEMORY], bootmem.count[HOLES_MEMORY]);
@@ -271,18 +278,26 @@ void *boot_alloc(uint32_t size)
 
 		if (region_size >= size) {
 			void *ret = (void *)reg->start;
-			reg->start += size;
 
-			if (reg->start == reg->end) {
-				for (uint32_t j = (uint32_t)i; j < BOOT_ALLOC_FREE_COUNT(&bootmem) - 1; j++)
-					bootmem.regions[FREE_MEMORY][j] = bootmem.regions[FREE_MEMORY][j + 1];
-				BOOT_ALLOC_FREE_COUNT(&bootmem) -= 1;
+			printk("DEBUG: reg->start=0x%x, reg->end=0x%x, size=0x%x\n", reg->start, reg->end,
+			       size);
+			printk("DEBUG: ret=0x%x, ret+size=0x%x\n", (uintptr_t)ret, (uintptr_t)ret + size);
+
+			// Validation avant d'ajouter
+			if ((uintptr_t)ret + size > reg->end) {
+				printk("ERROR: Allocation would exceed region!\n");
+				continue;
 			}
+
+			reg->start += size;
 
 			boot_allocator_add_region(&bootmem, (uintptr_t)ret, (uintptr_t)ret + size,
 			                          RESERVED_MEMORY);
-			BOOT_ALLOCATOR_SORT_AND_MERGE(bootmem.regions[RESERVED_MEMORY],
-			                              bootmem.count[RESERVED_MEMORY]);
+
+			if (reg->start >= reg->end) {
+				*reg = bootmem.regions[FREE_MEMORY][--BOOT_ALLOC_FREE_COUNT(&bootmem)];
+			}
+
 			return ret;
 		}
 	}
