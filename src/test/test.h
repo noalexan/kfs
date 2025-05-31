@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 #include <types.h>
+#include <memory.h>
 
 #include "../keyboard.h"
 #include "../printk/printk.h"
@@ -27,3 +28,6 @@ void test_idt_page_fault(void);
 
 // debug
 void register_scroll_lock_on_debug();
+
+// memory
+void test_boot_alocator(void);

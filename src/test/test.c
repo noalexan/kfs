@@ -91,3 +91,22 @@ void register_scroll_lock_on_debug()
 	keyboard_key_t key = {0, 0, 0x46, 0, 0, NULL}; // Scroll lock
 	keyboard_bind_key(debugkey, key);
 }
+
+void test_boot_alocator(void)
+{
+
+	printk("---------------------Testing Boot Allocator---------------------\n");
+	boot_allocator_printer();
+	printk("-----------------------------------------------------------------\n");
+	void *a = boot_alloc(64);
+	void *b = boot_alloc(128);
+	void *c = boot_alloc(256);
+
+	printk("boot_alloc(64) , start = %p | end %p\n", a, a + 64);
+	printk("boot_alloc(128) , start = %p | end %p\n", b, b + 128);
+	printk("boot_alloc(256) , start = %p | end %p\n", c, c + 256);
+
+	printk("-----------------------------------------------------------------\n");
+	boot_allocator_printer();
+	printk("-----------------------------------------------------------------\n");
+}
