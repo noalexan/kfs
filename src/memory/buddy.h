@@ -22,24 +22,16 @@
 
 // Structures
 
-struct list_head {
-	struct list_head *next, *prev;
-};
-
-struct buddy_free_area {
-	struct list_head free_list;
-	uint32_t         nr_free;
-};
-
 // Typedefs
 
-typedef struct buddy_free_area buddy_allocator_t;
+typedef struct buddy_allocator buddy_allocator_t;
 
 // ============================================================================
 // VARIABLES GLOBALES
 // ============================================================================
 
-extern buddy_allocator_t buddy[MAX_ORDER];
+// static uintptr_t all_start[MAX_REGIONS];
+
 
 // ============================================================================
 // EXTERNAL APIs

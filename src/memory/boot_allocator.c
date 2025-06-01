@@ -3,7 +3,6 @@
 #include "idt.h"
 #include "panic.h"
 #include <libft.h>
-#include <memory.h>
 #include <utils.h>
 
 /*
@@ -182,8 +181,9 @@ static uint32_t boot_allocator_get_total_visibale_ram(boot_allocator_t *alloc)
 	uint32_t total_count = BOOT_ALLOC_FREE_COUNT(alloc) + BOOT_ALLOC_RESERVED_COUNT(alloc) +
 	                       BOOT_ALLOC_HOLE_COUNT(alloc);
 
-	if (total_count <= 0)
-		kpanic("Error: %s: this function cannot be called before memory parsing\n", __func__);
+    if (total_count <= 0) {
+        kpanic("Error: %s: this function cannot be called before memory parsing\n", __func__);
+	}
 
 	region_t *all_reg = boot_allocator_get_all_regions(alloc);
 	BOOT_ALLOCATOR_SORT_AND_MERGE(all_reg, total_count);
@@ -195,6 +195,21 @@ static uint32_t boot_allocator_get_total_visibale_ram(boot_allocator_t *alloc)
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // External APis
+
+region_t *boot_allocator_get_region(enum mem_type type)
+{
+	return bootmem.regions[type];
+}
+
+uint32_t boot_allocator_get_region_count(enum mem_type type)
+{
+	return bootmem.count[type];
+}
+
+void boot_allocator_freeze(void)
+{
+	bootmem.state = FROZEN;
+}
 
 /*
  * Checks if a given address range overlaps with any region of the specified memory type
@@ -256,7 +271,6 @@ void boot_allocator_init(multiboot_tag_mmap_t *mmap, uint8_t *mmap_end)
 	mb2_mmap_iter(mmap, mmap_end, boot_allocator_init_total_size, true);
 
 	total_pages = boot_allocator_get_total_visibale_ram(&bootmem) / PAGE_SIZE;
-	// boot_allocator_printer();
 }
 
 /*
@@ -278,12 +292,7 @@ void *boot_alloc(uint32_t size)
 
 		if (region_size >= size) {
 			void *ret = (void *)reg->start;
-
-			printk("DEBUG: reg->start=0x%x, reg->end=0x%x, size=0x%x\n", reg->start, reg->end,
-			       size);
-			printk("DEBUG: ret=0x%x, ret+size=0x%x\n", (uintptr_t)ret, (uintptr_t)ret + size);
-
-			// Validation avant d'ajouter
+			
 			if ((uintptr_t)ret + size > reg->end) {
 				printk("ERROR: Allocation would exceed region!\n");
 				continue;

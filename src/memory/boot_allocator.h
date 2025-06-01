@@ -5,6 +5,7 @@
 // ============================================================================
 
 #include <types.h>
+#include <memory.h>
 
 // ============================================================================
 // DEFINE AND MACRO
@@ -12,9 +13,8 @@
 
 // Defines
 
-#define MAX_REGIONS       256
-#define END               0x00000000
-#define REGION_TYPE_COUNT 3
+#define END         			0x00000000
+#define REGION_TYPE_COUNT		3
 
 // Macros
 
@@ -45,13 +45,6 @@
 
 // Structures
 
-typedef struct region_s {
-	uintptr_t start;
-	uintptr_t end;
-} region_t;
-
-/*
- **/
 typedef struct boot_allocator {
 	bool     state;
 	uint32_t count[REGION_TYPE_COUNT];
@@ -66,6 +59,7 @@ typedef void (*regions_foreach_fn)(region_t *regions);
 // VARIABLES GLOBALES
 // ============================================================================
 
+extern boot_allocator_t bootmem;
 static region_t all_reg_g[MAX_REGIONS * REGION_TYPE_COUNT];
 
 // ============================================================================

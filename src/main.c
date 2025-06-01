@@ -13,6 +13,7 @@ void kernel_main(uint32_t magic, uint32_t mbi_addr)
 	ttys_init();
 	mb2_init(magic, mbi_addr);
 	page_descriptor_init();
+	buddy_allocator_init();
 
 	// debug();
 	while (true) // hang

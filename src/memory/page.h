@@ -22,11 +22,6 @@
 
 // Structures
 
-typedef struct page {
-	uint32_t  flags;
-	uintptr_t private_data;
-} page_t;
-
 // Typedefs
 
 typedef struct page page_t;
