@@ -18,6 +18,8 @@
 struct s_cursor g_cursor;
 static uint8_t  vga_mode = VGA_DEFAULT_MODE;
 
+uint8_t vga_get_mode(void) { return vga_mode; }
+
 void vga_setup_default_screen()
 {
 	vga_clear();

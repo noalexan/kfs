@@ -44,3 +44,4 @@ _start:
 	call kernel_main
 
 	hlt
+	jmp . - 1
