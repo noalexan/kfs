@@ -4,8 +4,8 @@
 // IMCLUDES
 // ============================================================================
 
-#include <types.h>
 #include <memory.h>
+#include <types.h>
 
 // ============================================================================
 // DEFINE AND MACRO
@@ -13,8 +13,8 @@
 
 // Defines
 
-#define END         			0x00000000
-#define REGION_TYPE_COUNT		3
+#define END               0x00000000
+#define REGION_TYPE_COUNT 3
 
 // Macros
 
@@ -60,7 +60,7 @@ typedef void (*regions_foreach_fn)(region_t *regions);
 // ============================================================================
 
 extern boot_allocator_t bootmem;
-static region_t all_reg_g[MAX_REGIONS * REGION_TYPE_COUNT];
+static region_t         all_reg_g[MAX_REGIONS * REGION_TYPE_COUNT];
 
 // ============================================================================
 // EXTERNAL APIs

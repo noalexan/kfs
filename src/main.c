@@ -9,11 +9,12 @@ void kernel_main(uint32_t magic, uint32_t mbi_addr)
 {
 	gdt_init();
 	idt_init();
-	keyboard_init();
-	ttys_init();
 	mb2_init(magic, mbi_addr);
 	page_descriptor_init();
-	buddy_allocator_init();
+	keyboard_init();
+	ttys_init();
+	buddy_init();
+	buddy_print();
 
 	// debug();
 	while (true) // hang

@@ -8,7 +8,9 @@
 // #define PAGE_ALLOCATED      0b00000100
 // };
 
-page_t *page_descriptors;
+uint32_t reserved_count = 0;
+uint32_t free_count     = 0;
+page_t  *page_descriptors;
 
 // TODO : add flags when other are implemented
 static uint32_t page_get_appropriate_flag(uintptr_t addr_start)
@@ -20,33 +22,37 @@ static uint32_t page_get_appropriate_flag(uintptr_t addr_start)
 	return PAGE_BUDDY;
 }
 
+static void count_free_pages(page_t *page, void *counter)
+{
+	if (PAGE_IS_FREE(page))
+		(*(uint32_t *)counter)++;
+}
+
+static void count_reserved_pages(page_t *page, void *counter)
+{
+	if (!PAGE_IS_FREE(page))
+		(*(uint32_t *)counter)++;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // External Apis
 
-/*
- * TODO :
- * set page allocated
- * set page not allocated
- *
- * print page info
- */
+uint32_t page_to_index(page_t *page) { return page - page_descriptors; }
 
-uint32_t page_get_index(page_t *page) { return page - page_descriptors; }
-
-uintptr_t page_get_addr(page_t *page)
+uintptr_t page_to_phys(page_t *page)
 {
-	uint32_t idx = page_get_index(page);
+	uint32_t idx = page_to_index(page);
 	return idx * PAGE_SIZE;
 }
 
-page_t *page_get_with_index(uint32_t idx)
+page_t *page_index_to_page(uint32_t idx)
 {
 	if (idx >= total_pages)
 		return NULL;
 	return &page_descriptors[idx];
 }
 
-page_t *page_get_with_addr(uintptr_t addr)
+page_t *page_addr_to_page(uintptr_t addr)
 {
 	return &page_descriptors[ALIGN(addr, PAGE_SIZE) / PAGE_SIZE];
 }
@@ -63,8 +69,8 @@ void page_print_info(page_t *page)
 		return;
 	}
 
-	uint32_t  index = page_get_index(page);
-	uintptr_t addr  = page_get_addr(page);
+	uint32_t  index = page_to_index(page);
+	uintptr_t addr  = page_to_phys(page);
 
 	printk("Page: idx=%u addr=0x%x flags=0x%x\n", index, addr, page->flags);
 
@@ -76,10 +82,33 @@ void page_print_info(page_t *page)
 		printk("  - ALLOCATED\n");
 }
 
+uint32_t page_get_updated_reserved_count(void)
+{
+	reserved_count = 0;
+	page_descriptor_foreach(count_reserved_pages, &reserved_count);
+	return reserved_count;
+}
+
+uint32_t page_get_updated_free_count(void)
+{
+	free_count = 0;
+	page_descriptor_foreach(count_free_pages, &free_count);
+	return free_count;
+}
+
+void page_descriptor_foreach(pages_foreach_fn handler, void *data)
+{
+	for (uint32_t i = 0; i < total_pages; i++)
+		handler(&page_descriptors[i], data);
+}
+
+uint32_t page_get_free_count(void) { return free_count; }
+
+uint32_t page_get_reserved_count(void) { return reserved_count; }
+
 void page_descriptor_init(void)
 {
 	page_descriptors = boot_alloc(total_pages * sizeof(page_t));
-
 	for (uint32_t i = 0; i < total_pages; i++) {
 		page_descriptors[i].flags        = page_get_appropriate_flag(i * PAGE_SIZE);
 		page_descriptors[i].private_data = 0;
