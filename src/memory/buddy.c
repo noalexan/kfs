@@ -8,8 +8,6 @@
 
 /*
  * TODO :
- *  Buddy init: parse Free Mem using bootmem to get addr_start use page_descriptor to init blocks
- *
  *  Alloc Pages :
  *      Split Block
  *
@@ -92,29 +90,28 @@ void buddy_print(void)
 	       total_pages);
 }
 
-// TODO : improve time complexity
-
 void buddy_init(void)
 {
 	boot_allocator_freeze();
 
-	uint32_t  free_count   = boot_allocator_get_region_count(FREE_MEMORY);
-	region_t *free_regions = boot_allocator_get_region(FREE_MEMORY);
+	for (int order = 0; order <= MAX_ORDER; order++) {
+		struct list_head *head = &buddy[NORMAL_ZONE].areas[order].free_list[MIGRATE_MOVABLE];
+		head->next             = head;
+		head->prev             = head;
+		buddy[NORMAL_ZONE].areas[order].nr_free = 0;
+	}
 
-	for (uint32_t i = 0; i < free_count; i++) {
-		page_t *first_page = page_addr_to_page(reg_start(free_regions[i]));
-		page_t *last_page  = page_addr_to_page(reg_end(free_regions[i]));
-
-		while (PAGE_IS_UNUSABLE(first_page) && first_page != last_page)
-			first_page++;
-		while (PAGE_IS_UNUSABLE(last_page) && last_page != first_page)
-			last_page--;
-
-		uint32_t usable_size   = last_page - first_page + 1;
-		uint32_t original_size = usable_size;
-
-		page_t *current_page = first_page;
-
+	for (uint32_t i = 0; i < total_pages; i++) {
+		if (PAGE_IS_UNUSABLE(&page_descriptors[i]))
+			continue;
+		page_t *first_page = &page_descriptors[i];
+		while (PAGE_IS_FREE(&page_descriptors[i]) && i < total_pages)
+			i++;
+		if (PAGE_IS_UNUSABLE(&page_descriptors[i - 1]))
+			break;
+		page_t  *last_page    = &page_descriptors[i];
+		uint32_t usable_size  = last_page - first_page;
+		page_t  *current_page = first_page;
 		for (int order = MAX_ORDER; order >= 0; order--) {
 			uint32_t pages_per_block = (1 << order);
 
