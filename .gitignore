@@ -34,3 +34,5 @@ core.*
 
 # Ignore custom scripts or generated files (adjust as needed)
 scripts/generated/*
+
+.tools
