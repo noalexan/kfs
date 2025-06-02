@@ -84,6 +84,15 @@ else
 	docker run --rm -t -v .:/kfs -e IN_DOCKER=1 $(DOCKERIMAGENAME):$(DOCKERIMAGETAG) format
 endif
 
+EXT_TOOLS := $(PWD)/.tools
+
+.PHONY: setup-dev
+setup-dev:
+	@mkdir -vp $(EXT_TOOLS)
+	@pip install --target $(EXT_TOOLS) pre-commit
+	@PYTHONPATH="$(EXT_TOOLS):$$PYTHONPATH" python -m pre_commit install
+
+
 .PHONY: run
 run: all
 	$(QEMU) $(QEMUFLAGS) -cdrom $(BUILDDIR)/boot.iso
