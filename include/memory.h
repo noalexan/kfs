@@ -75,7 +75,7 @@ typedef enum {
 	ORDER_1MIB,
 	ORDER_2MIB,
 	ORDER_4MIB,
-	ORDER_UNSET,
+	BAD_ORDER,
 } order_size;
 
 enum mem_type { FREE_MEMORY = 0, RESERVED_MEMORY, HOLES_MEMORY };
@@ -164,5 +164,6 @@ uint32_t page_get_reserved_count(void);
 
 // buddy.c
 
-void buddy_init(void);
-void buddy_print(void);
+void       buddy_init(void);
+void       buddy_print(void);
+uintptr_t *buddy_alloc_pages(uint32_t size);
