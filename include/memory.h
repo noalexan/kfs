@@ -17,6 +17,7 @@
 
 #define PAGE_SIZE  4096
 #define PAGE_SHIFT 12
+#define PAGE_MAGIC 0xDEADBEEF
 #define MAX_ORDER  10
 
 #define KiB_SIZE (1UL << 10)
@@ -54,6 +55,7 @@
 #define PAGE_IS_BUDDY_MANAGED(page) (FLAG_IS_SET((page)->flags, PAGE_BUDDY))
 #define PAGE_IS_FREE(page)                                                                         \
 	(FLAG_IS_SET((page)->flags, PAGE_BUDDY) && !FLAG_IS_SET((page)->flags, PAGE_ALLOCATED))
+#define PAGE_BY_ORDER(order) (1 << order)
 
 // Macros
 

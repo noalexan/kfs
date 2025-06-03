@@ -111,6 +111,6 @@ void page_descriptor_init(void)
 	page_descriptors = boot_alloc(total_pages * sizeof(page_t));
 	for (uint32_t i = 0; i < total_pages; i++) {
 		page_descriptors[i].flags        = page_get_appropriate_flag(i * PAGE_SIZE);
-		page_descriptors[i].private_data = 0;
+		page_descriptors[i].private_data = PAGE_MAGIC;
 	}
 }

@@ -14,7 +14,10 @@ void kernel_main(uint32_t magic, uint32_t mbi_addr)
 	keyboard_init();
 	ttys_init();
 	buddy_init();
-	buddy_print();
+	// buddy_print();
+	// uintptr_t *phys = buddy_alloc_pages(PAGE_SIZE * 1024);
+	// printk("Allocated page : %p\n", phys);
+	// buddy_print();
 
 	// debug();
 	while (true) // hang
