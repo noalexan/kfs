@@ -7,7 +7,6 @@
 
 void debug(void)
 {
-
 	printk("---------------------Testing Boot Allocator---------------------\n");
 	boot_allocator_printer();
 	printk("-----------------------------------------------------------------\n");
@@ -31,9 +30,4 @@ void kernel_main(uint32_t magic, uint32_t mbi_addr)
 	keyboard_init();
 	ttys_init();
 	mb2_init(magic, mbi_addr);
-
-	// debug();
-	while (true) // hang
-		__asm__ volatile("hlt");
-	;
 }
