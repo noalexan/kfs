@@ -5,7 +5,7 @@
 ## k1   [x] Hello world kernel
 ## k2   [x] GDT
 ## k4   [x] IDT                                                <!---Deadline - 25 Mai 2025->
-## lk2  [x] Driver and interrupt 
+## lk2  [x] Driver and interrupt
 
 
 ## rt	[ ] Random task : implement backspace and TSS
