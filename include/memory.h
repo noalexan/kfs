@@ -44,6 +44,9 @@
 
 // End of useless things
 
+#define FREE      0
+#define ALLOCATED 1
+
 // Macros
 
 #define PAGE_SET_ALLOCATED(page) FLAG_SET((page)->flags, PAGE_ALLOCATED)
@@ -55,7 +58,10 @@
 #define PAGE_IS_BUDDY_MANAGED(page) (FLAG_IS_SET((page)->flags, PAGE_BUDDY))
 #define PAGE_IS_FREE(page)                                                                         \
 	(FLAG_IS_SET((page)->flags, PAGE_BUDDY) && !FLAG_IS_SET((page)->flags, PAGE_ALLOCATED))
-#define PAGE_BY_ORDER(order) (1 << order)
+#define PAGE_BY_ORDER(order)         (1 << order)
+#define PAGE_DATA_IS_MAGIC(page)     (page->private_data == PAGE_MAGIC)
+#define ORDER_TO_BYTES(order)        (PAGE_BY_ORDER(order) * PAGE_SIZE)
+#define WHO_IS_MY_BUDDY(addr, order) (addr ^ ORDER_TO_BYTES(order))
 
 // Macros
 
@@ -169,3 +175,6 @@ uint32_t page_get_reserved_count(void);
 void       buddy_init(void);
 void       buddy_print(void);
 uintptr_t *buddy_alloc_pages(uint32_t size);
+void       buddy_free_block(void *ptr);
+void       debug_buddy(void);
+void       print_buddy_free_list(uint32_t order);
