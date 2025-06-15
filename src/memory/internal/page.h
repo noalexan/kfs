@@ -4,6 +4,7 @@
 // IMCLUDES
 // ============================================================================
 
+#include <drivers/vga.h>
 #include <memory/boot_allocator.h>
 #include <memory/page.h>
 

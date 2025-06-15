@@ -10,10 +10,6 @@ CFLAGS=-ffreestanding -fno-builtin -fno-exceptions -fno-stack-protector
 CFLAGS+=-Wall -Wextra # -Werror
 CFLAGS+=-I./include -I./lib/libft
 
-SRC_INCLUDE_DIRS := $(shell find src -type d)
-INCLUDE_DIRS := $(shell find include -type d)
-CFLAGS += $(addprefix -I, $(INCLUDE_DIRS)) $(addprefix -I, $(SRC_INCLUDE_DIRS))
-
 CXX=i686-linux-gnu-g++
 CXXFLAGS=-ffreestanding -fno-builtin -fno-exceptions -fno-stack-protector -fno-rtti
 CXXFLAGS+=-Wall -Wextra # -Werror

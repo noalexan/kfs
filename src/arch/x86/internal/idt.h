@@ -1,8 +1,13 @@
 #pragma once
 
+#include <acpi.h>
+#include <drivers/keyboard.h>
+#include <drivers/vga.h>
+#include <io.h>
+#include <kernel/panic.h>
+#include <libft.h>
 #include <types.h>
-
-#include <register.h>
+#include <x86.h>
 
 #define IDT_BASE        0x00000000
 #define IDT_SIZE        256
@@ -15,11 +20,6 @@ typedef struct __attribute__((packed)) {
 	uint8_t  type_attributes;
 	uint16_t offset_2;
 } idt_entry;
-
-typedef struct __attribute__((packed)) {
-	uint16_t limit;
-	uint32_t base;
-} idtr_t;
 
 enum IDTTypeAttributes {
 	TaskGate    = 0x05,
@@ -36,12 +36,8 @@ enum IDTTypeAttributes {
 	PresentBit = 0x01 << 7
 };
 
-extern idtr_t           idtr;
-extern idt_entry *const idt_entries;
-extern const char      *interrupt_names[];
+idtr_t           idtr;
+idt_entry *const idt_entries;
+const char      *interrupt_names[];
 
-typedef void (*irqHandler)(REGISTERS registers, int interrupt, int error);
 typedef void (*syscallHandler)(REGISTERS registers);
-
-void idt_init(void);
-void idt_register_interrupt_handlers(uint8_t num, irqHandler handler);

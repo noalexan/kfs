@@ -5,8 +5,12 @@
 // ============================================================================
 
 #include <acpi.h>
+#include <kernel/panic.h>
+#include <libft.h>
 #include <memory/boot_allocator.h>
 #include <types.h>
+#include <utils.h>
+#include <x86.h>
 
 // ============================================================================
 // DEFINE AND MACRO

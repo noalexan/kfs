@@ -1,11 +1,5 @@
 #include "internal/boot_allocator.h"
 
-#include "gdt.h"
-#include "idt.h"
-#include "panic.h"
-#include <libft.h>
-#include <utils.h>
-
 /*
  *  The following APIs are used to store precoce allocations and to keep a track of evry used memory
  *  before the memory system is available
@@ -248,8 +242,12 @@ void boot_allocator_init(multiboot_tag_mmap_t *mmap, uint8_t *mmap_end)
 	// Zone VGA/BIOS_ROM (0xa0000-0x100000)
 	boot_allocator_add_region(&bootmem, 0xa0000, 0x100000, RESERVED_MEMORY);
 	// Zone Low memory
-	boot_allocator_add_region(&bootmem, gdtr.base, (gdtr.base + gdtr.limit + 1), RESERVED_MEMORY);
-	boot_allocator_add_region(&bootmem, idtr.base, (idtr.base + idtr.limit + 1), RESERVED_MEMORY);
+	const gdt_ptr_t *gdtr = gdtr_getter();
+	const idtr_t    *idtr = idtr_getter();
+	boot_allocator_add_region(&bootmem, gdtr->base, (gdtr->base + gdtr->limit + 1),
+	                          RESERVED_MEMORY);
+	boot_allocator_add_region(&bootmem, idtr->base, (idtr->base + idtr->limit + 1),
+	                          RESERVED_MEMORY);
 	boot_allocator_add_region(&bootmem, 0x0, 0x1000, RESERVED_MEMORY);
 	// Zone Inconnu --> todo : understand wtf is this shit, marked as problematic at the moment
 	boot_allocator_add_region(&bootmem, 0x1000, 0x9fc00, RESERVED_MEMORY);

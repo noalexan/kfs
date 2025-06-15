@@ -1,5 +1,4 @@
 #include "internal/page.h"
-#include "vga.h"
 
 // struct page {
 //     uint32_t flags;

@@ -1,5 +1,4 @@
-#include "gdt.h"
-#include <libft.h>
+#include "internal/gdt.h"
 
 gdt_ptr_t             gdtr;
 segment_descriptor_t *gdt_entries = (segment_descriptor_t *)GDT_ADDR;
@@ -15,6 +14,8 @@ static inline void gdt_set_entry(segment_descriptor_t *gdt_entry, uint32_t base,
 	gdt_entry->flags       = flags & 0x0F;
 	gdt_entry->base_high   = (base >> 24) & 0xFF;
 }
+
+const gdt_ptr_t *gdtr_getter(void) { return &gdtr; }
 
 // TODO : Implement TSS
 void gdt_init(void)
