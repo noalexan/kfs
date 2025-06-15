@@ -1,9 +1,7 @@
 #pragma once
 
+#include <drivers/vga.h>
 #include <types.h>
-
-#include "acpi.h"
-#include "vga.h"
 
 #define kpanic(msg, ...)                                                                           \
 	do {                                                                                           \
@@ -18,6 +16,5 @@
 		halt();                                                                                    \
 	} while (0)
 
-void print_stack_frame();
-void memory_dump(uint32_t addr_start, uint32_t addr_end);
-void save_stack(void);
+void __assert_fail(const char *expr, const char *file, size_t line);
+void print_stack_frame(void);

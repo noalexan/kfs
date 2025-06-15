@@ -1,6 +1,15 @@
-#include "panic.h"
+#include "internal/panic.h"
 
 static uint8_t stack_snapshot[4096];
+
+void __assert_fail(const char *expr, const char *file, size_t line)
+{
+	enum vga_color mode = vga_get_mode();
+	vga_set_mode(VGA_COLOR(VGA_COLOR_BLACK, VGA_COLOR_RED));
+	vga_printf("Assertion failed:%s:%u: %s", file, line, expr);
+	vga_set_mode(mode);
+	vga_printf("\n");
+}
 
 void save_stack(void)
 {
@@ -12,7 +21,7 @@ void save_stack(void)
 		stack_snapshot[i] = *(uint8_t *)(esp++);
 }
 
-void print_stack_frame()
+void print_stack_frame(void)
 {
 	uint32_t *ebp, *esp;
 
