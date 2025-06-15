@@ -9,7 +9,7 @@
 /////////////////////////////////////////////////////////////////////////////////
 // DEBUG
 
-const char *debug_buddy_order_to_string(int order)
+static const char *debug_buddy_order_to_string(int order)
 {
 	switch (order) {
 	case 0:
@@ -39,145 +39,250 @@ const char *debug_buddy_order_to_string(int order)
 	}
 }
 
-void print_buddy_free_list(uint32_t order)
+static void print_buddy_free_list(size_t order)
 {
+	struct list_head *head     = &buddy[NORMAL_ZONE].areas[order].free_list[MIGRATE_MOVABLE];
+	struct list_head *cur      = head->next;
+	int               node_num = 0;
+
+	debug_buddy_corrupted_list(order);
+
+	printk("=== Free list [order %s] ===\n", debug_buddy_order_to_string(order));
+	printk("Head : %p\n Size : %d\n", head, order_to_nrFree(order));
+	while (cur != head) {
+		printk("  Node %d : %p | next = %p | prev = %p\n", node_num, cur, cur->next, cur->prev);
+		cur = cur->next;
+		node_num++;
+	}
+}
+
+static void debug_buddy_panic(const char *func)
+{
+	printk("  Panic system here %s()\n", func);
+	printk("=========================================\n");
+	halt();
+}
+
+static void debug_buddy_print_node_info(struct list_head *node)
+{
+	if (!node) {
+		printk("    [Node State] NULL pointer\n");
+		return;
+	}
+	printk("    [Node %p State] | next: %p | prev: %p\n", node, node->next, node->prev);
+	if (node->next)
+		printk("        -> node->next->prev: %p (should be %p)\n", node->next->prev, node);
+}
+
+static void debug_buddy_corrupted_list(size_t order)
+{
+	struct list_head *cur;
+	size_t            count = 0;
+	size_t            size  = order_to_nrFree(order);
+	size_t            limit = (size == 0 ? 2000 : size * 4);
 	struct list_head *head  = &buddy[NORMAL_ZONE].areas[order].free_list[MIGRATE_MOVABLE];
+
+	for (cur = head->next; cur != head; cur = cur ? cur->next : NULL) {
+		count++;
+		if (!cur) {
+			printk("\n\n--- KERNEL PANIC: LIST CORRUPTION ---\n");
+			printk("  Buddy free_list for order %u is corrupted!\n\n", order);
+			printk("  Reason: NULL pointer encountered during traversal (node #%zu)\n", count);
+			debug_buddy_print_node_info(cur);
+			debug_buddy_panic(__func__);
+		}
+		if (count > limit) {
+			printk("\n\n--- KERNEL PANIC: LIST CORRUPTION ---\n");
+			printk("  Buddy free_list for order %u is corrupted!\n\n", order);
+			printk("  Reason: Infinite loop or corruption detected (node limit exceeded)\n");
+			debug_buddy_print_node_info(cur);
+			debug_buddy_panic(__func__);
+		}
+	}
+	// printk("[OK] Buddy free_list for order %s is healthy\n", debug_buddy_order_to_string(order),
+	// count);
+}
+
+static void debug_buddy_check_lost_pages(void)
+{
+	size_t    lost        = 0;
+	size_t    total_buddy = 0;
+	size_t    free_count  = boot_allocator_get_region_count(FREE_MEMORY);
+	region_t *free_reg    = boot_allocator_get_region(FREE_MEMORY);
+
+	for (uint32_t i = 0; i < total_pages; i++) {
+		if (PAGE_IS_FREE(&page_descriptors[i])) {
+			uintptr_t addr     = i * PAGE_SIZE;
+			bool      in_buddy = false;
+			for (size_t j = 0; j < free_count; j++) {
+				if (addr >= free_reg[j].start && addr < free_reg[j].end) {
+					in_buddy = true;
+					break;
+				}
+			}
+			if (!in_buddy) {
+				printk("Lost page: 0x%x\n", addr);
+				lost++;
+			} else {
+				total_buddy++;
+			}
+		}
+	}
+	// printk("Total free pages (descriptor): %u\n", page_get_updated_free_count());
+	// printk("Total free pages (in buddy regions): %u\n", total_buddy);
+	if (lost > 0) {
+		printk("\n\n--- KERNEL PANIC: PAGES Missing ---\n");
+		printk("Total lost pages: %u\n", lost);
+		debug_buddy_panic(__func__);
+	}
+}
+
+static void debug_buddy_alloc_still_free(size_t order, uintptr_t *phys)
+{
+	bool              found = false;
+	struct list_head *head  = order_to_free_list(order);
 	struct list_head *cur   = head->next;
-	int               count = 0;
-	printk("=== Free list [order %u] ===\n", order);
-	printk("Head @ %p\n", head);
 
 	while (cur != head) {
-		// Affiche l'adresse du nœud courant et ses pointeurs
-		printk("  Node #%d @ %p | next = %p | prev = %p\n", count, cur, cur->next, cur->prev);
-
-		// Optionnel : remonter à la page associée si tu as une fonction pour ça
-		// page_t *page = phys_to_page((uintptr_t)cur);
-		// printk("    -> page index = %u\n", page_to_index(page));
-
-		cur = cur->next;
-		count++;
-
-		// Sécurité anti-boucle infinie
-		if (count > 800) {
-			printk("  !! Boucle infinie ou corruption détectée (trop de blocs)\n");
-			break;
-		}
-	}
-	printk("Total blocks in free_list[%u] : %d\n", order, count);
-	printk("=============================\n");
-}
-
-void debug_buddy_free_list(uint32_t order)
-{
-	printk("---\nIN %s | curent free block %d!\n", __func__, order_to_nrFree(order));
-
-	struct list_head *head  = order_to_free_list(order);
-	struct list_head *cur   = head->next;
-	int               count = 0;
-	int               max   = order_to_nrFree(order) * 4;
-	while (cur != head && count < max) {
-		if (order == 6) {
-			printk("	Why: stuck here count(%d) max(%d) head(%p) cur(%p)!\n", count, max, head,
-			       cur);
-		}
-		cur = cur->next;
-		count++;
-	}
-	if (cur != head) {
-		printk("-	!! Infinite loop or corruption detected in free_list[%d] (count=%d)\n", order,
-		       count);
-		halt();
-	} else {
-		printk("-	OK: free_list [order %d], nodes traversed: %d\n", order, count);
-	}
-	printk("OUT %s!\n---\n", __func__);
-}
-
-void debug_buddy_alloc_still_free(uint32_t order, uintptr_t *phys)
-{
-	printk("---\nIN %s!\n", __func__);
-	if (order_to_nrFree(order) == 0) {
-		printk("	MAY: no block, nothing to be done here %s!\n", __func__);
-		goto out;
-	}
-	struct list_head *head  = order_to_free_list(order);
-	struct list_head *cur   = head->next;
-	int               found = 0;
-	int               count = 0;
-	int               max   = order_to_nrFree(order) * 4;
-	while (cur != head && count < max) {
-		if (order == 6) {
-			printk("	Why: stuck here count(%d) max(%d) head(%p) cur(%p)!\n", count, max, head,
-			       cur);
-		}
-		if ((uintptr_t)cur == phys) {
-			found = 1;
+		if ((uintptr_t *)cur == phys) {
+			found = true;
 			break;
 		}
 		cur = cur->next;
-		count++;
 	}
 	if (found) {
-		printk("-	!! ERROR: %s: (%p) is STILL present in %s!\n", __func__, (void *)phys,
+		printk("Error: %s : (%p) is STILL present in %s free list!\n", __func__, (void *)phys,
 		       debug_buddy_order_to_string(order));
-		halt();
-	} else if (count == max) {
-		printk("-	!! Infinite loop or corruption detected in free_list[%d] (count=%d)\n", order,
-		       count);
-		halt();
-	} else
-		printk("-	OK: %s: (%p) is not present in his list!\n", __func__, (void *)phys);
-out:
-	printk("OUT %s!\n---\n", __func__);
+		debug_buddy_panic(__func__);
+	}
+	// else {
+	// printk("OK: %s: (%p) is not present in %s free list!\n",
+	//    __func__, (void *)phys, debug_buddy_order_to_string(order));
+	// }
 }
 
-void debug_buddy_simple_alloc(int i)
+static void buddy_drain_lower_orders(void)
 {
-	printk("=====================================================================\n");
-	printk("\n\n=== TEST BUDDY ORDER %d (%s) with %d free_blocks ===\n\n", i,
-	       debug_buddy_order_to_string(i), order_to_nrFree(i));
-	uintptr_t *blk1 = pop_block_with_order(i);
-	debug_buddy_free_list(i);
-	debug_buddy_alloc_still_free(i, blk1);
-	uintptr_t *blk2 = pop_block_with_order(i);
-	if (blk1 != NULL && blk2 != NULL) {
-		if (blk1 == blk2) {
-			printk("-	Error: Pop Smoke is die with %x at %d order\n", blk1, i);
-			halt();
-		} else {
-			printk("-	OK: Who can say Pop without Smoke %x %x\n", blk1, blk2);
+	for (int order = 0; order < MAX_ORDER; order++) {
+		size_t free_blocks = order_to_nrFree(order);
+		while (free_blocks-- > 0) {
+			uintptr_t *blk = alloc_block_with_order(order);
+			if (blk == NULL) {
+				printk("Error: Unexpected NULL while draining order %d\n", order);
+				debug_buddy_panic(__func__);
+			}
 		}
+		uintptr_t *blk = alloc_block_with_order(order);
+		if (blk != NULL) {
+			printk("Error: After draining, order %d still has a free block (%p)\n", order,
+			       (void *)blk);
+			debug_buddy_panic(__func__);
+		}
+		buddy[NORMAL_ZONE].areas[order].nr_free = 0;
+	}
+}
 
-		debug_buddy_alloc_still_free(i, blk2);
-		debug_buddy_free_list(i);
-	} else if (blk1 == NULL) {
-		printk("-	!! Allocation failed for order %d\n", i);
-		halt();
-		return;
+static void debug_buddy_simple_alloc(void)
+{
+	for (int i = MAX_ORDER; i >= 0; i--) {
+		if (order_to_nrFree(i) > 0) {
+			uintptr_t *ret = alloc_block_with_order(i);
+			debug_buddy_alloc_still_free(i, ret);
+		}
+	}
+}
+
+static void debug_buddy_check_all_list_corrumption(void)
+{
+	for (size_t order = 0; order <= MAX_ORDER; order++)
+		debug_buddy_corrupted_list(order);
+}
+
+static void debug_buddy_split_block(void)
+{
+	buddy_drain_lower_orders();
+
+	for (int order = MAX_ORDER - 1; order >= 0; order--) {
+		uintptr_t *block = buddy_alloc_pages(ORDER_TO_BYTES(order));
+		debug_buddy_alloc_still_free(order, block);
+		for (int i = order; i < MAX_ORDER; i++) {
+			if (order_to_nrFree(i) != 1) {
+				printk("Error: order %d should have exactly 1 free block, found %u\n", i,
+				       order_to_nrFree(i));
+				print_buddy_free_list(i);
+				debug_buddy_panic(__func__);
+			}
+		}
+		debug_buddy_check_all_list_corrumption();
+		debug_buddy_simple_alloc();
+		buddy_drain_lower_orders();
+	}
+}
+
+static void debug_buddy_free_block(void)
+{
+	buddy_drain_lower_orders();
+
+	for (size_t order = 0; order <= MAX_ORDER; order++) {
+		uintptr_t *block = buddy_alloc_pages(ORDER_TO_BYTES(order));
+		debug_buddy_alloc_still_free(order, block);
+
+		buddy_free_block(block);
+
+		for (size_t i = order; i < MAX_ORDER; i++) {
+			if (order_to_nrFree(i) != 0) {
+				printk("Error: order %u should have exactly 0 free block, found %u\n", i,
+				       order_to_nrFree(i));
+				print_buddy_free_list(i);
+				debug_buddy_panic(__func__);
+			}
+		}
 	}
 }
 
 void debug_buddy(void)
 {
+
+	// Missing Pages
+	debug_buddy_check_lost_pages();
+	printk("[OK] No pages missing\n");
+
+	// List Corrumption
+	debug_buddy_check_all_list_corrumption();
+	printk("[OK] Buddy free_list for order %s is healthy\n");
+
 	// Simple alloc
-	for (int i = MAX_ORDER; i >= 0; i--) {
-		// printk("=====================================================================\n");
-		if (order_to_nrFree(i) > 0) {
-			debug_buddy_simple_alloc(i);
-		} else {
-			printk("\n\n=====================================================================\n\n");
-			printk("Order %d need split for bigger block\n\n", i);
-		}
-	}
-	// Alloc With Split
+	debug_buddy_simple_alloc();
+	debug_buddy_check_all_list_corrumption();
+	printk("[OK] First test for simple allocation\n");
+
+	// Split allocation
+	debug_buddy_split_block();
+	printk("[OK] Split Blocks\n");
+
+	// Free Blocks
+	debug_buddy_free_block();
+	printk("[OK] Free Blocks\n");
+
+	// Free Invalid Pointer
+	// buddy_drain_lower_orders();
+	// buddy_free_block(0x01000);
+
+	// Alloc Invalid Size
+	buddy_drain_lower_orders();
 }
-uint32_t kord = 12;
 
 /////////////////////////////////////////////////////////////////////////////////
 // Internal APIs
 
-buddy_allocator_t buddy[ZONE_TYPES];
+buddy_allocator_t buddy[MAX_ZONE];
+
+static inline struct list_head *ptr_to_list(void *ptr)
+{
+	return page_to_list_node(page_addr_to_page((uintptr_t)ptr));
+}
+
+static inline bool order_is_valid(int order) { return order >= 0 && order <= MAX_ORDER; }
 
 static struct list_head *page_to_list_node(page_t *page)
 {
@@ -185,50 +290,36 @@ static struct list_head *page_to_list_node(page_t *page)
 	return (struct list_head *)phys_addr;
 }
 
-static page_t *list_node_to_page(struct list_head *node)
+static inline page_t *list_node_to_page(struct list_head *node)
 {
-	uintptr_t phys_addr = (uintptr_t)node;
-	return page_addr_to_page(phys_addr);
+	return page_addr_to_page((uintptr_t)node);
 }
 
 static void buddy_list_add_head(struct list_head *new_node, struct list_head *head)
 {
+	struct list_head *old_next = head->next;
 
-	new_node->next = NULL;
-	new_node->prev = NULL;
-	if (kord < 7) {
-		printk("0 newn(%p) newp(%p) | headn(%p) headp(%p)\n", new_node->next, new_node->prev,
-		       head->next, head->prev);
-	}
-	new_node->next = head->next;
+	new_node->next = old_next;
 	new_node->prev = head;
-	if (kord < 7) {
-		printk("1 newn(%p) newp(%p) | headn(%p) headp(%p)\n", new_node->next, new_node->prev,
-		       head->next, head->prev);
-	}
-	head->next->prev = new_node;
-	head->next       = new_node;
-	if (kord < 7) {
-		printk("2 newn(%p) newp(%p) | headn(%p) headp(%p)\n", new_node->next, new_node->prev,
-		       head->next, head->prev);
-	}
+	old_next->prev = new_node;
+	head->next     = new_node;
 }
 
-static inline struct list_head *order_to_free_list(uint32_t order)
+static inline struct list_head *order_to_free_list(size_t order)
 {
 	return &buddy[NORMAL_ZONE].areas[order].free_list[MIGRATE_MOVABLE];
 }
 
-static inline uint32_t order_to_nrFree(uint32_t order)
+static inline size_t order_to_nrFree(size_t order)
 {
 	return buddy[NORMAL_ZONE].areas[order].nr_free;
 }
 
-static uint32_t size_to_order(uint32_t size)
+static size_t size_to_order(size_t size)
 {
-	uint32_t total_pages = DIV_ROUND_UP(size, PAGE_SIZE);
+	size_t total_pages = DIV_ROUND_UP(size, PAGE_SIZE);
 	for (int order = 0; order <= MAX_ORDER; order++) {
-		if (total_pages <= (uint32_t)PAGE_BY_ORDER(order))
+		if (total_pages <= (size_t)PAGE_BY_ORDER(order))
 			return order;
 	}
 	return BAD_ORDER;
@@ -243,7 +334,7 @@ static struct list_head *pop_node(struct list_head *node)
 	return node;
 }
 
-static uintptr_t *pop_first_block(uint32_t order)
+static uintptr_t *pop_first_block(size_t order)
 {
 	struct list_head *head        = order_to_free_list(order);
 	struct list_head *first_block = head->next;
@@ -254,41 +345,48 @@ static uintptr_t *pop_first_block(uint32_t order)
 	return (uintptr_t *)pop_node(first_block);
 }
 
-static void set_block_metadata(uintptr_t *ret, uint32_t order, int type)
+static void set_block_metadata(uintptr_t *ret, size_t order, int type)
 {
 	page_t *first_page       = page_addr_to_page((uintptr_t)ret);
 	first_page->private_data = type == FREE ? PAGE_MAGIC : (uintptr_t)order;
 	type == FREE ? PAGE_SET_FREE(first_page) : PAGE_SET_ALLOCATED(first_page);
 }
 
-static inline uintptr_t *pop_block_with_order(uint32_t order)
+static uintptr_t *alloc_block_with_order(size_t order)
 {
-	if (!buddy[NORMAL_ZONE].areas[order].nr_free)
-		return NULL;
 	uintptr_t *ret = pop_first_block(order);
-	set_block_metadata(ret, order, ALLOCATED);
+	if (ret == NULL && order_to_nrFree(order) > 0)
+		kpanic("Error : %s: free count mismatch (order %u, nrFree=%u)", __func__, order,
+		       order_to_nrFree(order));
+	if (ret)
+		set_block_metadata(ret, order, ALLOCATED);
 	return ret;
 }
 
-static uintptr_t *split_blocks(uint32_t order_needed, uint32_t cur_order, uintptr_t *ret)
+static uintptr_t *split_block_to_order(size_t order_needed, size_t cur_order, uintptr_t *ret)
 {
+	if (!order_is_valid(order_needed) || !order_is_valid(cur_order))
+		kpanic("Error: %s: Invalid Order\n", __func__);
 	if (cur_order == order_needed) {
 		set_block_metadata(ret, order_needed, ALLOCATED);
 		return ret;
 	}
 	page_t *first_page = page_addr_to_page((uintptr_t)ret);
-	page_t *next_page  = first_page + PAGE_BY_ORDER(cur_order);
-	buddy_list_add_head(page_to_list_node(next_page), order_to_free_list(cur_order));
-	printk("block A %x, block b %x", first_page, next_page);
-	buddy[NORMAL_ZONE].areas[cur_order].nr_free++;
+	page_t *buddy_page = first_page + PAGE_BY_ORDER((cur_order - 1));
+
+	buddy_list_add_head(page_to_list_node(buddy_page), order_to_free_list(cur_order - 1));
+	buddy[NORMAL_ZONE].areas[cur_order - 1].nr_free++;
 	cur_order--;
-	return split_blocks(order_needed, cur_order, ret);
+	return split_block_to_order(order_needed, cur_order, ret);
 }
 
-uintptr_t *buddy_alloc_pages(uint32_t size)
+/////////////////////////////////////////////////////////////////////////////////
+// Externals APIs
+
+uintptr_t *buddy_alloc_pages(size_t size)
 {
-	uint32_t order_needed = size_to_order(size);
-	uint32_t cur_order    = order_needed;
+	size_t order_needed = size_to_order(size);
+	size_t cur_order    = order_needed;
 	while (cur_order != BAD_ORDER && !order_to_nrFree(cur_order))
 		cur_order++;
 	if (cur_order == BAD_ORDER)
@@ -297,54 +395,78 @@ uintptr_t *buddy_alloc_pages(uint32_t size)
 		uintptr_t *ret = pop_first_block(cur_order);
 		if (ret == NULL)
 			return NULL;
-		printk("BLOCK NEED TO BE SPLITTED\n");
-		return split_blocks(order_needed, cur_order, ret);
+		return split_block_to_order(order_needed, cur_order, ret);
 	}
-	printk("BLOCK DONT NEED TO BE SPLITED\n");
-	return pop_block_with_order(order_needed);
+	return alloc_block_with_order(order_needed);
 }
 
-/////////////////////////////////////////////////////////////////////////////////
-// Externals APIs
+static uintptr_t get_buddy_base(uintptr_t addr)
+{
+	size_t    free_count = boot_allocator_get_region_count(FREE_MEMORY);
+	region_t *free_reg   = boot_allocator_get_region(FREE_MEMORY);
+
+	for (size_t i = 0; i < free_count; i++) {
+		if (addr >= free_reg[i].start && addr < free_reg[i].end)
+			return free_reg[i].start;
+	}
+	return 0;
+}
+
+static struct list_head *get_buddy_node(void *block, size_t order)
+{
+	struct list_head *head = order_to_free_list(order);
+	struct list_head *cur  = head->next;
+	uintptr_t         buddy_addr =
+	    WHO_IS_MY_BUDDY((uintptr_t)block, order, get_buddy_base((uintptr_t)block));
+
+	while (cur != head) {
+		if ((uintptr_t)cur == buddy_addr) {
+			return cur;
+		}
+		cur = cur->next;
+	}
+	print_buddy_free_list(order);
+
+	return NULL;
+}
 
 void buddy_free_block(void *ptr)
 {
-	// Check if the ptr page is correct is correct
 	page_t *page = page_addr_to_page((uintptr_t)ptr);
-	if (PAGE_IS_FREE(page) || PAGE_DATA_IS_MAGIC(page))
-		kpanic("error: buddy_free_block: trying to free a non-allocated block\n");
 
-	uint32_t block_order = (uint32_t)page->private_data;
-	if (block_order > MAX_ORDER) {
-		kpanic("error: buddy_free_block: incorrect block order: %x\n", block_order);
+	size_t block_order = (size_t)page->private_data;
+	if (!order_is_valid(block_order)) {
+		kpanic("Error: buddy_free_block: incorrect block order: %x\n", block_order);
 	}
+
 	page->private_data = PAGE_MAGIC;
 	PAGE_SET_FREE(page);
-	debug_buddy_free_list(block_order);
-	while (block_order <= MAX_ORDER) {
-		uintptr_t         buddy_addr = WHO_IS_MY_BUDDY((uintptr_t)ptr, block_order);
-		struct list_head *first_node = order_to_free_list(block_order);
-		struct list_head *cur        = first_node->next;
-		while (cur != first_node) {
-			if ((uintptr_t)cur == buddy_addr)
-				break;
-			cur = cur->next;
+
+	while (block_order < MAX_ORDER) {
+
+		struct list_head *buddy_node = get_buddy_node(ptr, block_order);
+		if (!buddy_node) {
+			break;
 		}
-		if (cur == first_node)
-			break;
-		cur = pop_node(cur);
+
+		buddy_node = pop_node(buddy_node);
+
+		page_t *buddy_page = page_addr_to_page((uintptr_t)buddy_node);
+
+		buddy_page->private_data = PAGE_MAGIC;
+		PAGE_SET_FREE(buddy_page);
+
 		buddy[NORMAL_ZONE].areas[block_order].nr_free--;
-		ptr = (void *)MIN((uintptr_t)ptr, (uintptr_t)cur);
-		if (block_order == MAX_ORDER)
-			break;
+		ptr = (void *)MIN((uintptr_t)ptr, (uintptr_t)buddy_node);
+
 		block_order++;
 	}
-	buddy_list_add_head(page_to_list_node(page_addr_to_page((uintptr_t)ptr)),
-	                    order_to_free_list(block_order));
+
+	buddy_list_add_head(ptr_to_list(ptr), order_to_free_list(block_order));
 	buddy[NORMAL_ZONE].areas[block_order].nr_free++;
 }
 
-uint32_t buddy_get_var_size(void *var)
+size_t buddy_get_var_size(void *var)
 {
 	page_t *page = page_addr_to_page((uintptr_t)var);
 	if (PAGE_DATA_IS_MAGIC(page))
@@ -355,16 +477,15 @@ uint32_t buddy_get_var_size(void *var)
 void buddy_print(void)
 {
 	printk("Buddy Free Blocks: \n---\n");
-	bool     has_blocks            = false;
-	uint32_t total_pages_in_blocks = 0;
+	bool   has_blocks            = false;
+	size_t total_pages_in_blocks = 0;
 
 	for (int order = 0; order <= MAX_ORDER; order++) {
-		uint32_t nr_free = buddy[NORMAL_ZONE].areas[order].nr_free;
+		size_t nr_free = buddy[NORMAL_ZONE].areas[order].nr_free;
 		if (nr_free > 0) {
-			uint32_t size_kb        = PAGE_BY_ORDER(order) * 4;
-			uint32_t pages_in_order = nr_free * PAGE_BY_ORDER(order);
+			size_t pages_in_order = nr_free * PAGE_BY_ORDER(order);
 			total_pages_in_blocks += pages_in_order;
-			printk("[%uKB:%u] ", size_kb, nr_free);
+			printk("[%s:%u] ", debug_buddy_order_to_string(order), nr_free);
 			has_blocks = true;
 		}
 	}
@@ -389,37 +510,30 @@ void buddy_init(void)
 		buddy[NORMAL_ZONE].areas[order].nr_free = 0;
 	}
 
-	for (uint32_t i = 0; i < total_pages; i++) {
-		if (PAGE_IS_UNUSABLE(&page_descriptors[i]))
-			continue;
-		page_t *first_page = &page_descriptors[i];
-		while (i < total_pages && PAGE_IS_FREE(&page_descriptors[i])) {
-			i++;
-		}
-		page_t  *last_page    = &page_descriptors[i];
-		uint32_t usable_size  = last_page - first_page;
-		page_t  *current_page = first_page;
-		printk("---------------------\nbuddy init : first_page(%p), last_page(%p) , "
-		       "usable_size(%d)\n\n",
-		       usable_size);
+	size_t    free_count = boot_allocator_get_region_count(FREE_MEMORY);
+	region_t *free_reg   = boot_allocator_get_region(FREE_MEMORY);
+
+	for (size_t i = 0; i < free_count; i++) {
+		page_t *region_start_page = page_addr_to_usable(free_reg[i].start, NEXT);
+		page_t *region_end_page   = page_addr_to_usable(free_reg[i].end, PREV);
+
+		size_t  usable_page  = region_end_page - region_start_page + 1;
+		page_t *current_page = region_start_page;
+
 		for (int order = MAX_ORDER; order >= 0; order--) {
-			uint32_t pages_per_block = PAGE_BY_ORDER(order);
-			while (usable_size >= pages_per_block) {
-				struct list_head *new_node = page_to_list_node(current_page);
-				if (order < 7) {
-					kord                 = order;
-					uintptr_t start_addr = page_to_phys(current_page);
-					uintptr_t end_addr   = start_addr + pages_per_block * PAGE_SIZE;
-					printk("%s : s(%p) e(%p)\n", debug_buddy_order_to_string(order),
-					       (void *)start_addr, (void *)end_addr);
-				}
+			size_t pages_per_block = PAGE_BY_ORDER(order);
+			while (usable_page >= pages_per_block) {
+				struct list_head *new_node = (struct list_head *)page_to_phys(current_page);
+				ft_memset(new_node, 0, sizeof(struct list_head));
+
 				buddy_list_add_head(new_node,
 				                    &buddy[NORMAL_ZONE].areas[order].free_list[MIGRATE_MOVABLE]);
 				buddy[NORMAL_ZONE].areas[order].nr_free++;
 				current_page += pages_per_block;
-				usable_size -= pages_per_block;
+				usable_page -= pages_per_block;
 			}
 		}
+		if (usable_page != 0)
+			kpanic("%d page lost in the hood\n", usable_page);
 	}
-	kord = 12;
 }

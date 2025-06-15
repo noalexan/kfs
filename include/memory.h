@@ -12,7 +12,7 @@
 // ============================================================================
 
 // Define
-
+#define UINTPTR_MAX 0xffffffff
 #define MAX_REGIONS 128
 
 #define PAGE_SIZE  4096
@@ -30,17 +30,8 @@
 #define PAGE_ALLOCATED 0b00000100
 
 // Currently is useless but here for the scalability
-#define ZONE_TYPES  1
-#define NORMAL_ZONE 0
-// Not Implemented
-#define DMA_ZONE   1
-#define DMA32_ZONE 2
-
-#define MIGRATION_TYPES 1
-#define MIGRATE_MOVABLE 0
-// Not Implemented
-#define MIGRATE_UNMOVABLE   1
-#define MIGRATE_RECLAIMABLE 2
+#define MAX_ZONE      1
+#define MAX_MIGRATION 1
 
 // End of useless things
 
@@ -58,10 +49,11 @@
 #define PAGE_IS_BUDDY_MANAGED(page) (FLAG_IS_SET((page)->flags, PAGE_BUDDY))
 #define PAGE_IS_FREE(page)                                                                         \
 	(FLAG_IS_SET((page)->flags, PAGE_BUDDY) && !FLAG_IS_SET((page)->flags, PAGE_ALLOCATED))
-#define PAGE_BY_ORDER(order)         (1 << order)
-#define PAGE_DATA_IS_MAGIC(page)     (page->private_data == PAGE_MAGIC)
-#define ORDER_TO_BYTES(order)        (PAGE_BY_ORDER(order) * PAGE_SIZE)
-#define WHO_IS_MY_BUDDY(addr, order) (addr ^ ORDER_TO_BYTES(order))
+#define PAGE_BY_ORDER(order)     (1 << order)
+#define PAGE_DATA_IS_MAGIC(page) (page->private_data == PAGE_MAGIC)
+#define ORDER_TO_BYTES(order)    (PAGE_BY_ORDER(order) * PAGE_SIZE)
+// #define WHO_IS_MY_BUDDY(addr, order) (addr ^ ORDER_TO_BYTES(order))
+#define WHO_IS_MY_BUDDY(addr, order, base) ((((addr) - (base)) ^ ORDER_TO_BYTES(order)) + (base))
 
 // Macros
 
@@ -86,6 +78,22 @@ typedef enum {
 	BAD_ORDER,
 } order_size;
 
+typedef enum {
+	NORMAL_ZONE = 0,
+	// Not Implemented
+	DMA_ZONE,
+	ZONE_HIGHMEM,
+} zone_type;
+
+typedef enum {
+	MIGRATE_MOVABLE = 0,
+	// Not Implemented
+	MIGRATE_UNMOVABLE,
+	MIGRATE_RECLAIMABLE,
+} migration_type;
+
+typedef enum { NEXT = 0, PREV } direction;
+
 enum mem_type { FREE_MEMORY = 0, RESERVED_MEMORY, HOLES_MEMORY };
 enum allocator_state { ACTIVE = 0, FROZEN };
 
@@ -101,7 +109,7 @@ struct list_head {
 };
 
 struct buddy_free_area {
-	struct list_head free_list[MIGRATION_TYPES];
+	struct list_head free_list[MAX_MIGRATION];
 	uint32_t         nr_free;
 };
 
@@ -112,6 +120,7 @@ struct buddy_allocator {
 struct page {
 	uint32_t  flags;
 	uintptr_t private_data;
+	// struct list_head list;
 };
 
 // TYPEDEF
@@ -135,7 +144,7 @@ typedef struct boot_allocator boot_allocator_t;
 extern uint32_t          total_pages;
 extern uint32_t          total_RAM;
 extern page_t           *page_descriptors;
-extern buddy_allocator_t buddy[ZONE_TYPES];
+extern buddy_allocator_t buddy[MAX_ZONE];
 
 // ============================================================================
 // EXTERNAL APIs
@@ -143,11 +152,10 @@ extern buddy_allocator_t buddy[ZONE_TYPES];
 
 // boot_allocator.c
 
-void    *boot_alloc(uint32_t size);
-void     boot_allocator_printer(void);
-void     boot_allocator_init(multiboot_tag_mmap_t *mmap, uint8_t *mmap_end);
-uint32_t boot_allocator_get_all_free(uintptr_t *dst, uint32_t size);
-bool     boot_allocator_range_overlaps(uintptr_t start, uintptr_t end, enum mem_type type);
+void *boot_alloc(uint32_t size);
+void  boot_allocator_printer(void);
+void  boot_allocator_init(multiboot_tag_mmap_t *mmap, uint8_t *mmap_end);
+bool  boot_allocator_range_overlaps(uintptr_t start, uintptr_t end, enum mem_type type);
 // Getter
 region_t *boot_allocator_get_region(enum mem_type type);
 uint32_t  boot_allocator_get_region_count(enum mem_type type);
@@ -169,6 +177,7 @@ uint32_t page_get_updated_free_count(void);
 void     page_descriptor_foreach(pages_foreach_fn handler, void *data);
 uint32_t page_get_free_count(void);
 uint32_t page_get_reserved_count(void);
+page_t  *page_addr_to_usable(uintptr_t addr, bool direction);
 
 // buddy.c
 
@@ -177,4 +186,3 @@ void       buddy_print(void);
 uintptr_t *buddy_alloc_pages(uint32_t size);
 void       buddy_free_block(void *ptr);
 void       debug_buddy(void);
-void       print_buddy_free_list(uint32_t order);

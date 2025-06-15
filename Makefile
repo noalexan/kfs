@@ -57,11 +57,8 @@ ifeq ($(IN_DOCKER),1)
 all: $(BUILDDIR)/boot.iso
 else
 all:
-	docker run --rm -t \
-		-v .:/kfs \
-		-e IN_DOCKER=1 \
-		--user $(shell id -u):$(shell id -g) \
-		$(DOCKERIMAGENAME):$(DOCKERIMAGETAG)
+	docker run --rm -t -v .:/kfs -e IN_DOCKER=1 $(DOCKERIMAGENAME):$(DOCKERIMAGETAG)
+	
 endif
 
 $(BUILDDIR)/boot.iso: $(ISODIR)/boot/kernel $(ISODIR)/boot/grub/grub.cfg

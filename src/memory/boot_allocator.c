@@ -244,12 +244,22 @@ void boot_allocator_init(multiboot_tag_mmap_t *mmap, uint8_t *mmap_end)
 	BOOT_ALLOC_FREE_COUNT(&bootmem)     = 0;
 	BOOT_ALLOC_RESERVED_COUNT(&bootmem) = 0;
 	BOOT_ALLOC_HOLE_COUNT(&bootmem)     = 0;
-	boot_allocator_add_region(&bootmem, (uintptr_t)kernel_start, (uintptr_t)kernel_end,
-	                          RESERVED_MEMORY);
+	// Zone VGA/BIOS_ROM (0xa0000-0x100000)
+	boot_allocator_add_region(&bootmem, 0xa0000, 0x100000, RESERVED_MEMORY);
+	// Zone Low memory
 	boot_allocator_add_region(&bootmem, gdtr.base, (gdtr.base + gdtr.limit + 1), RESERVED_MEMORY);
 	boot_allocator_add_region(&bootmem, idtr.base, (idtr.base + idtr.limit + 1), RESERVED_MEMORY);
+	boot_allocator_add_region(&bootmem, 0x0, 0x1000, RESERVED_MEMORY);
+	// Zone Inconnu --> todo : understand wtf is this shit, marked as problematic at the moment
+	boot_allocator_add_region(&bootmem, 0x1000, 0x9fc00, RESERVED_MEMORY);
+	// Zone Kernel Code
+	boot_allocator_add_region(&bootmem, (uintptr_t)kernel_start, (uintptr_t)kernel_end,
+	                          RESERVED_MEMORY);
+
+	// Zone Boot_info
 	boot_allocator_add_region(&bootmem, (uintptr_t)mb2info,
 	                          (uintptr_t)(mb2info + mb2info->total_size), RESERVED_MEMORY);
+	// boot_allocator_add_region(&bootmem, 0xff00000000, 0xffffffffff, RESERVED_MEMORY);
 
 	mb2_mmap_iter(mmap, mmap_end, boot_allocator_reserved_wrapper, false);
 	BOOT_ALLOCATOR_SORT_AND_MERGE(bootmem.regions[RESERVED_MEMORY], bootmem.count[RESERVED_MEMORY]);

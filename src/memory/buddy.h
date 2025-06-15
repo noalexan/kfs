@@ -45,7 +45,16 @@ static uint32_t          size_to_order(uint32_t size);
 static struct list_head *pop_node(struct list_head *node);
 static uintptr_t        *pop_first_block(uint32_t order);
 static void              set_block_metadata(uintptr_t *ret, uint32_t order, int type);
-static uintptr_t        *pop_block_with_order(uint32_t order);
-static uintptr_t        *split_blocks(uint32_t order_needed, uint32_t cur_order, uintptr_t *ret);
+static uintptr_t        *alloc_block_with_order(uint32_t order);
+static uintptr_t *split_block_to_order(uint32_t order_needed, uint32_t cur_order, uintptr_t *ret);
 
 // Debugs
+
+static const char *debug_buddy_order_to_string(int order);
+static void        print_buddy_free_list(size_t order);
+static void        debug_buddy_corrupted_list(size_t order);
+static void        debug_buddy_alloc_still_free(size_t order, uintptr_t *phys);
+static void        debug_buddy_simple_alloc(void);
+static void        debug_buddy_check_lost_pages(void);
+static void        debug_buddy_panic(const char *func);
+static void        debug_buddy_print_node_info(struct list_head *node);

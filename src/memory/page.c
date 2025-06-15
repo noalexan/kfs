@@ -8,18 +8,22 @@
 // #define PAGE_ALLOCATED      0b00000100
 // };
 
-uint32_t reserved_count = 0;
-uint32_t free_count     = 0;
-page_t  *page_descriptors;
+uint32_t reserved_count   = 0;
+uint32_t free_count       = 0;
+page_t  *page_descriptors = NULL;
 
-// TODO : add flags when other are implemented
 static uint32_t page_get_appropriate_flag(uintptr_t addr_start)
 {
-	if (boot_allocator_range_overlaps(addr_start, addr_start + PAGE_SIZE, RESERVED_MEMORY) ||
-	    boot_allocator_range_overlaps(addr_start, addr_start + PAGE_SIZE, HOLES_MEMORY)) {
-		return PAGE_RESERVED;
+	uintptr_t addr_end   = addr_start + PAGE_SIZE;
+	size_t    free_count = boot_allocator_get_region_count(FREE_MEMORY);
+	region_t *free_reg   = boot_allocator_get_region(FREE_MEMORY);
+
+	for (size_t i = 0; i < free_count; i++) {
+		if (addr_start >= free_reg[i].start && addr_end <= free_reg[i].end) {
+			return PAGE_BUDDY;
+		}
 	}
-	return PAGE_BUDDY;
+	return PAGE_RESERVED;
 }
 
 static void count_free_pages(page_t *page, void *counter)
@@ -33,6 +37,10 @@ static void count_reserved_pages(page_t *page, void *counter)
 	if (!PAGE_IS_FREE(page))
 		(*(uint32_t *)counter)++;
 }
+
+static inline page_t *last_page() { return &page_descriptors[total_pages - 1]; }
+
+static inline page_t *first_page() { return &page_descriptors[0]; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // External Apis
@@ -100,6 +108,20 @@ void page_descriptor_foreach(pages_foreach_fn handler, void *data)
 {
 	for (uint32_t i = 0; i < total_pages; i++)
 		handler(&page_descriptors[i], data);
+}
+
+page_t *page_addr_to_usable(uintptr_t addr, bool direction)
+{
+	int     factor = (direction == NEXT ? 1 : -1);
+	page_t *ret    = page_addr_to_page(addr);
+
+	while (ret >= first_page() && ret <= last_page()) {
+		if (PAGE_IS_FREE(ret))
+			return ret;
+
+		ret += factor;
+	}
+	return NULL;
 }
 
 uint32_t page_get_free_count(void) { return free_count; }
