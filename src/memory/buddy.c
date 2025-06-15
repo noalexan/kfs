@@ -1,8 +1,8 @@
 #include "internal/buddy.h"
 #include "internal/boot_allocator.h"
 #include "panic.h"
-#include "printk.h"
 #include "utils.h"
+#include "vga.h"
 #include <libft.h>
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -148,7 +148,7 @@ static struct list_head *get_buddy_node(void *block, size_t order)
 
 void buddy_print(void)
 {
-	printk("Buddy Free Blocks: \n---\n");
+	vga_printf("Buddy Free Blocks: \n---\n");
 	bool   has_blocks            = false;
 	size_t total_pages_in_blocks = 0;
 
@@ -157,17 +157,17 @@ void buddy_print(void)
 		if (nr_free > 0) {
 			size_t pages_in_order = nr_free * PAGE_BY_ORDER(order);
 			total_pages_in_blocks += pages_in_order;
-			printk("[%s:%u] ", debug_buddy_order_to_string(order), nr_free);
+			vga_printf("[%s:%u] ", debug_buddy_order_to_string(order), nr_free);
 			has_blocks = true;
 		}
 	}
-	printk("\n");
-	printk("Total RAM : %u | Total pages : %u\n", total_RAM, total_pages);
-	printk("Total pages in buddy blocks: %u\n", total_pages_in_blocks);
-	printk("Free Pages : %u | Unusable pages : %u\n----\n", page_get_updated_free_count(),
-	       page_get_updated_reserved_count());
+	vga_printf("\n");
+	vga_printf("Total RAM : %u | Total pages : %u\n", total_RAM, total_pages);
+	vga_printf("Total pages in buddy blocks: %u\n", total_pages_in_blocks);
+	vga_printf("Free Pages : %u | Unusable pages : %u\n----\n", page_get_updated_free_count(),
+	           page_get_updated_reserved_count());
 	if (!has_blocks) {
-		printk("(empty)");
+		vga_printf("(empty)");
 	}
 }
 
@@ -313,10 +313,10 @@ static void print_buddy_free_list(size_t order)
 
 	debug_buddy_corrupted_list(order);
 
-	printk("=== Free list [order %s] ===\n", debug_buddy_order_to_string(order));
-	printk("Head : %p\n Size : %d\n", head, order_to_nrFree(order));
+	vga_printf("=== Free list [order %s] ===\n", debug_buddy_order_to_string(order));
+	vga_printf("Head : %p\n Size : %d\n", head, order_to_nrFree(order));
 	while (cur != head) {
-		printk("  Node %d : %p | next = %p | prev = %p\n", node_num, cur, cur->next, cur->prev);
+		vga_printf("  Node %d : %p | next = %p | prev = %p\n", node_num, cur, cur->next, cur->prev);
 		cur = cur->next;
 		node_num++;
 	}
@@ -324,20 +324,20 @@ static void print_buddy_free_list(size_t order)
 
 static void debug_buddy_panic(const char *func)
 {
-	printk("  Panic system here %s()\n", func);
-	printk("=========================================\n");
+	vga_printf("  Panic system here %s()\n", func);
+	vga_printf("=========================================\n");
 	halt();
 }
 
 static void debug_buddy_print_node_info(struct list_head *node)
 {
 	if (!node) {
-		printk("    [Node State] NULL pointer\n");
+		vga_printf("    [Node State] NULL pointer\n");
 		return;
 	}
-	printk("    [Node %p State] | next: %p | prev: %p\n", node, node->next, node->prev);
+	vga_printf("    [Node %p State] | next: %p | prev: %p\n", node, node->next, node->prev);
 	if (node->next)
-		printk("        -> node->next->prev: %p (should be %p)\n", node->next->prev, node);
+		vga_printf("        -> node->next->prev: %p (should be %p)\n", node->next->prev, node);
 }
 
 static void debug_buddy_corrupted_list(size_t order)
@@ -351,22 +351,22 @@ static void debug_buddy_corrupted_list(size_t order)
 	for (cur = head->next; cur != head; cur = cur ? cur->next : NULL) {
 		count++;
 		if (!cur) {
-			printk("\n\n--- KERNEL PANIC: LIST CORRUPTION ---\n");
-			printk("  Buddy free_list for order %u is corrupted!\n\n", order);
-			printk("  Reason: NULL pointer encountered during traversal (node #%zu)\n", count);
+			vga_printf("\n\n--- KERNEL PANIC: LIST CORRUPTION ---\n");
+			vga_printf("  Buddy free_list for order %u is corrupted!\n\n", order);
+			vga_printf("  Reason: NULL pointer encountered during traversal (node #%zu)\n", count);
 			debug_buddy_print_node_info(cur);
 			debug_buddy_panic(__func__);
 		}
 		if (count > limit) {
-			printk("\n\n--- KERNEL PANIC: LIST CORRUPTION ---\n");
-			printk("  Buddy free_list for order %u is corrupted!\n\n", order);
-			printk("  Reason: Infinite loop or corruption detected (node limit exceeded)\n");
+			vga_printf("\n\n--- KERNEL PANIC: LIST CORRUPTION ---\n");
+			vga_printf("  Buddy free_list for order %u is corrupted!\n\n", order);
+			vga_printf("  Reason: Infinite loop or corruption detected (node limit exceeded)\n");
 			debug_buddy_print_node_info(cur);
 			debug_buddy_panic(__func__);
 		}
 	}
-	// printk("[OK] Buddy free_list for order %s is healthy\n", debug_buddy_order_to_string(order),
-	// count);
+	// vga_printf("[OK] Buddy free_list for order %s is healthy\n",
+	// debug_buddy_order_to_string(order), count);
 }
 
 static void debug_buddy_check_lost_pages(void)
@@ -387,18 +387,18 @@ static void debug_buddy_check_lost_pages(void)
 				}
 			}
 			if (!in_buddy) {
-				printk("Lost page: 0x%x\n", addr);
+				vga_printf("Lost page: 0x%x\n", addr);
 				lost++;
 			} else {
 				total_buddy++;
 			}
 		}
 	}
-	// printk("Total free pages (descriptor): %u\n", page_get_updated_free_count());
-	// printk("Total free pages (in buddy regions): %u\n", total_buddy);
+	// vga_printf("Total free pages (descriptor): %u\n", page_get_updated_free_count());
+	// vga_printf("Total free pages (in buddy regions): %u\n", total_buddy);
 	if (lost > 0) {
-		printk("\n\n--- KERNEL PANIC: PAGES Missing ---\n");
-		printk("Total lost pages: %u\n", lost);
+		vga_printf("\n\n--- KERNEL PANIC: PAGES Missing ---\n");
+		vga_printf("Total lost pages: %u\n", lost);
 		debug_buddy_panic(__func__);
 	}
 }
@@ -417,12 +417,12 @@ static void debug_buddy_alloc_still_free(size_t order, uintptr_t *phys)
 		cur = cur->next;
 	}
 	if (found) {
-		printk("Error: %s : (%p) is STILL present in %s free list!\n", __func__, (void *)phys,
-		       debug_buddy_order_to_string(order));
+		vga_printf("Error: %s : (%p) is STILL present in %s free list!\n", __func__, (void *)phys,
+		           debug_buddy_order_to_string(order));
 		debug_buddy_panic(__func__);
 	}
 	// else {
-	// printk("OK: %s: (%p) is not present in %s free list!\n",
+	// vga_printf("OK: %s: (%p) is not present in %s free list!\n",
 	//    __func__, (void *)phys, debug_buddy_order_to_string(order));
 	// }
 }
@@ -434,14 +434,14 @@ static void buddy_drain_lower_orders(void)
 		while (free_blocks-- > 0) {
 			uintptr_t *blk = alloc_block_with_order(order);
 			if (blk == NULL) {
-				printk("Error: Unexpected NULL while draining order %d\n", order);
+				vga_printf("Error: Unexpected NULL while draining order %d\n", order);
 				debug_buddy_panic(__func__);
 			}
 		}
 		uintptr_t *blk = alloc_block_with_order(order);
 		if (blk != NULL) {
-			printk("Error: After draining, order %d still has a free block (%p)\n", order,
-			       (void *)blk);
+			vga_printf("Error: After draining, order %d still has a free block (%p)\n", order,
+			           (void *)blk);
 			debug_buddy_panic(__func__);
 		}
 		buddy[NORMAL_ZONE].areas[order].nr_free = 0;
@@ -473,8 +473,8 @@ static void debug_buddy_split_block(void)
 		debug_buddy_alloc_still_free(order, block);
 		for (int i = order; i < MAX_ORDER; i++) {
 			if (order_to_nrFree(i) != 1) {
-				printk("Error: order %d should have exactly 1 free block, found %u\n", i,
-				       order_to_nrFree(i));
+				vga_printf("Error: order %d should have exactly 1 free block, found %u\n", i,
+				           order_to_nrFree(i));
 				print_buddy_free_list(i);
 				debug_buddy_panic(__func__);
 			}
@@ -497,8 +497,8 @@ static void debug_buddy_free_block(void)
 
 		for (size_t i = order; i < MAX_ORDER; i++) {
 			if (order_to_nrFree(i) != 0) {
-				printk("Error: order %u should have exactly 0 free block, found %u\n", i,
-				       order_to_nrFree(i));
+				vga_printf("Error: order %u should have exactly 0 free block, found %u\n", i,
+				           order_to_nrFree(i));
 				print_buddy_free_list(i);
 				debug_buddy_panic(__func__);
 			}
@@ -511,24 +511,24 @@ void debug_buddy(void)
 
 	// Missing Pages
 	debug_buddy_check_lost_pages();
-	printk("[OK] No pages missing\n");
+	vga_printf("[OK] No pages missing\n");
 
 	// List Corrumption
 	debug_buddy_check_all_list_corrumption();
-	printk("[OK] Buddy free_list for order %s is healthy\n");
+	vga_printf("[OK] Buddy free_list for order %s is healthy\n");
 
 	// Simple alloc
 	debug_buddy_simple_alloc();
 	debug_buddy_check_all_list_corrumption();
-	printk("[OK] First test for simple allocation\n");
+	vga_printf("[OK] First test for simple allocation\n");
 
 	// Split allocation
 	debug_buddy_split_block();
-	printk("[OK] Split Blocks\n");
+	vga_printf("[OK] Split Blocks\n");
 
 	// Free Blocks
 	debug_buddy_free_block();
-	printk("[OK] Free Blocks\n");
+	vga_printf("[OK] Free Blocks\n");
 
 	// Free Invalid Pointer
 	// buddy_drain_lower_orders();

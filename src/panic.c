@@ -19,12 +19,12 @@ void print_stack_frame()
 	__asm__ volatile("mov %%ebp, %0" : "=r"(ebp));
 	__asm__ volatile("mov %%esp, %0" : "=r"(esp));
 
-	printk("\nStack trace:\n");
+	vga_printf("\nStack trace:\n");
 	memory_dump((uint32_t)esp, (uint32_t)ebp);
 
-	printk("ESP = %p | EBP = %p\n", esp, ebp);
+	vga_printf("ESP = %p | EBP = %p\n", esp, ebp);
 	uint32_t eip = *(ebp + 1);
-	printk("Return address: 0x%x\n", eip);
+	vga_printf("Return address: 0x%x\n", eip);
 }
 
 void memory_dump(uint32_t addr_start, uint32_t addr_end)
@@ -32,13 +32,13 @@ void memory_dump(uint32_t addr_start, uint32_t addr_end)
 	uint32_t addr = addr_end;
 	while (addr >= addr_start) {
 		if (addr % 8 == 0 || addr == addr_start)
-			printk("%p:\t", addr);
+			vga_printf("%p:\t", addr);
 		if (*(uint8_t *)addr < 0x10)
-			printk("0");
-		printk("%x ", *(uint8_t *)(addr--));
+			vga_printf("0");
+		vga_printf("%x ", *(uint8_t *)(addr--));
 		if (addr % 8 == 0)
-			printk("\n");
+			vga_printf("\n");
 	}
 	if (addr % 8)
-		printk("\n");
+		vga_printf("\n");
 }
