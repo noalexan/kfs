@@ -1,9 +1,9 @@
 #pragma once
+
 // ============================================================================
-// IMCLUDES
+// INCLUDES
 // ============================================================================
 
-#include "mb2_info.h"
 #include <types.h>
 #include <utils.h>
 
@@ -11,30 +11,15 @@
 // DEFINE AND MACRO
 // ============================================================================
 
-// Define
-#define UINTPTR_MAX 0xffffffff
+// Defines
 
 #define PAGE_SIZE  4096
 #define PAGE_SHIFT 12
 #define PAGE_MAGIC 0xDEADBEEF
 
-#define KiB_SIZE (1UL << 10)
-#define MiB_SIZE (1UL << 20)
-#define GiB_SIZE (1UL << 30)
-
-// Flags for page
 #define PAGE_RESERVED  0b00000001
 #define PAGE_BUDDY     0b00000010
 #define PAGE_ALLOCATED 0b00000100
-
-// Currently is useless but here for the scalability
-#define MAX_ZONE      1
-#define MAX_MIGRATION 1
-
-// End of useless things
-
-#define FREE      0
-#define ALLOCATED 1
 
 // Macros
 
@@ -48,75 +33,27 @@
 #define PAGE_IS_FREE(page)                                                                         \
 	(FLAG_IS_SET((page)->flags, PAGE_BUDDY) && !FLAG_IS_SET((page)->flags, PAGE_ALLOCATED))
 #define PAGE_BY_ORDER(order)     (1 << order)
-#define PAGE_DATA_IS_MAGIC(page) (page->private_data == PAGE_MAGIC)
+#define PAGE_DATA_IS_MAGIC(page) ((page)->private_data == PAGE_MAGIC)
 #define ORDER_TO_BYTES(order)    (PAGE_BY_ORDER(order) * PAGE_SIZE)
-// #define WHO_IS_MY_BUDDY(addr, order) (addr ^ ORDER_TO_BYTES(order))
-
-// Macros
 
 // ============================================================================
 // STRUCT
 // ============================================================================
 
-// ENUM
-
-typedef enum {
-	ORDER_4KIB = 0,
-	ORDER_8KIB,
-	ORDER_16KIB,
-	ORDER_32KIB,
-	ORDER_64KIB,
-	ORDER_128KIB,
-	ORDER_256KIB,
-	ORDER_512KIB,
-	ORDER_1MIB,
-	ORDER_2MIB,
-	ORDER_4MIB,
-	BAD_ORDER,
-} order_size;
-
-typedef enum {
-	NORMAL_ZONE = 0,
-	// Not Implemented
-	DMA_ZONE,
-	ZONE_HIGHMEM,
-} zone_type;
-
-typedef enum {
-	MIGRATE_MOVABLE = 0,
-	// Not Implemented
-	MIGRATE_UNMOVABLE,
-	MIGRATE_RECLAIMABLE,
-} migration_type;
+// Enums
 
 typedef enum { NEXT = 0, PREV } direction;
 
-enum mem_type { FREE_MEMORY = 0, RESERVED_MEMORY, HOLES_MEMORY };
-enum allocator_state { ACTIVE = 0, FROZEN };
-
-// STRUCT
-
-struct region_s {
-	uintptr_t start;
-	uintptr_t end;
-};
+// Structures
 
 struct page {
 	uint32_t  flags;
 	uintptr_t private_data;
 };
 
-// TYPEDEF
+// Typedefs
 
-typedef struct region_s region_t;
-typedef struct page     page_t;
-
-// Forward declarations for internals types
-
-// boot_allocator.c
-
-struct boot_allocator;
-typedef struct boot_allocator boot_allocator_t;
+typedef struct page page_t;
 
 // ============================================================================
 // VARIABLES GLOBALES
@@ -130,20 +67,6 @@ extern page_t  *page_descriptors;
 // EXTERNAL APIs
 // ============================================================================
 
-//////////////////////////////
-// boot_allocator.c
-
-bool      boot_allocator_range_overlaps(uintptr_t start, uintptr_t end, enum mem_type type);
-void     *boot_alloc(uint32_t size);
-void      boot_allocator_freeze(void);
-void      boot_allocator_printer(void);
-void      boot_allocator_init(multiboot_tag_mmap_t *mmap, uint8_t *mmap_end);
-uint32_t  boot_allocator_get_region_count(enum mem_type type);
-region_t *boot_allocator_get_region(enum mem_type type);
-
-//////////////////////////////
-// page.c
-
 void      page_print_info(page_t *page);
 void      page_descriptor_init(void);
 uint32_t  page_to_index(page_t *page);
@@ -156,12 +79,3 @@ uint32_t  page_get_updated_reserved_count(void);
 uint32_t  page_get_updated_free_count(void);
 uint32_t  page_get_free_count(void);
 uint32_t  page_get_reserved_count(void);
-
-//////////////////////////////
-// buddy.c
-
-uintptr_t *buddy_alloc_pages(size_t size);
-void       buddy_print(void);
-void       buddy_free_block(void *ptr);
-void       buddy_init(void);
-void       debug_buddy(void);

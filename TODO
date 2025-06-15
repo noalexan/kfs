@@ -1,4 +1,0 @@
-? Add printk KERN_* support
-
-- [ ] Create get_line
-- [ ] Add TSS

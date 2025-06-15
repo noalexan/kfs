@@ -1,6 +1,5 @@
-#include "buddy.h"
-#include "boot_allocator.h"
-#include "buddy.h"
+#include "internal/buddy.h"
+#include "internal/boot_allocator.h"
 #include "panic.h"
 #include "printk.h"
 #include "utils.h"

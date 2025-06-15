@@ -4,8 +4,8 @@
 #include <stdint.h>
 #include <types.h>
 
-#include "../keyboard.h"
-#include "../printk/printk.h"
+#include "keyboard.h"
+#include "printk.h"
 
 // Structure pour le pointeur GDT
 typedef struct {
