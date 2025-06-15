@@ -1,9 +1,7 @@
 #pragma once
 
-#include "panic.h"
 #include <multiboot2.h>
 #include <types.h>
-#include <utils.h>
 
 typedef struct multiboot_tag_mmap multiboot_tag_mmap_t;
 

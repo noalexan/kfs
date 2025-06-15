@@ -10,10 +10,14 @@ CFLAGS=-ffreestanding -fno-builtin -fno-exceptions -fno-stack-protector
 CFLAGS+=-Wall -Wextra # -Werror
 CFLAGS+=-I./include -I./lib/libft
 
+SRC_INCLUDE_DIRS := $(shell find src -type d)
+CFLAGS += $(addprefix -I, $(SRC_INCLUDE_DIRS))
+
 CXX=i686-linux-gnu-g++
 CXXFLAGS=-ffreestanding -fno-builtin -fno-exceptions -fno-stack-protector -fno-rtti
 CXXFLAGS+=-Wall -Wextra # -Werror
 CXXFLAGS+=-I./include -I./lib/libft
+CXXFLAGS += $(addprefix -I, $(SRC_INCLUDE_DIRS))
 
 AR=i686-linux-gnu-ar
 
@@ -54,6 +58,7 @@ all: $(BUILDDIR)/boot.iso
 else
 all:
 	docker run --rm -t -v .:/kfs -e IN_DOCKER=1 $(DOCKERIMAGENAME):$(DOCKERIMAGETAG)
+	
 endif
 
 $(BUILDDIR)/boot.iso: $(ISODIR)/boot/kernel $(ISODIR)/boot/grub/grub.cfg

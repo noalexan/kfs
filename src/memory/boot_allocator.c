@@ -1,8 +1,9 @@
 #include "boot_allocator.h"
-#include "../gdt.h"
-#include "../idt.h"
-#include "../panic.h"
+#include "gdt.h"
+#include "idt.h"
+#include "panic.h"
 #include <libft.h>
+#include <utils.h>
 
 /*
  *  The following APIs are used to store precoce allocations and to keep a track of evry used memory
@@ -11,12 +12,13 @@
 
 // Globals
 
+uint32_t         total_pages = 0;
+uint32_t         total_RAM   = 0;
+boot_allocator_t bootmem;
 extern uint8_t   kernel_start[];
 extern uint8_t   kernel_end[];
-boot_allocator_t bootmem;
 
 ////////////////////////////////////////////////
-// Need refactor
 
 // APIs
 
@@ -28,24 +30,20 @@ boot_allocator_t bootmem;
 static void boot_allocator_add_region(boot_allocator_t *alloc, uintptr_t start, uintptr_t end,
                                       enum mem_type type)
 {
-	char *str_type = (type == RESERVED_MEMORY ? "reserved" : "free");
-	if (start > end && end != END) {
-		kpanic("Error: boot allocator - start: %p end: %p address is greater than end address\n",
-		       start, end);
-	} else if (start == end)
+	if (start > end && end != 0) {
+		kpanic("boot_alloc: %s: Invalid region start=%p end=%p\n", __func__, start, end);
+	} else if (start == end) {
 		return;
-	if (type == RESERVED_MEMORY) {
-		if (alloc->reserved_count >= MAX_REGIONS)
-			kpanic("Error: boot allocator too many %s regions registered\n", str_type);
-		alloc->reserved_regions[alloc->reserved_count++] = (region_t){start, end};
-		return;
-	} else if (type == FREE_MEMORY) {
-		if (alloc->free_count >= MAX_REGIONS)
-			kpanic("Error: boot allocator too many %s regions registered\n", str_type);
-		alloc->free_regions[alloc->free_count++] = (region_t){start, end};
-		return;
+	} else if (type >= REGION_TYPE_COUNT)
+		kpanic("boot_alloc: %s: Unknown memory type\n", __func__);
+
+	if (alloc->count[type] >= MAX_REGIONS) {
+		kpanic("boot_alloc: %s: too many %s regions\n", __func__);
 	}
-	kpanic("Error: boot_alloc: add_region fun unknown memory type\n");
+
+	uint32_t index              = alloc->count[type];
+	alloc->regions[type][index] = (region_t){start, end};
+	alloc->count[type]++;
 }
 
 /*
@@ -56,43 +54,6 @@ static void boot_allocator_add_region(boot_allocator_t *alloc, uintptr_t start, 
 void boot_allocator_reserved_wrapper(uintptr_t start, uintptr_t end)
 {
 	boot_allocator_add_region(&bootmem, start, end, RESERVED_MEMORY);
-}
-
-/*
- * Checks if a given address range overlaps with any region of the specified memory type
- */
-
-static bool boot_allocator_range_overlaps(uintptr_t start, uintptr_t end, enum mem_type type)
-{
-	uint32_t  count = (type == RESERVED_MEMORY ? bootmem.reserved_count : bootmem.free_count);
-	region_t *reg   = (type == RESERVED_MEMORY ? bootmem.reserved_regions : bootmem.free_regions);
-	for (size_t i = 0; i < count; i++) {
-		if (!(end <= reg[i].start || start >= reg[i].end)) {
-			return true;
-		}
-	}
-	return false;
-}
-
-/*
- * Checks if a given address overlaps
- */
-
-static bool boot_allocator_addr_overlaps(uint32_t addr)
-{
-	for (uint32_t i = 0; i < bootmem.reserved_count; i++) {
-		region_t res = bootmem.reserved_regions[i];
-		if (addr >= res.start && addr < res.end) {
-			return true;
-		}
-	}
-	for (uint32_t i = 0; i < bootmem.free_count; i++) {
-		region_t fr = bootmem.free_regions[i];
-		if (addr >= fr.start && addr < fr.end) {
-			return true;
-		}
-	}
-	return false;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////
@@ -112,9 +73,8 @@ static void boot_allocator_sort_regions(region_t *reg, uint32_t count)
 static void boot_allocator_free_handler(uintptr_t start, uintptr_t end)
 {
 	uintptr_t cur = start;
-	printk("Free area : s %p | e %p\n", start, end);
-	for (uint32_t i = 0; i < bootmem.reserved_count; i++) {
-		region_t res = bootmem.reserved_regions[i];
+	for (uint32_t i = 0; i < BOOT_ALLOC_RESERVED_COUNT(&bootmem); i++) {
+		region_t res = BOOT_ALLOC_RESERVED_REGIONS(&bootmem)[i];
 
 		if (res.end <= cur || res.start >= end)
 			continue;
@@ -174,36 +134,144 @@ static void boot_allocator_for_each_regions(regions_foreach_fn handler, region_t
 	}
 }
 
+static region_t *boot_allocator_get_all_regions(boot_allocator_t *alloc)
+{
+	uint32_t idx = 0;
+
+	for (uint32_t type = 0; type < REGION_TYPE_COUNT; type++) {
+		for (uint32_t i = 0; i < alloc->count[type]; i++) {
+			ft_memcpy(&all_reg_g[idx++], &alloc->regions[type][i], sizeof(region_t));
+		}
+	}
+	return all_reg_g;
+}
+
+static void boot_allocator_fill_gaps_as_holes(void)
+{
+	uint32_t total_reg = BOOT_ALLOC_RESERVED_COUNT(&bootmem) + BOOT_ALLOC_FREE_COUNT(&bootmem);
+
+	if (total_reg == 0) {
+		printk("No regions to process\n");
+		return;
+	}
+
+	region_t *all_reg = boot_allocator_get_all_regions(&bootmem);
+
+	BOOT_ALLOCATOR_SORT_AND_MERGE(all_reg, total_reg);
+
+	for (uint32_t i = 0; i < total_reg - 1; i++) {
+		uintptr_t gap_start = all_reg[i].end;
+		uintptr_t gap_end   = all_reg[i + 1].start;
+		if (gap_start < gap_end)
+			boot_allocator_add_region(&bootmem, gap_start, gap_end, HOLES_MEMORY);
+	}
+
+	BOOT_ALLOCATOR_SORT_AND_MERGE(bootmem.regions[HOLES_MEMORY], bootmem.count[HOLES_MEMORY]);
+}
+
+static void boot_allocator_init_total_size(uintptr_t start, uintptr_t end)
+{
+	if ((uint32_t)end == 0)
+		end = 0xffffffff;
+	total_RAM += end - start;
+}
+
+static uint32_t boot_allocator_get_total_visibale_ram(boot_allocator_t *alloc)
+{
+	uint32_t total_count = BOOT_ALLOC_FREE_COUNT(alloc) + BOOT_ALLOC_RESERVED_COUNT(alloc) +
+	                       BOOT_ALLOC_HOLE_COUNT(alloc);
+
+	if (total_count <= 0) {
+		kpanic("Error: %s: this function cannot be called before memory parsing\n", __func__);
+	}
+
+	region_t *all_reg = boot_allocator_get_all_regions(alloc);
+	BOOT_ALLOCATOR_SORT_AND_MERGE(all_reg, total_count);
+	uintptr_t end = all_reg[total_count - 1].end;
+	if (end == 0)
+		return 0xffffffff;
+	return end;
+}
+
 //////////////////////////////////////////////////////////////////////////////////////////
 // External APis
+
+region_t *boot_allocator_get_region(enum mem_type type) { return bootmem.regions[type]; }
+
+uint32_t boot_allocator_get_region_count(enum mem_type type) { return bootmem.count[type]; }
+
+void boot_allocator_freeze(void) { bootmem.state = FROZEN; }
+
+/*
+ * Checks if a given address range overlaps with any region of the specified memory type
+ */
+
+bool boot_allocator_range_overlaps(uintptr_t start, uintptr_t end, enum mem_type type)
+{
+	uint32_t  count   = bootmem.count[type];
+	region_t *regions = bootmem.regions[type];
+
+	for (uint32_t i = 0; i < count; i++) {
+		if (!(end <= regions[i].start || start >= regions[i].end)) {
+			return true;
+		}
+	}
+	return false;
+}
 
 void boot_allocator_printer(void)
 {
 	printk("----------Boot Allocator Printer----------\n");
 	printk("Reserved Areas : \n");
-	boot_allocator_for_each_regions(boot_allocator_print_region_info, bootmem.reserved_regions,
-	                                bootmem.reserved_count);
+	boot_allocator_for_each_regions(boot_allocator_print_region_info,
+	                                BOOT_ALLOC_RESERVED_REGIONS(&bootmem),
+	                                BOOT_ALLOC_RESERVED_COUNT(&bootmem));
+	printk("----------\n");
 	printk("Free Areas : \n");
-	boot_allocator_for_each_regions(boot_allocator_print_region_info, bootmem.free_regions,
-	                                bootmem.free_count);
+	boot_allocator_for_each_regions(boot_allocator_print_region_info,
+	                                BOOT_ALLOC_FREE_REGIONS(&bootmem),
+	                                BOOT_ALLOC_FREE_COUNT(&bootmem));
+	printk("----------\n");
+	printk("Holes Areas : \n");
+	boot_allocator_for_each_regions(boot_allocator_print_region_info,
+	                                BOOT_ALLOC_HOLE_REGIONS(&bootmem),
+	                                BOOT_ALLOC_HOLE_COUNT(&bootmem));
 	printk("------------------------------------------\n");
 }
 
 void boot_allocator_init(multiboot_tag_mmap_t *mmap, uint8_t *mmap_end)
 {
-	bootmem.free_count     = 0;
-	bootmem.reserved_count = 0;
-	boot_allocator_add_region(&bootmem, kernel_start, kernel_end, RESERVED_MEMORY);
+	BOOT_ALLOC_FREE_COUNT(&bootmem)     = 0;
+	BOOT_ALLOC_RESERVED_COUNT(&bootmem) = 0;
+	BOOT_ALLOC_HOLE_COUNT(&bootmem)     = 0;
+	// Zone VGA/BIOS_ROM (0xa0000-0x100000)
+	boot_allocator_add_region(&bootmem, 0xa0000, 0x100000, RESERVED_MEMORY);
+	// Zone Low memory
 	boot_allocator_add_region(&bootmem, gdtr.base, (gdtr.base + gdtr.limit + 1), RESERVED_MEMORY);
 	boot_allocator_add_region(&bootmem, idtr.base, (idtr.base + idtr.limit + 1), RESERVED_MEMORY);
-	boot_allocator_add_region(&bootmem, mb2info, (mb2info + mb2info->total_size), RESERVED_MEMORY);
+	boot_allocator_add_region(&bootmem, 0x0, 0x1000, RESERVED_MEMORY);
+	// Zone Inconnu --> todo : understand wtf is this shit, marked as problematic at the moment
+	boot_allocator_add_region(&bootmem, 0x1000, 0x9fc00, RESERVED_MEMORY);
+	// Zone Kernel Code
+	boot_allocator_add_region(&bootmem, (uintptr_t)kernel_start, (uintptr_t)kernel_end,
+	                          RESERVED_MEMORY);
+
+	// Zone Boot_info
+	boot_allocator_add_region(&bootmem, (uintptr_t)mb2info,
+	                          (uintptr_t)(mb2info + mb2info->total_size), RESERVED_MEMORY);
+	// boot_allocator_add_region(&bootmem, 0xff00000000, 0xffffffffff, RESERVED_MEMORY);
+
 	mb2_mmap_iter(mmap, mmap_end, boot_allocator_reserved_wrapper, false);
-	boot_allocator_sort_regions(bootmem.reserved_regions, bootmem.reserved_count);
+	BOOT_ALLOCATOR_SORT_AND_MERGE(bootmem.regions[RESERVED_MEMORY], bootmem.count[RESERVED_MEMORY]);
+
 	mb2_mmap_iter(mmap, mmap_end, boot_allocator_free_handler, true);
-	bootmem.free_count =
-	    boot_allocator_merge_contiguous_regions(bootmem.free_regions, bootmem.free_count);
-	bootmem.reserved_count =
-	    boot_allocator_merge_contiguous_regions(bootmem.reserved_regions, bootmem.reserved_count);
+	BOOT_ALLOCATOR_SORT_AND_MERGE(bootmem.regions[FREE_MEMORY], bootmem.count[FREE_MEMORY]);
+
+	boot_allocator_fill_gaps_as_holes();
+	mb2_mmap_iter(mmap, mmap_end, boot_allocator_init_total_size, false);
+	mb2_mmap_iter(mmap, mmap_end, boot_allocator_init_total_size, true);
+
+	total_pages = boot_allocator_get_total_visibale_ram(&bootmem) / PAGE_SIZE;
 }
 
 /*
@@ -219,22 +287,27 @@ void *boot_alloc(uint32_t size)
 		return NULL;
 	}
 
-	for (int i = bootmem.free_count - 1; i >= 0; i--) {
-		region_t *reg         = &bootmem.free_regions[i];
+	for (int i = BOOT_ALLOC_FREE_COUNT(&bootmem) - 1; i >= 0; i--) {
+		region_t *reg         = &bootmem.regions[FREE_MEMORY][i];
 		uint32_t  region_size = reg->end - reg->start;
 
 		if (region_size >= size) {
 			void *ret = (void *)reg->start;
-			reg->start += size;
 
-			if (reg->start == reg->end) {
-				for (int j = i; j < bootmem.free_count - 1; j++)
-					bootmem.free_regions[j] = bootmem.free_regions[j + 1];
-				bootmem.free_count -= 1;
+			if ((uintptr_t)ret + size > reg->end) {
+				printk("ERROR: Allocation would exceed region!\n");
+				continue;
 			}
+
+			reg->start += size;
 
 			boot_allocator_add_region(&bootmem, (uintptr_t)ret, (uintptr_t)ret + size,
 			                          RESERVED_MEMORY);
+
+			if (reg->start >= reg->end) {
+				*reg = bootmem.regions[FREE_MEMORY][--BOOT_ALLOC_FREE_COUNT(&bootmem)];
+			}
+
 			return ret;
 		}
 	}

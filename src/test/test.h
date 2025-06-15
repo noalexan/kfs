@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory.h>
 #include <stdint.h>
 #include <types.h>
 
@@ -27,3 +28,6 @@ void test_idt_page_fault(void);
 
 // debug
 void register_scroll_lock_on_debug();
+
+// memory
+void test_boot_alocator(void);

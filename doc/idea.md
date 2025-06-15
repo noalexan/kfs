@@ -2,48 +2,53 @@
 
 ## Keyboard
 
-### Lock Keys
+[ ] refactor to use dynamic memory
 
-Actually lock keys are toggle on release, but is not standar, modern keyboard toggle thekey statement
-on press, but with the current implrmentation repeat are not handled:
+### Input Driver
 
-<!-- * [0x3A] = { "Caps Lock",    KEY_PRESS  }, -->
-<!-- * [0x45] = { "Num Lock",     KEY_PRESS  }, -->
-<!-- * [0x46] = { "Scroll Lock",  KEY_PRESS  }, -->
-<!-- * [0xBA] = { "Caps Lock",    KEY_RELEASE }, -->
-<!-- * [0xC5] = { "Num Lock",     KEY_RELEASE }, -->
-<!-- * [0xC6] = { "Scroll Lock",  KEY_RELEASE }, -->
-- Improvment way :
+[ ] Create an input driver for follow this workflow :
 
 ```c
-    bool key_down[256] = {0};     //  tableau global ou save l'etat de chaque touche
-    bool caps_lock_state = false; // ou num_lock_state, scroll_lock_state, etc.
-
-    void handle_key_event(uint8_t scancode, bool is_press) {
-        uint8_t code = scancode & 0x7F;
-
-        if (is_press) {
-            if (!key_down[code]) {
-                key_down[code] = true;
-                // PREMIER PRESS : on toggle le lock
-                if (code == CAPS_LOCK_SCANCODE) {
-                    caps_lock_state = !caps_lock_state;
-                    // (Met à jour l'etat , etc.)
-                }
-                // ... autres touches
-            }
-            // sinon, c'est un repeat : on ignore pour les lock keys
-        } else {
-            key_down[code] = false;
-            // On ne fait rien sur release pour les lock keys
-        }
-    }
+    // KEYBOARD driver -> INPUT driver + Line Editing <-> tty -> VGA driver
 ```
 
-## TSS
+## Memory
+
+[~] Use a Buddy Allocator for the PMM
+[ ] Create differente memory zone : DMA / DMA32 / NORMAL  Only if neccesary
+[ ] Create differente MIGRATION_TYPE to optimize framgmentation handling
+
+### Multiple Zones and Migration Type handling
+
+- Be carefull this idea need to chage lots of code like boot allocator implementation page descriptor and maybe some lines on buddy allocator =).
+
+-   Refactor bootallocator like this to hndle multiple zone :
+
+```c
+typedef struct boot_allocator {
+    bool state;
+    zone_regions_t zones[ZONE_TYPE_COUNT][REGIONS_TYPES];
+} boot_allocator_t;
+
+```
+
+- on page descriptor parsing use an metrics descriptor to segment free regions into page with an MIGRATION TYPE flags following metrics :
+
+```c
+typedef struct migration_metrics_s {
+    int proportions;
+    size_t min_size;
+    bool allow_fallback[MIGRATION_TYPE_COUNT];
+} migration_metrics_t;
+
+migration_metrics_t metrics[MIGRATION_TYPE_COUNT];
+```
+
+- Maybe an refactoring of buddy allocator impl is needed.
+
+## Test Framework / Driver
+
+## TSS Maybe on KFS 5
 
 Follow Os dev to implement TSS
-
-## Handle framgmentation on bitmap
-
-[ ] Use a buddy allocator alg
+Stack Allocator

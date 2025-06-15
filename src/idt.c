@@ -5,8 +5,8 @@
 #include "io.h"
 #include "keyboard.h"
 #include "panic.h"
-#include "printk/printk.h"
-#include "vga/vga.h"
+#include "printk.h"
+#include "vga.h"
 
 #define PIC1         0x20 // IO base address for master PIC
 #define PIC2         0xA0 // IO base address for slave PIC
@@ -84,7 +84,7 @@ extern void irq_128(void);
 extern void syscall_dispatcher(REGISTERS, int, int);
 
 idt_entry *const idt_entries = (idt_entry *)IDT_BASE;
-idtr_t           idtr        = {.limit = sizeof(idt_entry) * IDT_SIZE - 1, .base = idt_entries};
+idtr_t           idtr = {.limit = sizeof(idt_entry) * IDT_SIZE - 1, .base = (uint32_t)idt_entries};
 
 irqHandler interrupt_handlers[256] = {
     [0x80] = syscall_dispatcher,
