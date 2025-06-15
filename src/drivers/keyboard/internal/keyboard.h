@@ -8,6 +8,7 @@
 #include "io.h"
 #include "panic.h"
 #include "tty.h"
+#include <acpi.h>
 #include <drivers/keyboard.h>
 #include <libft.h>
 #include <types.h>

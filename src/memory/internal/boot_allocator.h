@@ -4,6 +4,7 @@
 // IMCLUDES
 // ============================================================================
 
+#include <acpi.h>
 #include <memory/boot_allocator.h>
 #include <types.h>
 

@@ -1,4 +1,4 @@
-#include "mb2_info.h"
+#include "internal/mb2_info.h"
 #include "panic.h"
 #include <memory.h>
 #include <types.h>
@@ -39,12 +39,6 @@ const struct multiboot2_header_tag_end mb2_tag_end
 
 ////////////////////////////////////////////////////////////
 // Functions
-
-static inline multiboot_memory_map_t *next_entry(multiboot_memory_map_t *mmap_entry,
-                                                 multiboot_tag_mmap_t   *mmap)
-{
-	return (multiboot_memory_map_t *)((uint8_t *)mmap_entry + mmap->entry_size);
-}
 
 void mb2_mmap_iter(multiboot_tag_mmap_t *mmap, uint8_t *mmap_end, entry_handler_t handler,
                    bool free)

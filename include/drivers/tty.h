@@ -1,6 +1,6 @@
 #pragma once
 
-#include "vga.h"
+#include <drivers/vga.h>
 
 #define MAX_TTY     12
 #define MAX_CMD_LEN 256
