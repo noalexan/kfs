@@ -1,4 +1,5 @@
-#include "boot_allocator.h"
+#include "internal/boot_allocator.h"
+
 #include "gdt.h"
 #include "idt.h"
 #include "panic.h"

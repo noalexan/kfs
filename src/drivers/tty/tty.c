@@ -2,7 +2,7 @@
 
 #include "acpi.h"
 #include "keyboard.h"
-#include "printk/printk.h"
+#include "printk.h"
 #include "tty.h"
 
 static bool ft_strequ(const char *s1, const char *s2)
