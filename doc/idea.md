@@ -9,7 +9,7 @@
 [ ] Create an input driver for follow this workflow :
 
 ```c
-    // KEYBOARD driver -> INPUT driver + Line Editing <-> tty -> VGA driver 
+    // KEYBOARD driver -> INPUT driver + Line Editing <-> tty -> VGA driver
 ```
 
 ## Memory

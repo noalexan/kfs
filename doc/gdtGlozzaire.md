@@ -36,4 +36,3 @@ Un descripteur de segment est une structure de données de 8 octets qui définit
   - Present Bit (P): Indique si le segment est présent en mémoire.
   - Autres flags: D/B, L, S, AVL pour diverses fonctionnalités.
 Lorsqu'un sélecteur est chargé dans un registre de segment, le descripteur associé est automatiquement chargé dans un registre caché associé, permettant au processeur d'accéder rapidement aux caractéristiques du segment
-

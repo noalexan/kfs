@@ -38,9 +38,10 @@ _start:
 	lea esp, [0x00090000]
 	mov ebp, esp
 
-    push ebx	# ptr on mb2 info
-    push eax	# magic number set by grub for mb2 info
+	push ebx # ptr on mb2 info
+	push eax # magic number set by grub for mb2 info
 
 	call kernel_main
 
 	hlt
+	jmp . - 1
