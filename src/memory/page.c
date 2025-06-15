@@ -1,5 +1,4 @@
-#include "page.h"
-#include "printk.h"
+#include "internal/page.h"
 
 // struct page {
 //     uint32_t flags;
@@ -42,6 +41,12 @@ static inline page_t *last_page() { return &page_descriptors[total_pages - 1]; }
 
 static inline page_t *first_page() { return &page_descriptors[0]; }
 
+static void page_descriptor_foreach(pages_foreach_fn handler, void *data)
+{
+	for (uint32_t i = 0; i < total_pages; i++)
+		handler(&page_descriptors[i], data);
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // External Apis
 
@@ -73,21 +78,21 @@ bool page_addr_is_same_page(uintptr_t addr1, uintptr_t addr2)
 void page_print_info(page_t *page)
 {
 	if (!page) {
-		printk("page_print_info: NULL page\n");
+		vga_printf("page_print_info: NULL page\n");
 		return;
 	}
 
 	uint32_t  index = page_to_index(page);
 	uintptr_t addr  = page_to_phys(page);
 
-	printk("Page: idx=%u addr=0x%x flags=0x%x\n", index, addr, page->flags);
+	vga_printf("Page: idx=%u addr=0x%x flags=0x%x\n", index, addr, page->flags);
 
 	if (page->flags & PAGE_RESERVED)
-		printk("  - RESERVED\n");
+		vga_printf("  - RESERVED\n");
 	if (page->flags & PAGE_BUDDY)
-		printk("  - BUDDY\n");
+		vga_printf("  - BUDDY\n");
 	if (page->flags & PAGE_ALLOCATED)
-		printk("  - ALLOCATED\n");
+		vga_printf("  - ALLOCATED\n");
 }
 
 uint32_t page_get_updated_reserved_count(void)
@@ -102,12 +107,6 @@ uint32_t page_get_updated_free_count(void)
 	free_count = 0;
 	page_descriptor_foreach(count_free_pages, &free_count);
 	return free_count;
-}
-
-void page_descriptor_foreach(pages_foreach_fn handler, void *data)
-{
-	for (uint32_t i = 0; i < total_pages; i++)
-		handler(&page_descriptors[i], data);
 }
 
 page_t *page_addr_to_usable(uintptr_t addr, bool direction)

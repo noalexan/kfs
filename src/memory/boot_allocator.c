@@ -1,9 +1,4 @@
-#include "boot_allocator.h"
-#include "gdt.h"
-#include "idt.h"
-#include "panic.h"
-#include <libft.h>
-#include <utils.h>
+#include "internal/boot_allocator.h"
 
 /*
  *  The following APIs are used to store precoce allocations and to keep a track of evry used memory
@@ -123,7 +118,7 @@ static uint32_t boot_allocator_merge_contiguous_regions(region_t *reg, uint32_t 
 
 static void boot_allocator_print_region_info(region_t *reg)
 {
-	printk("%p -> %p\n", (void *)reg->start, (void *)reg->end);
+	vga_printf("%p -> %p\n", (void *)reg->start, (void *)reg->end);
 }
 
 static void boot_allocator_for_each_regions(regions_foreach_fn handler, region_t *reg,
@@ -151,7 +146,7 @@ static void boot_allocator_fill_gaps_as_holes(void)
 	uint32_t total_reg = BOOT_ALLOC_RESERVED_COUNT(&bootmem) + BOOT_ALLOC_FREE_COUNT(&bootmem);
 
 	if (total_reg == 0) {
-		printk("No regions to process\n");
+		vga_printf("No regions to process\n");
 		return;
 	}
 
@@ -221,22 +216,22 @@ bool boot_allocator_range_overlaps(uintptr_t start, uintptr_t end, enum mem_type
 
 void boot_allocator_printer(void)
 {
-	printk("----------Boot Allocator Printer----------\n");
-	printk("Reserved Areas : \n");
+	vga_printf("----------Boot Allocator Printer----------\n");
+	vga_printf("Reserved Areas : \n");
 	boot_allocator_for_each_regions(boot_allocator_print_region_info,
 	                                BOOT_ALLOC_RESERVED_REGIONS(&bootmem),
 	                                BOOT_ALLOC_RESERVED_COUNT(&bootmem));
-	printk("----------\n");
-	printk("Free Areas : \n");
+	vga_printf("----------\n");
+	vga_printf("Free Areas : \n");
 	boot_allocator_for_each_regions(boot_allocator_print_region_info,
 	                                BOOT_ALLOC_FREE_REGIONS(&bootmem),
 	                                BOOT_ALLOC_FREE_COUNT(&bootmem));
-	printk("----------\n");
-	printk("Holes Areas : \n");
+	vga_printf("----------\n");
+	vga_printf("Holes Areas : \n");
 	boot_allocator_for_each_regions(boot_allocator_print_region_info,
 	                                BOOT_ALLOC_HOLE_REGIONS(&bootmem),
 	                                BOOT_ALLOC_HOLE_COUNT(&bootmem));
-	printk("------------------------------------------\n");
+	vga_printf("------------------------------------------\n");
 }
 
 void boot_allocator_init(multiboot_tag_mmap_t *mmap, uint8_t *mmap_end)
@@ -247,8 +242,12 @@ void boot_allocator_init(multiboot_tag_mmap_t *mmap, uint8_t *mmap_end)
 	// Zone VGA/BIOS_ROM (0xa0000-0x100000)
 	boot_allocator_add_region(&bootmem, 0xa0000, 0x100000, RESERVED_MEMORY);
 	// Zone Low memory
-	boot_allocator_add_region(&bootmem, gdtr.base, (gdtr.base + gdtr.limit + 1), RESERVED_MEMORY);
-	boot_allocator_add_region(&bootmem, idtr.base, (idtr.base + idtr.limit + 1), RESERVED_MEMORY);
+	const gdt_ptr_t *gdtr = gdtr_getter();
+	const idtr_t    *idtr = idtr_getter();
+	boot_allocator_add_region(&bootmem, gdtr->base, (gdtr->base + gdtr->limit + 1),
+	                          RESERVED_MEMORY);
+	boot_allocator_add_region(&bootmem, idtr->base, (idtr->base + idtr->limit + 1),
+	                          RESERVED_MEMORY);
 	boot_allocator_add_region(&bootmem, 0x0, 0x1000, RESERVED_MEMORY);
 	// Zone Inconnu --> todo : understand wtf is this shit, marked as problematic at the moment
 	boot_allocator_add_region(&bootmem, 0x1000, 0x9fc00, RESERVED_MEMORY);
@@ -283,7 +282,7 @@ void boot_allocator_init(multiboot_tag_mmap_t *mmap, uint8_t *mmap_end)
 void *boot_alloc(uint32_t size)
 {
 	if (bootmem.state == FROZEN) {
-		printk("Error: boot allocator is frozen\n");
+		vga_printf("Error: boot allocator is frozen\n");
 		return NULL;
 	}
 
@@ -295,7 +294,7 @@ void *boot_alloc(uint32_t size)
 			void *ret = (void *)reg->start;
 
 			if ((uintptr_t)ret + size > reg->end) {
-				printk("ERROR: Allocation would exceed region!\n");
+				vga_printf("ERROR: Allocation would exceed region!\n");
 				continue;
 			}
 
@@ -311,6 +310,6 @@ void *boot_alloc(uint32_t size)
 			return ret;
 		}
 	}
-	printk("Error: boot allocator: No space left on device\n");
+	vga_printf("Error: boot allocator: No space left on device\n");
 	return NULL;
 }

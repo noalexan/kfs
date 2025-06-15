@@ -1,11 +1,12 @@
 #pragma once
 
-#include <memory.h>
+#include <acpi.h>
+#include <drivers/keyboard.h>
+#include <drivers/vga.h>
+#include <kernel/panic.h>
+#include <memory/memory.h>
 #include <stdint.h>
 #include <types.h>
-
-#include "../keyboard.h"
-#include "../printk/printk.h"
 
 // Structure pour le pointeur GDT
 typedef struct {
