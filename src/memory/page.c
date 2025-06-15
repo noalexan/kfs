@@ -1,5 +1,5 @@
 #include "internal/page.h"
-#include "printk.h"
+#include "vga.h"
 
 // struct page {
 //     uint32_t flags;
@@ -79,21 +79,21 @@ bool page_addr_is_same_page(uintptr_t addr1, uintptr_t addr2)
 void page_print_info(page_t *page)
 {
 	if (!page) {
-		printk("page_print_info: NULL page\n");
+		vga_printf("page_print_info: NULL page\n");
 		return;
 	}
 
 	uint32_t  index = page_to_index(page);
 	uintptr_t addr  = page_to_phys(page);
 
-	printk("Page: idx=%u addr=0x%x flags=0x%x\n", index, addr, page->flags);
+	vga_printf("Page: idx=%u addr=0x%x flags=0x%x\n", index, addr, page->flags);
 
 	if (page->flags & PAGE_RESERVED)
-		printk("  - RESERVED\n");
+		vga_printf("  - RESERVED\n");
 	if (page->flags & PAGE_BUDDY)
-		printk("  - BUDDY\n");
+		vga_printf("  - BUDDY\n");
 	if (page->flags & PAGE_ALLOCATED)
-		printk("  - ALLOCATED\n");
+		vga_printf("  - ALLOCATED\n");
 }
 
 uint32_t page_get_updated_reserved_count(void)

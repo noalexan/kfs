@@ -1,9 +1,9 @@
 #include <libft.h>
 
 #include "acpi.h"
+#include "internal/tty.h"
 #include "keyboard.h"
-#include "printk.h"
-#include "tty.h"
+#include <vga.h>
 
 static bool ft_strequ(const char *s1, const char *s2)
 {
@@ -18,16 +18,16 @@ static bool ft_strequ(const char *s1, const char *s2)
 
 static void print_help(void)
 {
-	printk("\nUsage: [command] [options]\n\n"
-	       "Available commands:\n"
-	       "  shutdown   Shut down the system\n"
-	       "  poweroff   Shut down the system\n"
-	       "  halt       Halt the system\n"
-	       "  reboot     Reboot the system\n"
-	       "  clear      Clear display\n"
-	       "  azerty     Switch layout to azerty\n"
-	       "  qwerty     Switch layout to qwerty\n"
-	       "  help       Display this help message\n");
+	vga_printf("\nUsage: [command] [options]\n\n"
+	           "Available commands:\n"
+	           "  shutdown   Shut down the system\n"
+	           "  poweroff   Shut down the system\n"
+	           "  halt       Halt the system\n"
+	           "  reboot     Reboot the system\n"
+	           "  clear      Clear display\n"
+	           "  azerty     Switch layout to azerty\n"
+	           "  qwerty     Switch layout to qwerty\n"
+	           "  help       Display this help message\n");
 }
 
 void tty_cli_handle_nl(void)
@@ -50,10 +50,10 @@ void tty_cli_handle_nl(void)
 	} else if (ft_strequ(current_tty->cli, "qwerty")) {
 		keyboard_switch_layout(QWERTY);
 	} else if (cmd_len) {
-		printk("\nk1tOS: command not found: %s", current_tty->cli);
+		vga_printf("\nk1tOS: command not found: %s", current_tty->cli);
 	}
 
-	printk("\n%s", TTY_PROMPT);
+	vga_printf("\n%s", TTY_PROMPT);
 	ft_bzero(current_tty->cli, 256);
 }
 

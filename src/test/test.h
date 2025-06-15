@@ -5,7 +5,8 @@
 #include <types.h>
 
 #include "keyboard.h"
-#include "printk.h"
+#include "panic.h"
+#include "vga.h"
 
 // Structure pour le pointeur GDT
 typedef struct {

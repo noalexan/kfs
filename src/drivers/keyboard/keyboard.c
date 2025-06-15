@@ -1,7 +1,5 @@
-#include "keyboard.h"
-#include "idt.h"
-#include "io.h"
-#include "layout.h"
+#include "internal/keyboard.h"
+#include "internal/layout.h"
 
 TTY               *current_tty;
 TTY                ttys[12];
@@ -33,7 +31,7 @@ static void keyboard_printable_handler(keyboard_key_t key)
 		current_tty->cli[cmd_len + 1] = 0;
 	}
 
-	printk("%c", ascii);
+	vga_printf("%c", ascii);
 }
 
 // Printable Group
@@ -203,13 +201,13 @@ static void keyboard_init_default_table(void)
 void keyboard_switch_layout(Layout new_layout)
 {
 	if (current_layout_type == new_layout) {
-		printk("\nkeyboard: Layout already set");
+		vga_printf("\nkeyboard: Layout already set");
 		return;
 	} else if (new_layout == QWERTY) {
-		printk("\nkeyboard: Switching layout to QWERTY");
+		vga_printf("\nkeyboard: Switching layout to QWERTY");
 		keyboard_remap_layout(default_key_table, 256);
 	} else if (new_layout == AZERTY) {
-		printk("\nkeyboard: Switching layout to AZERTY");
+		vga_printf("\nkeyboard: Switching layout to AZERTY");
 		keyboard_remap_layout(azerty_layout, STOP_WHEN_UNDEFINED);
 	}
 	current_layout_type = new_layout;

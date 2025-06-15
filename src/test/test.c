@@ -4,14 +4,14 @@ void test_gdt_loaded(void)
 {
 	gdt_ptr_t gdt_ptr;
 	__asm__ volatile("sgdt %0" : "=m"(gdt_ptr));
-	printk("GDT loaded: base=0x%x, limit=0x%x\n", gdt_ptr.base, gdt_ptr.limit);
+	vga_printf("GDT loaded: base=0x%x, limit=0x%x\n", gdt_ptr.base, gdt_ptr.limit);
 }
 
 void test_gdt_access(void)
 {
 	volatile int test = 42;
 	test += 1;
-	printk("GDT access test: OK (no fault)\n");
+	vga_printf("GDT access test: OK (no fault)\n");
 }
 
 static inline uint16_t get_cs(void)
@@ -36,11 +36,11 @@ static inline uint16_t get_ss(void)
 void test_gdt_print_segment_registers(void)
 {
 	// CS : Code Segment
-	printk("CS = 0x%x (attendu: 0x8)   // Code Segment\n", get_cs());
+	vga_printf("CS = 0x%x (attendu: 0x8)   // Code Segment\n", get_cs());
 	// DS : Data Segment
-	printk("DS = 0x%x (attendu: 0x10)  // Data Segment\n", get_ds());
+	vga_printf("DS = 0x%x (attendu: 0x10)  // Data Segment\n", get_ds());
 	// SS : Stack Segment
-	printk("SS = 0x%x (attendu: 0x10)  // Stack Segment\n", get_ss());
+	vga_printf("SS = 0x%x (attendu: 0x10)  // Stack Segment\n", get_ss());
 }
 
 void test_idt_divide_by_zero(void)
@@ -95,18 +95,18 @@ void register_scroll_lock_on_debug()
 void test_boot_alocator(void)
 {
 
-	printk("---------------------Testing Boot Allocator---------------------\n");
+	vga_printf("---------------------Testing Boot Allocator---------------------\n");
 	boot_allocator_printer();
-	printk("-----------------------------------------------------------------\n");
+	vga_printf("-----------------------------------------------------------------\n");
 	void *a = boot_alloc(64);
 	void *b = boot_alloc(128);
 	void *c = boot_alloc(256);
 
-	printk("boot_alloc(64) , start = %p | end %p\n", a, a + 64);
-	printk("boot_alloc(128) , start = %p | end %p\n", b, b + 128);
-	printk("boot_alloc(256) , start = %p | end %p\n", c, c + 256);
+	vga_printf("boot_alloc(64) , start = %p | end %p\n", a, a + 64);
+	vga_printf("boot_alloc(128) , start = %p | end %p\n", b, b + 128);
+	vga_printf("boot_alloc(256) , start = %p | end %p\n", c, c + 256);
 
-	printk("-----------------------------------------------------------------\n");
+	vga_printf("-----------------------------------------------------------------\n");
 	boot_allocator_printer();
-	printk("-----------------------------------------------------------------\n");
+	vga_printf("-----------------------------------------------------------------\n");
 }

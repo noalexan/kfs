@@ -5,7 +5,6 @@
 #include "io.h"
 #include "keyboard.h"
 #include "panic.h"
-#include "printk.h"
 #include "vga.h"
 
 #define PIC1         0x20 // IO base address for master PIC

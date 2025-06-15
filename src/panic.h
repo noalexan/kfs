@@ -3,7 +3,6 @@
 #include <types.h>
 
 #include "acpi.h"
-#include "printk.h"
 #include "vga.h"
 
 #define kpanic(msg, ...)                                                                           \
@@ -11,11 +10,11 @@
 		vga_clear();                                                                               \
 		vga_set_screen_mode(VGA_COLOR(VGA_COLOR_RED, VGA_COLOR_WHITE));                            \
 		vga_disable_cursor();                                                                      \
-		printk("\n------------------------------------\n");                                        \
+		vga_printf("\n------------------------------------\n");                                    \
 		print_stack_frame();                                                                       \
-		printk("------------------------------------\n");                                          \
-		printk("PANIC in %s:%d\n", __FILE__, __LINE__);                                            \
-		printk(msg, ##__VA_ARGS__);                                                                \
+		vga_printf("------------------------------------\n");                                      \
+		vga_printf("PANIC in %s:%d\n", __FILE__, __LINE__);                                        \
+		vga_printf(msg, ##__VA_ARGS__);                                                            \
 		halt();                                                                                    \
 	} while (0)
 
