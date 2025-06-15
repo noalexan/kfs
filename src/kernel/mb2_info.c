@@ -1,8 +1,4 @@
 #include "internal/mb2_info.h"
-#include "panic.h"
-#include <memory.h>
-#include <types.h>
-#include <utils.h>
 
 ////////////////////////////////////////////////////////////
 // Globals

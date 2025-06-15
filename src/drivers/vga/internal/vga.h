@@ -5,7 +5,7 @@
 // ============================================================================
 
 #include "io.h"
-#include "tty.h"
+#include <drivers/tty.h>
 #include <drivers/vga.h>
 #include <libft.h>
 #include <stdarg.h>

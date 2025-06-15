@@ -1,10 +1,10 @@
 #pragma once
 
-#include "keyboard.h"
-#include "panic.h"
-#include "vga.h"
 #include <acpi.h>
-#include <memory.h>
+#include <drivers/keyboard.h>
+#include <drivers/vga.h>
+#include <kernel/panic.h>
+#include <memory/memory.h>
 #include <stdint.h>
 #include <types.h>
 

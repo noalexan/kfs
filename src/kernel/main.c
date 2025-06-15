@@ -1,21 +1,19 @@
-#include "gdt.h"
-#include "idt.h"
-#include "keyboard.h"
-#include "mb2_info.h"
-#include "tty.h"
-#include <memory.h>
+#include <drivers/keyboard.h>
+#include <drivers/tty.h>
+#include <kernel/mb2_info.h>
+#include <memory/memory.h>
+#include <x86.h>
 
 void kernel_main(uint32_t magic, uint32_t mbi_addr)
 {
-	gdt_init();
-	idt_init();
+	x86_init();
 	mb2_init(magic, mbi_addr);
 	page_descriptor_init();
 	buddy_init();
 	keyboard_init();
 	ttys_init();
 	// boot_allocator_printer();
-	debug_buddy();
+	// debug_buddy();
 
 	while (true) // hang
 		__asm__ volatile("hlt");

@@ -1,9 +1,4 @@
-#include <libft.h>
-
 #include "internal/tty.h"
-#include "keyboard.h"
-#include <acpi.h>
-#include <vga.h>
 
 static bool ft_strequ(const char *s1, const char *s2)
 {

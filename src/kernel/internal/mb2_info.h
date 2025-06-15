@@ -2,6 +2,10 @@
 
 #include <acpi.h>
 #include <kernel/mb2_info.h>
+#include <kernel/panic.h>
+#include <memory/memory.h>
+#include <types.h>
+#include <utils.h>
 
 #define TAGS_NEEDED 1
 

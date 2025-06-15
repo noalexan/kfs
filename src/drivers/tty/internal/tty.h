@@ -1,6 +1,10 @@
 #pragma once
 
+#include <acpi.h>
+#include <drivers/keyboard.h>
 #include <drivers/tty.h>
+#include <drivers/vga.h>
+#include <libft.h>
 
 // ============================================================================
 // DEFINE AND MACRO

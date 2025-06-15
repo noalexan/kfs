@@ -1,6 +1,8 @@
 #pragma once
 
+#include <libft.h>
 #include <types.h>
+#include <x86.h>
 
 #define GDT_MAX_ENTRIES 7
 #define GDT_ADDR        0x00000800
@@ -37,12 +39,5 @@ typedef struct segment_descriptor {
 	uint8_t  base_high;      // 55 -> 63
 } __attribute__((packed)) segment_descriptor_t;
 
-typedef struct gdt_ptr {
-	uint16_t limit;
-	uint32_t base;
-} __attribute__((packed)) gdt_ptr_t;
-
-extern segment_descriptor_t *gdt_entries;
-extern gdt_ptr_t             gdtr;
-
-void gdt_init(void);
+segment_descriptor_t *gdt_entries;
+gdt_ptr_t             gdtr;
