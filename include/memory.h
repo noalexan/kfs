@@ -13,12 +13,10 @@
 
 // Define
 #define UINTPTR_MAX 0xffffffff
-#define MAX_REGIONS 128
 
 #define PAGE_SIZE  4096
 #define PAGE_SHIFT 12
 #define PAGE_MAGIC 0xDEADBEEF
-#define MAX_ORDER  10
 
 #define KiB_SIZE (1UL << 10)
 #define MiB_SIZE (1UL << 20)
@@ -53,7 +51,6 @@
 #define PAGE_DATA_IS_MAGIC(page) (page->private_data == PAGE_MAGIC)
 #define ORDER_TO_BYTES(order)    (PAGE_BY_ORDER(order) * PAGE_SIZE)
 // #define WHO_IS_MY_BUDDY(addr, order) (addr ^ ORDER_TO_BYTES(order))
-#define WHO_IS_MY_BUDDY(addr, order, base) ((((addr) - (base)) ^ ORDER_TO_BYTES(order)) + (base))
 
 // Macros
 
@@ -104,31 +101,15 @@ struct region_s {
 	uintptr_t end;
 };
 
-struct list_head {
-	struct list_head *next, *prev;
-};
-
-struct buddy_free_area {
-	struct list_head free_list[MAX_MIGRATION];
-	uint32_t         nr_free;
-};
-
-struct buddy_allocator {
-	struct buddy_free_area areas[MAX_ORDER + 1];
-};
-
 struct page {
 	uint32_t  flags;
 	uintptr_t private_data;
-	// struct list_head list;
 };
 
 // TYPEDEF
 
-typedef struct region_s        region_t;
-typedef struct buddy_allocator buddy_allocator_t;
-typedef struct page            page_t;
-typedef void (*pages_foreach_fn)(page_t *page, void *data);
+typedef struct region_s region_t;
+typedef struct page     page_t;
 
 // Forward declarations for internals types
 
@@ -141,48 +122,46 @@ typedef struct boot_allocator boot_allocator_t;
 // VARIABLES GLOBALES
 // ============================================================================
 
-extern uint32_t          total_pages;
-extern uint32_t          total_RAM;
-extern page_t           *page_descriptors;
-extern buddy_allocator_t buddy[MAX_ZONE];
+extern uint32_t total_pages;
+extern uint32_t total_RAM;
+extern page_t  *page_descriptors;
 
 // ============================================================================
 // EXTERNAL APIs
 // ============================================================================
 
+//////////////////////////////
 // boot_allocator.c
 
-void *boot_alloc(uint32_t size);
-void  boot_allocator_printer(void);
-void  boot_allocator_init(multiboot_tag_mmap_t *mmap, uint8_t *mmap_end);
-bool  boot_allocator_range_overlaps(uintptr_t start, uintptr_t end, enum mem_type type);
-// Getter
-region_t *boot_allocator_get_region(enum mem_type type);
+bool      boot_allocator_range_overlaps(uintptr_t start, uintptr_t end, enum mem_type type);
+void     *boot_alloc(uint32_t size);
+void      boot_allocator_freeze(void);
+void      boot_allocator_printer(void);
+void      boot_allocator_init(multiboot_tag_mmap_t *mmap, uint8_t *mmap_end);
 uint32_t  boot_allocator_get_region_count(enum mem_type type);
-// Setter
-void boot_allocator_freeze(void);
+region_t *boot_allocator_get_region(enum mem_type type);
 
+//////////////////////////////
 // page.c
 
+void      page_print_info(page_t *page);
+void      page_descriptor_init(void);
 uint32_t  page_to_index(page_t *page);
 uintptr_t page_to_phys(page_t *page);
 page_t   *page_index_to_page(uint32_t idx);
 page_t   *page_addr_to_page(uintptr_t addr);
+page_t   *page_addr_to_usable(uintptr_t addr, bool direction);
 bool      page_addr_is_same_page(uintptr_t addr1, uintptr_t addr2);
-void      page_print_info(page_t *page);
-void      page_descriptor_init(void);
+uint32_t  page_get_updated_reserved_count(void);
+uint32_t  page_get_updated_free_count(void);
+uint32_t  page_get_free_count(void);
+uint32_t  page_get_reserved_count(void);
 
-uint32_t page_get_updated_reserved_count(void);
-uint32_t page_get_updated_free_count(void);
-void     page_descriptor_foreach(pages_foreach_fn handler, void *data);
-uint32_t page_get_free_count(void);
-uint32_t page_get_reserved_count(void);
-page_t  *page_addr_to_usable(uintptr_t addr, bool direction);
-
+//////////////////////////////
 // buddy.c
 
-void       buddy_init(void);
+uintptr_t *buddy_alloc_pages(size_t size);
 void       buddy_print(void);
-uintptr_t *buddy_alloc_pages(uint32_t size);
 void       buddy_free_block(void *ptr);
+void       buddy_init(void);
 void       debug_buddy(void);

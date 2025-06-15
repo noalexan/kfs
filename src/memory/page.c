@@ -42,6 +42,12 @@ static inline page_t *last_page() { return &page_descriptors[total_pages - 1]; }
 
 static inline page_t *first_page() { return &page_descriptors[0]; }
 
+static void page_descriptor_foreach(pages_foreach_fn handler, void *data)
+{
+	for (uint32_t i = 0; i < total_pages; i++)
+		handler(&page_descriptors[i], data);
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // External Apis
 
@@ -102,12 +108,6 @@ uint32_t page_get_updated_free_count(void)
 	free_count = 0;
 	page_descriptor_foreach(count_free_pages, &free_count);
 	return free_count;
-}
-
-void page_descriptor_foreach(pages_foreach_fn handler, void *data)
-{
-	for (uint32_t i = 0; i < total_pages; i++)
-		handler(&page_descriptors[i], data);
 }
 
 page_t *page_addr_to_usable(uintptr_t addr, bool direction)

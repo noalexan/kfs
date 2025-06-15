@@ -11,11 +11,11 @@ void kernel_main(uint32_t magic, uint32_t mbi_addr)
 	idt_init();
 	mb2_init(magic, mbi_addr);
 	page_descriptor_init();
+	buddy_init();
 	keyboard_init();
 	ttys_init();
 	// boot_allocator_printer();
-	buddy_init();
-	// debug_buddy();
+	debug_buddy();
 
 	while (true) // hang
 		__asm__ volatile("hlt");
