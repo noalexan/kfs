@@ -1,4 +1,4 @@
-name: Clang Format Check
+name: Project Checker
 
 on:
   pull_request:
@@ -7,7 +7,7 @@ on:
 
 jobs:
   format-check:
-    name: Check Code Formatting
+    name: Check for Code Formatting
     runs-on: ubuntu-latest
 
     steps:
@@ -25,12 +25,14 @@ jobs:
           clang-format --verbose --Werror --dry-run $(find ./src ./include -regex '.*\.\(c\|h\|cpp\|hpp\)')
 
   compile:
-    name: Check for compilation errors
+    name: Check for Compilation Errors
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          submodules: true
 
       - name: Install dependencies
         run: |
