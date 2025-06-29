@@ -12,10 +12,4 @@ void kernel_main(uint32_t magic, uint32_t mbi_addr)
 	buddy_init();
 	keyboard_init();
 	ttys_init();
-	// boot_allocator_printer();
-	// debug_buddy();
-
-	while (true) // hang
-		__asm__ volatile("hlt");
-	;
 }
