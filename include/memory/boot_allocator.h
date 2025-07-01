@@ -51,6 +51,9 @@ bool      boot_allocator_range_overlaps(uintptr_t start, uintptr_t end, enum mem
 void     *boot_alloc(uint32_t size);
 void      boot_allocator_freeze(void);
 void      boot_allocator_printer(void);
+void      boot_allocator_zones_printer(void);
 void      boot_allocator_init(multiboot_tag_mmap_t *mmap, uint8_t *mmap_end);
 uint32_t  boot_allocator_get_region_count(enum mem_type type);
 region_t *boot_allocator_get_region(enum mem_type type);
+region_t *boot_allocator_get_zone(int type);
+uint32_t  boot_allocator_get_zones_count(int type);

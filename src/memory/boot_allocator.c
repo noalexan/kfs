@@ -1,5 +1,67 @@
-#include "internal/boot_allocator.h"
+#include <acpi.h>
+#include <kernel/panic.h>
+#include <libft.h>
+#include <memory/memory.h>
+#include <types.h>
+#include <utils.h>
+#include <x86.h>
 
+////////////////////////////////////////////////
+// Header
+
+// Defines
+
+#define END               0x00000000
+#define REGION_TYPE_COUNT 3
+#define MAX_REGIONS       128
+
+// Macros
+
+#define BOOT_ALLOCATOR_SORT_AND_MERGE(regions, count)                                              \
+	do {                                                                                           \
+		boot_allocator_sort_regions((regions), (count));                                           \
+		(count) = boot_allocator_merge_contiguous_regions((regions), (count));                     \
+	} while (0)
+
+// Only in if statement
+#define BOOT_ALLOCATOR_IS_REGION_UNMAPPED(start, end)                                              \
+	(!(boot_allocator_overlaps((start), (end), RESERVED_MEMORY) ||                                 \
+	   boot_allocator_overlaps((start), (end), FREE_MEMORY)))
+
+#define BOOT_ALLOC_FREE_COUNT(alloc)     ((alloc)->count[FREE_MEMORY])
+#define BOOT_ALLOC_RESERVED_COUNT(alloc) ((alloc)->count[RESERVED_MEMORY])
+#define BOOT_ALLOC_HOLE_COUNT(alloc)     ((alloc)->count[HOLES_MEMORY])
+
+#define BOOT_ALLOC_FREE_REGIONS(alloc)     ((alloc)->regions[FREE_MEMORY])
+#define BOOT_ALLOC_RESERVED_REGIONS(alloc) ((alloc)->regions[RESERVED_MEMORY])
+#define BOOT_ALLOC_HOLE_REGIONS(alloc)     ((alloc)->regions[HOLES_MEMORY])
+
+// ============================================================================
+// STRUCT
+// ============================================================================
+
+// Enums
+
+// Structures
+
+typedef struct boot_allocator {
+	bool     state;
+	uint32_t count[REGION_TYPE_COUNT];
+	region_t regions[REGION_TYPE_COUNT][MAX_REGIONS];
+} boot_allocator_t;
+
+uint32_t zone_count[MAX_ZONE];
+region_t free_zones[MAX_ZONE][MAX_REGIONS];
+// Typedefs
+
+typedef void (*regions_foreach_fn)(region_t *regions);
+
+// ============================================================================
+// VARIABLES GLOBALES
+// ============================================================================
+
+extern boot_allocator_t bootmem;
+static region_t         all_reg_g[MAX_REGIONS * REGION_TYPE_COUNT];
 /*
  *  The following APIs are used to store precoce allocations and to keep a track of evry used memory
  *  before the memory system is available
@@ -14,8 +76,7 @@ extern uint8_t   kernel_start[];
 extern uint8_t   kernel_end[];
 
 ////////////////////////////////////////////////
-
-// APIs
+// Code
 
 /*
  * Adds a memory region (reserved or free) to the boot allocator's region tables
@@ -188,12 +249,50 @@ static uint32_t boot_allocator_get_total_visibale_ram(boot_allocator_t *alloc)
 	return end;
 }
 
+static void boot_allocator_init_free_zones(void)
+{
+	size_t    free_count = boot_allocator_get_region_count(FREE_MEMORY);
+	region_t *free_reg   = boot_allocator_get_region(FREE_MEMORY);
+
+	for (size_t i = 0; i < free_count; i++) {
+		uintptr_t region_start = free_reg[i].start;
+		uintptr_t region_end   = free_reg[i].end;
+
+		uintptr_t cur_start = region_start;
+		while (cur_start < region_end) {
+			int       zone     = -1;
+			uintptr_t zone_end = 0;
+
+			if (cur_start >= HIGHMEM_START) {
+				zone     = HIGHMEM_ZONE;
+				zone_end = HIGHMEM_END;
+			} else if (cur_start >= LOWMEM_START) {
+				zone     = LOWMEM_ZONE;
+				zone_end = HIGHMEM_START;
+			} else {
+				zone     = DMA_ZONE;
+				zone_end = LOWMEM_START;
+			}
+
+			uintptr_t sub_end = (region_end < zone_end) ? region_end : zone_end;
+			if (sub_end > cur_start) {
+				free_zones[zone][zone_count[zone]++] = (region_t){cur_start, sub_end};
+			}
+			cur_start = sub_end;
+		}
+	}
+}
+
 //////////////////////////////////////////////////////////////////////////////////////////
 // External APis
 
 region_t *boot_allocator_get_region(enum mem_type type) { return bootmem.regions[type]; }
 
 uint32_t boot_allocator_get_region_count(enum mem_type type) { return bootmem.count[type]; }
+
+region_t *boot_allocator_get_zone(int type) { return free_zones[type]; }
+
+uint32_t boot_allocator_get_zones_count(int type) { return zone_count[type]; }
 
 void boot_allocator_freeze(void) { bootmem.state = FROZEN; }
 
@@ -234,6 +333,23 @@ void boot_allocator_printer(void)
 	vga_printf("------------------------------------------\n");
 }
 
+void boot_allocator_zones_printer(void)
+{
+	vga_printf("----------Boot Allocator Zones Printer----------\n");
+	vga_printf("Dma Zone : \n");
+	boot_allocator_for_each_regions(boot_allocator_print_region_info, free_zones[DMA_ZONE],
+	                                zone_count[DMA_ZONE]);
+	vga_printf("----------\n");
+	vga_printf("Lowmem Zone : \n");
+	boot_allocator_for_each_regions(boot_allocator_print_region_info, free_zones[LOWMEM_ZONE],
+	                                zone_count[LOWMEM_ZONE]);
+	vga_printf("----------\n");
+	vga_printf("Highmem Zone : \n");
+	boot_allocator_for_each_regions(boot_allocator_print_region_info, free_zones[HIGHMEM_ZONE],
+	                                zone_count[HIGHMEM_ZONE]);
+	vga_printf("------------------------------------------\n");
+}
+
 void boot_allocator_init(multiboot_tag_mmap_t *mmap, uint8_t *mmap_end)
 {
 	BOOT_ALLOC_FREE_COUNT(&bootmem)     = 0;
@@ -271,6 +387,10 @@ void boot_allocator_init(multiboot_tag_mmap_t *mmap, uint8_t *mmap_end)
 	mb2_mmap_iter(mmap, mmap_end, boot_allocator_init_total_size, true);
 
 	total_pages = boot_allocator_get_total_visibale_ram(&bootmem) / PAGE_SIZE;
+	boot_allocator_init_free_zones();
+	for (int zone = 0; zone < MAX_ZONE; zone++) {
+		BOOT_ALLOCATOR_SORT_AND_MERGE(free_zones[zone], zone_count[zone]);
+	}
 }
 
 /*

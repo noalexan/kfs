@@ -20,7 +20,6 @@
 #define MiB_SIZE (1UL << 20)
 #define GiB_SIZE (1UL << 30)
 
-#define MAX_ZONE      1
 #define MAX_MIGRATION 1
 
 // Macros
@@ -47,10 +46,10 @@ typedef enum {
 } order_size;
 
 typedef enum {
-	NORMAL_ZONE = 0,
-	// Not Implemented
+	LOWMEM_ZONE = 0,
 	DMA_ZONE,
-	ZONE_HIGHMEM,
+	HIGHMEM_ZONE,
+	INVALID_ZONE,
 } zone_type;
 
 typedef enum {
@@ -74,8 +73,8 @@ typedef enum {
 // EXTERNAL APIs
 // ============================================================================
 
-uintptr_t *buddy_alloc_pages(size_t size);
-void       buddy_print(void);
+uintptr_t *buddy_alloc_pages(size_t size, zone_type zone);
+void       buddy_print(zone_type zone);
 void       buddy_free_block(void *ptr);
 void       buddy_init(void);
 void       debug_buddy(void);

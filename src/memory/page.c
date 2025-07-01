@@ -1,17 +1,23 @@
-#include "internal/page.h"
+#include <drivers/vga.h>
+#include <memory/memory.h>
 
 // struct page {
 //     uint32_t flags;
 // #define PAGE_RESERVED       0b00000001
 // #define PAGE_BUDDY          0b00000010
 // #define PAGE_ALLOCATED      0b00000100
+// #define PAGE_DMA		       0b00001000
+// #define PAGE_LOWMEM         0b00010000
+// #define PAGE_HIGHMEM        0b00100000
 // };
+
+typedef void (*pages_foreach_fn)(page_t *page, void *data);
 
 uint32_t reserved_count   = 0;
 uint32_t free_count       = 0;
 page_t  *page_descriptors = NULL;
 
-static uint32_t page_get_appropriate_flag(uintptr_t addr_start)
+static uint32_t page_get_state_flag(uintptr_t addr_start)
 {
 	uintptr_t addr_end   = addr_start + PAGE_SIZE;
 	size_t    free_count = boot_allocator_get_region_count(FREE_MEMORY);
@@ -23,6 +29,20 @@ static uint32_t page_get_appropriate_flag(uintptr_t addr_start)
 		}
 	}
 	return PAGE_RESERVED;
+}
+
+static uint32_t page_get_zone_flag(uintptr_t addr_start)
+{
+	if (addr_start >= HIGHMEM_START)
+		return PAGE_HIGHMEM;
+	else if (addr_start >= LOWMEM_START)
+		return PAGE_LOWMEM;
+	return PAGE_DMA;
+}
+
+static inline uint32_t page_get_appropriate_flag(uintptr_t addr_start)
+{
+	return page_get_state_flag(addr_start) | page_get_zone_flag(addr_start);
 }
 
 static void count_free_pages(page_t *page, void *counter)

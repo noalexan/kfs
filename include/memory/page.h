@@ -20,8 +20,18 @@
 #define PAGE_RESERVED  0b00000001
 #define PAGE_BUDDY     0b00000010
 #define PAGE_ALLOCATED 0b00000100
+#define PAGE_DMA       0b00001000
+#define PAGE_LOWMEM    0b00010000
+#define PAGE_HIGHMEM   0b00100000
+#define PAGE_ZONE_MASK 0b00111000
 
 // Macros
+
+#define PAGE_SET_ZONE(page, zone) ((page)->flags = ((page)->flags & ~PAGE_ZONE_MASK) | (zone))
+#define PAGE_IS_DMA(page)         (FLAG_IS_SET((page)->flags, PAGE_DMA))
+#define PAGE_IS_LOWMEM(page)      (FLAG_IS_SET((page)->flags, PAGE_LOWMEM))
+#define PAGE_IS_HIGHMEM(page)     (FLAG_IS_SET((page)->flags, PAGE_HIGHMEM))
+#define PAGE_GET_ZONE(page)       ((page)->flags & PAGE_ZONE_MASK)
 
 #define PAGE_SET_ALLOCATED(page) FLAG_SET((page)->flags, PAGE_ALLOCATED)
 #define PAGE_SET_FREE(page)      FLAG_UNSET((page)->flags, PAGE_ALLOCATED)
