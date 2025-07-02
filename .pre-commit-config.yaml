@@ -1,13 +1,4 @@
 repos:
-  - repo: local
-    hooks:
-      - id: format-and-stage
-        name: Format and auto-stage
-        entry: bash -c 'make format && git add -u'
-        language: system
-        pass_filenames: false
-        always_run: true
-
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
     hooks:

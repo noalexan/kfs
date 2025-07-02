@@ -1,6 +1,13 @@
 #include <drivers/vga.h>
 #include <memory/memory.h>
 
+// Macro
+
+#define PAGE_SET_ZONE(page, zone) ((page)->flags = ((page)->flags & ~PAGE_ZONE_MASK) | (zone))
+#define PAGE_IS_DMA(page)         (FLAG_IS_SET((page)->flags, PAGE_DMA))
+#define PAGE_IS_LOWMEM(page)      (FLAG_IS_SET((page)->flags, PAGE_LOWMEM))
+#define PAGE_IS_HIGHMEM(page)     (FLAG_IS_SET((page)->flags, PAGE_HIGHMEM))
+
 // struct page {
 //     uint32_t flags;
 // #define PAGE_RESERVED       0b00000001
@@ -149,7 +156,7 @@ uint32_t page_get_reserved_count(void) { return reserved_count; }
 
 void page_descriptor_init(void)
 {
-	page_descriptors = boot_alloc(total_pages * sizeof(page_t));
+	page_descriptors = boot_alloc(total_pages * sizeof(page_t), HIGHMEM_ZONE);
 	for (uint32_t i = 0; i < total_pages; i++) {
 		page_descriptors[i].flags        = page_get_appropriate_flag(i * PAGE_SIZE);
 		page_descriptors[i].private_data = PAGE_MAGIC;

@@ -12,12 +12,30 @@
 // Macros
 
 #define WHO_IS_MY_BUDDY(addr, order, base) ((((addr) - (base)) ^ ORDER_TO_BYTES(order)) + (base))
+#define ORDER_TO_BYTES(order)              (PAGE_BY_ORDER(order) * PAGE_SIZE)
+#define PAGE_SET_ALLOCATED(page)           FLAG_SET((page)->flags, PAGE_ALLOCATED)
+#define PAGE_SET_FREE(page)                FLAG_UNSET((page)->flags, PAGE_ALLOCATED)
 
 // ============================================================================
 // STRUCT
 // ============================================================================
 
 // Enums
+
+typedef enum {
+	ORDER_4KIB = 0,
+	ORDER_8KIB,
+	ORDER_16KIB,
+	ORDER_32KIB,
+	ORDER_64KIB,
+	ORDER_128KIB,
+	ORDER_256KIB,
+	ORDER_512KIB,
+	ORDER_1MIB,
+	ORDER_2MIB,
+	ORDER_4MIB,
+	BAD_ORDER,
+} order_size;
 
 // Structures
 
@@ -180,10 +198,10 @@ static uintptr_t *split_block_to_order(size_t order_needed, size_t cur_order, ui
 	return split_block_to_order(order_needed, cur_order, ret, zone);
 }
 
-static uintptr_t get_buddy_base(uintptr_t addr)
+static uintptr_t get_buddy_base(uintptr_t addr, zone_type zone)
 {
-	size_t    free_count = boot_allocator_get_region_count(FREE_MEMORY);
-	region_t *free_reg   = boot_allocator_get_region(FREE_MEMORY);
+	size_t    free_count = boot_allocator_get_zones_count(zone);
+	region_t *free_reg   = boot_allocator_get_zone(zone);
 
 	for (size_t i = 0; i < free_count; i++) {
 		if (addr >= free_reg[i].start && addr < free_reg[i].end)
@@ -197,7 +215,7 @@ static struct list_head *get_buddy_node(void *block, size_t order, zone_type zon
 	struct list_head *head = order_to_free_list(order, zone);
 	struct list_head *cur  = head->next;
 	uintptr_t         buddy_addr =
-	    WHO_IS_MY_BUDDY((uintptr_t)block, order, get_buddy_base((uintptr_t)block));
+	    WHO_IS_MY_BUDDY((uintptr_t)block, order, get_buddy_base((uintptr_t)block, zone));
 
 	while (cur != head) {
 		if ((uintptr_t)cur == buddy_addr) {
@@ -208,39 +226,6 @@ static struct list_head *get_buddy_node(void *block, size_t order, zone_type zon
 	// print_buddy_free_list(order, zone);
 
 	return NULL;
-}
-
-static bool block_fits_in_zone(uint32_t addr, size_t block_size, zone_type zone)
-{
-	uint32_t zone_start, zone_end;
-	switch (zone) {
-	case DMA_ZONE:
-		zone_start = DMA_START;
-		zone_end   = DMA_END;
-		break;
-	case LOWMEM_ZONE:
-		zone_start = LOWMEM_START;
-		zone_end   = LOWMEM_END;
-		break;
-	case HIGHMEM_ZONE:
-		zone_start = HIGHMEM_START;
-		zone_end   = HIGHMEM_END;
-		break;
-	default:
-		return false;
-	}
-	return addr >= zone_start && (addr + block_size) <= zone_end;
-}
-
-static zone_type buddy_phy_to_zone(uint32_t addr, size_t block_size)
-{
-	if (block_fits_in_zone(addr, block_size, DMA_ZONE))
-		return DMA_ZONE;
-	else if (block_fits_in_zone(addr, block_size, LOWMEM_ZONE))
-		return LOWMEM_ZONE;
-	else if (block_fits_in_zone(addr, block_size, HIGHMEM_ZONE))
-		return HIGHMEM_ZONE;
-	return INVALID_ZONE;
 }
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -334,46 +319,46 @@ void buddy_free_block(void *ptr)
 
 void buddy_init(void)
 {
-	boot_allocator_freeze();
+	// boot_allocator_freeze();
 
-	for (size_t zone = 0; zone < MAX_ZONE; zone++) {
-		for (int order = 0; order <= MAX_ORDER; order++) {
-			struct list_head *head           = &buddy[zone].areas[order].free_list[MIGRATE_MOVABLE];
-			head->next                       = head;
-			head->prev                       = head;
-			buddy[zone].areas[order].nr_free = 0;
-		}
-	}
+	// for (size_t zone = 0; zone < MAX_ZONE; zone++) {
+	// 	for (int order = 0; order <= MAX_ORDER; order++) {
+	// 		struct list_head *head           = &buddy[zone].areas[order].free_list[MIGRATE_MOVABLE];
+	// 		head->next                       = head;
+	// 		head->prev                       = head;
+	// 		buddy[zone].areas[order].nr_free = 0;
+	// 	}
+	// }
 
-	size_t    free_count = boot_allocator_get_region_count(FREE_MEMORY);
-	region_t *free_reg   = boot_allocator_get_region(FREE_MEMORY);
+	// size_t    free_count = boot_allocator_get_region_count(FREE_MEMORY);
+	// region_t *free_reg   = boot_allocator_get_region(FREE_MEMORY);
 
-	for (size_t i = 0; i < free_count; i++) {
-		page_t *region_start_page = page_addr_to_usable(free_reg[i].start, NEXT);
-		page_t *region_end_page   = page_addr_to_usable(free_reg[i].end, PREV);
+	// for (size_t i = 0; i < free_count; i++) {
+	// 	page_t *region_start_page = page_addr_to_usable(free_reg[i].start, NEXT);
+	// 	page_t *region_end_page   = page_addr_to_usable(free_reg[i].end, PREV);
 
-		size_t  usable_page  = region_end_page - region_start_page + 1;
-		page_t *current_page = region_start_page;
+	// 	size_t  usable_page  = region_end_page - region_start_page + 1;
+	// 	page_t *current_page = region_start_page;
 
-		for (int order = MAX_ORDER; order >= 0; order--) {
-			size_t pages_per_block = PAGE_BY_ORDER(order);
-			while (usable_page >= pages_per_block) {
-				if (order < 0)
-					break;
-				uintptr_t         block_addr = page_to_phys(current_page);
-				struct list_head *new_node   = (struct list_head *)block_addr;
-				ft_memset(new_node, 0, sizeof(struct list_head));
-				zone_type mem_zone = PAGE_GET_ZONE(current_page);
-				buddy_list_add_head(new_node,
-				                    &buddy[mem_zone].areas[order].free_list[MIGRATE_MOVABLE]);
-				buddy[mem_zone].areas[order].nr_free++;
-				current_page += pages_per_block;
-				usable_page -= pages_per_block;
-			}
-		}
-		if (usable_page != 0)
-			kpanic("%d page lost in the hood\n", usable_page);
-	}
+	// 	for (int order = MAX_ORDER; order >= 0; order--) {
+	// 		size_t pages_per_block = PAGE_BY_ORDER(order);
+	// 		while (usable_page >= pages_per_block) {
+	// 			if (order < 0)
+	// 				break;
+	// 			uintptr_t         block_addr = page_to_phys(current_page);
+	// 			struct list_head *new_node   = (struct list_head *)block_addr;
+	// 			ft_memset(new_node, 0, sizeof(struct list_head));
+	// 			zone_type mem_zone = PAGE_GET_ZONE(current_page);
+	// 			buddy_list_add_head(new_node,
+	// 			                    &buddy[mem_zone].areas[order].free_list[MIGRATE_MOVABLE]);
+	// 			buddy[mem_zone].areas[order].nr_free++;
+	// 			current_page += pages_per_block;
+	// 			usable_page -= pages_per_block;
+	// 		}
+	// 	}
+	// 	if (usable_page != 0)
+	// 		kpanic("%d page lost in the hood\n", usable_page);
+	// }
 }
 
 /////////////////////////////////////////////////////////////////////////////////

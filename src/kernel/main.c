@@ -7,8 +7,8 @@ void kernel_main()
 	keyboard_init();
 	ttys_init();
 	// debug_buddy();
-	// buddy_print(HIGHMEM_ZONE);
-	boot_allocator_zones_printer();
+	buddy_print(HIGHMEM_ZONE);
+	// boot_allocator_zones_printer();
 	// boot_allocator_printer();
 
 	while (true) // hang

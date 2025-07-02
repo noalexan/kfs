@@ -32,6 +32,10 @@
 #define BOOT_ALLOC_RESERVED_COUNT(alloc) ((alloc)->count[RESERVED_MEMORY])
 #define BOOT_ALLOC_HOLE_COUNT(alloc)     ((alloc)->count[HOLES_MEMORY])
 
+#define BOOT_ALLOC_DMA_COUNT(count)     (count[DMA])
+#define BOOT_ALLOC_LOWMEM_COUNT(count)  (count[LOWMEM])
+#define BOOT_ALLOC_HIGHMEM_COUNT(count) (count[HIGHMEM])
+
 #define BOOT_ALLOC_FREE_REGIONS(alloc)     ((alloc)->regions[FREE_MEMORY])
 #define BOOT_ALLOC_RESERVED_REGIONS(alloc) ((alloc)->regions[RESERVED_MEMORY])
 #define BOOT_ALLOC_HOLE_REGIONS(alloc)     ((alloc)->regions[HOLES_MEMORY])
@@ -399,37 +403,34 @@ void boot_allocator_init(multiboot_tag_mmap_t *mmap, uint8_t *mmap_end)
  * Deny allocation too small or handle it with more memory as you want bro
  */
 
-void *boot_alloc(uint32_t size)
+void *boot_alloc(uint32_t size, zone_type zone)
 {
 	if (bootmem.state == FROZEN) {
 		vga_printf("Error: boot allocator is frozen\n");
 		return NULL;
 	}
 
-	for (int i = BOOT_ALLOC_FREE_COUNT(&bootmem) - 1; i >= 0; i--) {
-		region_t *reg         = &bootmem.regions[FREE_MEMORY][i];
+	for (int i = zone_count[zone] - 1; i >= 0; i--) {
+		region_t *reg         = &free_zones[zone][i];
 		uint32_t  region_size = reg->end - reg->start;
 
 		if (region_size >= size) {
-			void *ret = (void *)reg->start;
-
-			if ((uintptr_t)ret + size > reg->end) {
-				vga_printf("ERROR: Allocation would exceed region!\n");
+			if (reg->end - size < reg->start) {
+				vga_printf("ERROR: %s: Allocation would exceed region!\n", __func__);
 				continue;
 			}
 
-			reg->start += size;
+			void *ret = (void *)(reg->end - size);
 
-			boot_allocator_add_region(&bootmem, (uintptr_t)ret, (uintptr_t)ret + size,
-			                          RESERVED_MEMORY);
+			boot_allocator_add_region(&bootmem, (uintptr_t)ret, reg->end, RESERVED_MEMORY);
+			reg->end = (uintptr_t)ret;
 
-			if (reg->start >= reg->end) {
-				*reg = bootmem.regions[FREE_MEMORY][--BOOT_ALLOC_FREE_COUNT(&bootmem)];
+			if (reg->start == reg->end) {
+				*reg = free_zones[zone][--zone_count[zone]];
 			}
-
 			return ret;
 		}
 	}
-	vga_printf("Error: boot allocator: No space left on device\n");
+	vga_printf("Error: %s: No space left on device\n", __func__);
 	return NULL;
 }
