@@ -90,6 +90,9 @@ setup-dev:
 	@pip install --target $(EXT_TOOLS) pre-commit
 	@PYTHONPATH="$(EXT_TOOLS):$$PYTHONPATH" python -m pre_commit install
 
+.PHONY: doxy
+doxy:
+	doxygen Doxyfile
 
 .PHONY: run
 run: all

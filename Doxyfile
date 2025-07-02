@@ -1,0 +1,30 @@
+# Doxyfile 1.9.x - Minimal configuration for your project
+
+# Project settings
+PROJECT_NAME           = "MyProject"
+PROJECT_BRIEF          = "Auto-generated documentation"
+OUTPUT_DIRECTORY       = docs
+
+# Input
+INPUT                  = src include
+FILE_PATTERNS          = *.c *.cpp *.h *.hpp
+RECURSIVE              = YES
+
+# Output formats
+GENERATE_HTML          = YES
+GENERATE_LATEX         = NO
+GENERATE_MARKDOWN      = NO
+
+# Source code browsing
+SOURCE_BROWSER         = YES
+INLINE_SOURCES         = YES
+
+# Extract all entities
+EXTRACT_ALL            = YES
+
+# Exclude build artifacts
+EXCLUDE                = build
+
+# Miscellaneous
+QUIET                  = YES
+WARN_IF_UNDOCUMENTED   = YES

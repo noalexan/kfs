@@ -5,6 +5,9 @@
 *.elf
 *.iso
 
+# Doxygen
+docs/
+
 # Ignore temporary files and logs
 *.log
 *.tmp
