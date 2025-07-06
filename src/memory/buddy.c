@@ -209,7 +209,7 @@ static uintptr_t get_buddy_base(uintptr_t addr, zone_type zone)
 	}
 	return 0;
 }
-
+// TODO : align get_buddy _base ret value
 static struct list_head *get_buddy_node(void *block, size_t order, zone_type zone)
 {
 	struct list_head *head = order_to_free_list(order, zone);
@@ -231,6 +231,7 @@ static struct list_head *get_buddy_node(void *block, size_t order, zone_type zon
 /////////////////////////////////////////////////////////////////////////////////
 // Externals APIs
 
+// TODO : improve for consistency of adding zones
 void buddy_print(zone_type zone)
 {
 	vga_printf("Buddy Free Blocks: \n---\n");
@@ -319,51 +320,70 @@ void buddy_free_block(void *ptr)
 
 void buddy_init(void)
 {
-	// boot_allocator_freeze();
+	boot_allocator_freeze();
 
-	// for (size_t zone = 0; zone < MAX_ZONE; zone++) {
-	// 	for (int order = 0; order <= MAX_ORDER; order++) {
-	// 		struct list_head *head           = &buddy[zone].areas[order].free_list[MIGRATE_MOVABLE];
-	// 		head->next                       = head;
-	// 		head->prev                       = head;
-	// 		buddy[zone].areas[order].nr_free = 0;
-	// 	}
-	// }
+	for (size_t zone = 0; zone < MAX_ZONE; zone++) {
+		for (int order = 0; order <= MAX_ORDER; order++) {
+			struct list_head *head           = &buddy[zone].areas[order].free_list[MIGRATE_MOVABLE];
+			head->next                       = head;
+			head->prev                       = head;
+			buddy[zone].areas[order].nr_free = 0;
+		}
+	}
+	for (size_t zone = 0; zone < MAX_ZONE; zone++) {
 
-	// size_t    free_count = boot_allocator_get_region_count(FREE_MEMORY);
-	// region_t *free_reg   = boot_allocator_get_region(FREE_MEMORY);
+		size_t    free_count = boot_allocator_get_zones_count(zone);
+		region_t *free_reg   = boot_allocator_get_zone(zone);
 
-	// for (size_t i = 0; i < free_count; i++) {
-	// 	page_t *region_start_page = page_addr_to_usable(free_reg[i].start, NEXT);
-	// 	page_t *region_end_page   = page_addr_to_usable(free_reg[i].end, PREV);
+		for (size_t i = 0; i < free_count; i++) {
+			// TODO : change
+			page_t *region_start_page = page_addr_to_usable(free_reg[i].start, NEXT);
+			page_t *region_end_page   = page_addr_to_usable(free_reg[i].end, PREV);
 
-	// 	size_t  usable_page  = region_end_page - region_start_page + 1;
-	// 	page_t *current_page = region_start_page;
+			size_t  usable_page  = region_end_page - region_start_page;
+			page_t *current_page = region_start_page;
 
-	// 	for (int order = MAX_ORDER; order >= 0; order--) {
-	// 		size_t pages_per_block = PAGE_BY_ORDER(order);
-	// 		while (usable_page >= pages_per_block) {
-	// 			if (order < 0)
-	// 				break;
-	// 			uintptr_t         block_addr = page_to_phys(current_page);
-	// 			struct list_head *new_node   = (struct list_head *)block_addr;
-	// 			ft_memset(new_node, 0, sizeof(struct list_head));
-	// 			zone_type mem_zone = PAGE_GET_ZONE(current_page);
-	// 			buddy_list_add_head(new_node,
-	// 			                    &buddy[mem_zone].areas[order].free_list[MIGRATE_MOVABLE]);
-	// 			buddy[mem_zone].areas[order].nr_free++;
-	// 			current_page += pages_per_block;
-	// 			usable_page -= pages_per_block;
-	// 		}
-	// 	}
-	// 	if (usable_page != 0)
-	// 		kpanic("%d page lost in the hood\n", usable_page);
-	// }
+			for (int order = MAX_ORDER; order >= 0; order--) {
+				size_t pages_per_block = PAGE_BY_ORDER(order);
+				while (usable_page >= pages_per_block) {
+					if (order < 0)
+						break;
+					uintptr_t block_addr = page_to_phys(current_page);
+
+					struct list_head *new_node = (struct list_head *)block_addr;
+					ft_memset(new_node, 0, sizeof(struct list_head));
+
+					buddy_list_add_head(new_node,
+					                    &buddy[zone].areas[order].free_list[MIGRATE_MOVABLE]);
+					buddy[zone].areas[order].nr_free++;
+
+					current_page += pages_per_block;
+					usable_page -= pages_per_block;
+				}
+			}
+			if (usable_page != 0)
+				kpanic("%d page lost in the hood\n", usable_page);
+		}
+	}
 }
 
 /////////////////////////////////////////////////////////////////////////////////
 // DEBUG
 /////////////////////////////////////////////////////////////////////////////////
+
+static const char *debug_buddy_zone_to_str(zone_type zone)
+{
+	switch (zone) {
+	case 0:
+		return "LOWMEM zone";
+	case 1:
+		return "DMA zone";
+	case 2:
+		return "HIGHMEM zone";
+	default:
+		return "Unknown zone";
+	}
+}
 
 static void debug_buddy_panic(const char *func)
 {
@@ -395,15 +415,19 @@ static void debug_buddy_corrupted_list(size_t order, zone_type zone)
 		count++;
 		if (!cur) {
 			vga_printf("\n\n--- KERNEL PANIC: LIST CORRUPTION ---\n");
-			vga_printf("  Buddy free_list for order %u is corrupted!\n\n", order);
+			vga_printf("  Buddy free_list for order %s from %s is corrupted!\n\n",
+			           debug_buddy_order_to_string(order), debug_buddy_zone_to_str(zone));
 			vga_printf("  Reason: NULL pointer encountered during traversal (node #%zu)\n", count);
 			debug_buddy_print_node_info(cur);
 			debug_buddy_panic(__func__);
 		}
 		if (count > limit) {
 			vga_printf("\n\n--- KERNEL PANIC: LIST CORRUPTION ---\n");
-			vga_printf("  Buddy free_list for order %u is corrupted!\n\n", order);
+			vga_printf("  Buddy free_list for order %s from %s is corrupted!\n\n",
+			           debug_buddy_order_to_string(order), debug_buddy_zone_to_str(zone));
 			vga_printf("  Reason: Infinite loop or corruption detected (node limit exceeded)\n");
+			vga_printf("  Info: limit(%u) head(%p) cur(%p) cur->next(%p)\n", limit, head, cur,
+			           cur->next);
 			debug_buddy_print_node_info(cur);
 			debug_buddy_panic(__func__);
 		}
@@ -565,34 +589,18 @@ static void debug_buddy_free_block(zone_type zone)
 	}
 }
 
-static const char *debug_buddy_zone_to_str(zone_type zone)
-{
-	switch (zone) {
-	case 0:
-		return "LOWMEM zone";
-	case 1:
-		return "DMA zone";
-	case 2:
-		return "HIGHMEM zone";
-	default:
-		return "Unknown zone";
-	}
-}
-
 void debug_buddy(void)
 {
 
 	for (size_t zone = 0; zone < MAX_ZONE; zone++) {
-		// if (zone == DMA_ZONE) {
-		// 	if (order_to_nrFree(MAX_ORDER , zone) == 0) {
-		// 		vga_printf("Info: zone %d is empty, skipping buddy split test.\n", zone);
-		// 		return;
-		// 	} else {
-		// 		vga_printf("Info: zone %d not empty.(%d)\n", zone, order_to_nrFree(MAX_ORDER ,
-		// zone)); 		print_buddy_free_list(MAX_ORDER, zone);
-		// print_buddy_free_list(MAX_ORDER - 1, zone); 		return;
+		// 	for (int order = 0; order <= MAX_ORDER; order++) {
+		// 		debug_buddy_corrupted_list(order, zone);
+		// 		vga_printf("OK %s : %s\n", debug_buddy_zone_to_str(zone),
+		// debug_buddy_order_to_string(order));
 		// 	}
 		// }
+		// if (DMA_ZONE == zone)
+		// 	continue ;
 		vga_printf("Debug on %s\n", debug_buddy_zone_to_str(zone));
 
 		// Missing Pages
@@ -613,8 +621,8 @@ void debug_buddy(void)
 		vga_printf("[OK] Split Blocks\n");
 
 		// Free Blocks
-		debug_buddy_free_block(zone);
-		vga_printf("[OK] Free Blocks\n");
+		// debug_buddy_free_block(zone);
+		// vga_printf("[OK] Free Blocks\n");
 
 		// Free Invalid Pointer
 		// buddy_drain_lower_orders();
