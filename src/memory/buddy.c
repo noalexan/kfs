@@ -248,10 +248,10 @@ void buddy_print(zone_type zone)
 		}
 	}
 	vga_printf("\n");
-	vga_printf("Total RAM : %u | Total pages : %u\n", total_RAM, total_pages);
-	vga_printf("Total pages in buddy blocks: %u\n", total_pages_in_blocks);
-	vga_printf("Free Pages : %u | Unusable pages : %u\n----\n", page_get_updated_free_count(),
-	           page_get_updated_reserved_count());
+	// vga_printf("Total RAM : %u | Total pages : %u\n", total_RAM, total_pages);
+	// vga_printf("Total pages in buddy blocks: %u\n", total_pages_in_blocks);
+	// vga_printf("Free Pages : %u | Unusable pages : %u\n----\n", page_get_updated_free_count(),
+	//    page_get_updated_reserved_count());
 	if (!has_blocks) {
 		vga_printf("(empty)");
 	}
@@ -553,6 +553,11 @@ static void debug_buddy_split_block(zone_type zone)
 	buddy_drain_lower_orders(zone);
 	for (int order = MAX_ORDER - 1; order >= 0; order--) {
 		uintptr_t *block = buddy_alloc_pages(ORDER_TO_BYTES(order), zone);
+		if (block == NULL) {
+			vga_printf("No more block for testing split, order upper than %s on %s [OK]\n",
+			           debug_buddy_order_to_string(order), debug_buddy_zone_to_str(zone));
+			return;
+		}
 		debug_buddy_alloc_still_free(order, block, zone);
 		for (int i = order; i < MAX_ORDER; i++) {
 			if (order_to_nrFree(i, zone) != 1) {
@@ -616,13 +621,13 @@ void debug_buddy(void)
 		debug_buddy_check_all_list_corrumption(zone);
 		vga_printf("[OK] First test for simple allocation\n");
 
-		// Split allocation
-		debug_buddy_split_block(zone);
-		vga_printf("[OK] Split Blocks\n");
-
 		// Free Blocks
-		// debug_buddy_free_block(zone);
-		// vga_printf("[OK] Free Blocks\n");
+		debug_buddy_free_block(zone);
+		vga_printf("[OK] Free Blocks\n");
+
+		// // Split allocation
+		// debug_buddy_split_block(zone);
+		// vga_printf("[OK] Split Blocks\n");
 
 		// Free Invalid Pointer
 		// buddy_drain_lower_orders();
