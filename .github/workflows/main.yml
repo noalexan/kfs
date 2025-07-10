@@ -51,6 +51,4 @@ jobs:
           sudo apt-get install -y make docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
       - name: Run make
-        run: make
-
-        
+        run: make MAKEBUILDTYPE="Release"
