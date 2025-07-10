@@ -1,16 +1,13 @@
-name: Clang Format Check
+name: Project Checker
 
 on:
-  push:
-    branches:
-      - main
   pull_request:
     branches:
       - main
 
 jobs:
   format-check:
-    name: Check Code Formatting
+    name: Check for Code Formatting
     runs-on: ubuntu-latest
 
     steps:
@@ -18,7 +15,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Step 2: Install clang-format
+      # Step 2: Install dependencies
       - name: Install clang-format
         run: sudo apt-get update && sudo apt-get install -y clang-format
 
@@ -26,3 +23,32 @@ jobs:
       - name: Run clang-format check
         run: |
           clang-format --verbose --Werror --dry-run $(find ./src ./include -regex '.*\.\(c\|h\|cpp\|hpp\)')
+
+  compile:
+    name: Check for Compilation Errors
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            ca-certificates \
+            curl \
+            gnupg \
+            lsb-release
+          sudo mkdir -p /etc/apt/keyrings
+          curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+          echo \
+            "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+            $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+          sudo apt-get update
+          sudo apt-get install -y make docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+      - name: Run make
+        run: make MAKEBUILDTYPE="Release"

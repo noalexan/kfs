@@ -1,25 +1,40 @@
-BUILDDIR=build
+ifneq ($(MAKEBUILDTYPE),Release)
+MAKEBUILDTYPE=Debug
+endif
+
+ifeq ($(MAKEBUILDTYPE),Release)
+BUILDDIR=build/release
+else
+BUILDDIR=build/debug
+endif
+
 BINDIR=$(BUILDDIR)/bin
 ISODIR=$(BUILDDIR)/iso
+
+TOOLSDIR=tools
 
 AS=i686-linux-gnu-as
 ASFLAGS=
 
 CC=i686-linux-gnu-gcc
 CFLAGS=-ffreestanding -fno-builtin -fno-exceptions -fno-stack-protector
-CFLAGS+=-Wall -Wextra # -Werror
-CFLAGS+=-I./include -I./lib/libft
+CFLAGS+=-Wall -Wextra
 
-CXX=i686-linux-gnu-g++
-CXXFLAGS=-ffreestanding -fno-builtin -fno-exceptions -fno-stack-protector -fno-rtti
-CXXFLAGS+=-Wall -Wextra # -Werror
-CXXFLAGS+=-I./include -I./lib/libft
-CXXFLAGS += $(addprefix -I, $(SRC_INCLUDE_DIRS))
+ifeq ($(MAKEBUILDTYPE),Release)
+CFLAGS+=-Werror -DNDEBUG
+endif
+
+CFLAGS+=-I./include -I./lib/libft
 
 AR=i686-linux-gnu-ar
 
 LD=$(CC)
-LDFLAGS=-z noexecstack -nostdlib -nodefaultlibs -static # -s
+LDFLAGS=-z noexecstack -nostdlib -nodefaultlibs -static
+
+ifeq ($(MAKEBUILDTYPE),Release)
+LDFLAGS+=-s
+endif
+
 LDLIBS=-L./lib/libft -lft
 
 QEMU=qemu-system-i386
@@ -45,18 +60,22 @@ $(BINDIR)/%.o: src/%.c
 	@mkdir -pv $(@D)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-$(BINDIR)/%.o: src/%.cpp
-	@mkdir -pv $(@D)
-	$(CXX) $(CXXFLAGS) -c -o $@ $<
+define docker_run
+	docker run --rm -t -v .:/kfs -e IN_DOCKER=1 -e MAKEBUILDTYPE="$(MAKEBUILDTYPE)" $(DOCKERIMAGENAME):$(DOCKERIMAGETAG) $(1)
+endef
+
+ifeq ($(IN_DOCKER),1)
 
 .PHONY: all
-ifeq ($(IN_DOCKER),1)
 all: $(BUILDDIR)/boot.iso
-else
-all:
-	docker run --rm -t -v .:/kfs -e IN_DOCKER=1 $(DOCKERIMAGENAME):$(DOCKERIMAGETAG)
 
-endif
+.PHONY: format
+format:
+	@clang-format --verbose --Werror -i $(shell find ./src ./include -regex '.*\.\(c\|h\|cpp\|hpp\)')
+
+.PHONY: clean
+clean:
+	$(RM) -r $(BUILDDIR)
 
 $(BUILDDIR)/boot.iso: $(ISODIR)/boot/kernel $(ISODIR)/boot/grub/grub.cfg
 	@mkdir -pv $(@D)
@@ -74,32 +93,34 @@ $(ISODIR)/boot/kernel: $(OBJ) linker.ld | libft
 libft:
 	@make -C lib/libft CC=$(CC) AR=$(AR) OBJ="$(LIBFT_OBJ)"
 
+else
+
+.PHONY: all
+all:
+	$(call docker_run, all)
+
 .PHONY: format
 format:
-ifeq ($(IN_DOCKER),1)
-	@clang-format --verbose --Werror -i $(shell find ./src ./include -regex '.*\.\(c\|h\|cpp\|hpp\)')
-else
-	docker run --rm -t -v .:/kfs -e IN_DOCKER=1 $(DOCKERIMAGENAME):$(DOCKERIMAGETAG) format
+	$(call docker_run, format)
+
+.PHONY: clean
+clean:
+	$(call docker_run, clean)
+
 endif
 
-EXT_TOOLS := $(PWD)/.tools
-
+# Todo: did not work. to revisit
 .PHONY: setup-dev
 setup-dev:
-	@mkdir -vp $(EXT_TOOLS)
-	@pip install --target $(EXT_TOOLS) pre-commit
-	@PYTHONPATH="$(EXT_TOOLS):$$PYTHONPATH" python -m pre_commit install
-
+	@mkdir -vp $(TOOLSDIR)
+	@pip install --target $(TOOLSDIR) pre-commit
+	@PYTHONPATH="$(TOOLSDIR):$$PYTHONPATH" python -m pre_commit install
 
 .PHONY: run
 run: all
 	$(QEMU) $(QEMUFLAGS) -cdrom $(BUILDDIR)/boot.iso
 
-.PHONY: clean
-clean:
-	$(RM) -r $(BUILDDIR)
-
 .PHONY: re
 re: clean all
 
-.NOTPARALLEL: all clean
+.NOTPARALLEL: all clean format

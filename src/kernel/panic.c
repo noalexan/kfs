@@ -4,11 +4,11 @@ static uint8_t stack_snapshot[4096];
 
 void __assert_fail(const char *expr, const char *file, size_t line)
 {
-	enum vga_color mode = vga_get_mode();
-	vga_set_mode(VGA_COLOR(VGA_COLOR_BLACK, VGA_COLOR_RED));
-	vga_printf("Assertion failed:%s:%u: %s", file, line, expr);
-	vga_set_mode(mode);
-	vga_printf("\n");
+	vga_disable_cursor();
+	vga_set_cursor_position(0, g_cursor.y);
+	vga_set_screen_mode(VGA_COLOR(VGA_COLOR_RED, VGA_COLOR_WHITE));
+	vga_printf("Assertion failed:%s:%u: %s\n", file, line, expr);
+	halt();
 }
 
 void save_stack(void)
