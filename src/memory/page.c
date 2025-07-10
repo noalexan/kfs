@@ -26,12 +26,11 @@ page_t  *page_descriptors = NULL;
 
 static uint32_t page_get_state_flag(uintptr_t addr_start)
 {
-	uintptr_t addr_end   = addr_start + PAGE_SIZE;
 	size_t    free_count = boot_allocator_get_region_count(FREE_MEMORY);
 	region_t *free_reg   = boot_allocator_get_region(FREE_MEMORY);
 
 	for (size_t i = 0; i < free_count; i++) {
-		if (addr_start >= free_reg[i].start && addr_end <= free_reg[i].end) {
+		if (addr_start >= free_reg[i].start && addr_start < free_reg[i].end) {
 			return PAGE_BUDDY;
 		}
 	}

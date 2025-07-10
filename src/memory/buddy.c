@@ -198,6 +198,20 @@ static uintptr_t *split_block_to_order(size_t order_needed, size_t cur_order, ui
 	return split_block_to_order(order_needed, cur_order, ret, zone);
 }
 
+static inline zone_type page_zone_flags_to_zone_type(uint32_t zone_flags)
+{
+	switch (zone_flags) {
+	case PAGE_DMA:
+		return DMA_ZONE;
+	case PAGE_LOWMEM:
+		return LOWMEM_ZONE;
+	case PAGE_HIGHMEM:
+		return HIGHMEM_ZONE;
+	default:
+		return INVALID_ZONE;
+	}
+}
+
 static uintptr_t get_buddy_base(uintptr_t addr, zone_type zone)
 {
 	size_t    free_count = boot_allocator_get_zones_count(zone);
@@ -205,11 +219,11 @@ static uintptr_t get_buddy_base(uintptr_t addr, zone_type zone)
 
 	for (size_t i = 0; i < free_count; i++) {
 		if (addr >= free_reg[i].start && addr < free_reg[i].end)
-			return free_reg[i].start;
+			return ALIGN(free_reg[i].start, PAGE_SIZE);
 	}
 	return 0;
 }
-// TODO : align get_buddy _base ret value
+
 static struct list_head *get_buddy_node(void *block, size_t order, zone_type zone)
 {
 	struct list_head *head = order_to_free_list(order, zone);
@@ -293,24 +307,19 @@ void buddy_free_block(void *ptr)
 	page->private_data = PAGE_MAGIC;
 	PAGE_SET_FREE(page);
 
-	zone_type zone = PAGE_GET_ZONE(page);
+	zone_type zone = page_zone_flags_to_zone_type(PAGE_GET_ZONE(page));
 	while (block_order < MAX_ORDER) {
-
 		struct list_head *buddy_node = get_buddy_node(ptr, block_order, zone);
 		if (!buddy_node) {
 			break;
 		}
 
-		buddy_node = pop_node(buddy_node);
-
-		page_t *buddy_page = page_addr_to_page((uintptr_t)buddy_node);
-
+		buddy_node               = pop_node(buddy_node);
+		page_t *buddy_page       = page_addr_to_page((uintptr_t)buddy_node);
 		buddy_page->private_data = PAGE_MAGIC;
 		PAGE_SET_FREE(buddy_page);
-
 		buddy[zone].areas[block_order].nr_free--;
 		ptr = (void *)MIN((uintptr_t)ptr, (uintptr_t)buddy_node);
-
 		block_order++;
 	}
 
@@ -625,9 +634,9 @@ void debug_buddy(void)
 		debug_buddy_free_block(zone);
 		vga_printf("[OK] Free Blocks\n");
 
-		// // Split allocation
-		// debug_buddy_split_block(zone);
-		// vga_printf("[OK] Split Blocks\n");
+		// Split allocation
+		debug_buddy_split_block(zone);
+		vga_printf("[OK] Split Blocks\n");
 
 		// Free Invalid Pointer
 		// buddy_drain_lower_orders();
