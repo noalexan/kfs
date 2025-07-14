@@ -43,6 +43,3 @@ _start:
 
 	call x86_init
 	call kernel_main
-
-	hlt
-	jmp . - 1
