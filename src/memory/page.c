@@ -1,28 +1,54 @@
-#include "internal/page.h"
+#include <drivers/vga.h>
+#include <memory/memory.h>
+
+// Macro
+
+#define PAGE_SET_ZONE(page, zone) ((page)->flags = ((page)->flags & ~PAGE_ZONE_MASK) | (zone))
+#define PAGE_IS_DMA(page)         (FLAG_IS_SET((page)->flags, PAGE_DMA))
+#define PAGE_IS_LOWMEM(page)      (FLAG_IS_SET((page)->flags, PAGE_LOWMEM))
+#define PAGE_IS_HIGHMEM(page)     (FLAG_IS_SET((page)->flags, PAGE_HIGHMEM))
 
 // struct page {
 //     uint32_t flags;
 // #define PAGE_RESERVED       0b00000001
 // #define PAGE_BUDDY          0b00000010
 // #define PAGE_ALLOCATED      0b00000100
+// #define PAGE_DMA		       0b00001000
+// #define PAGE_LOWMEM         0b00010000
+// #define PAGE_HIGHMEM        0b00100000
 // };
+
+typedef void (*pages_foreach_fn)(page_t *page, void *data);
 
 uint32_t reserved_count   = 0;
 uint32_t free_count       = 0;
 page_t  *page_descriptors = NULL;
 
-static uint32_t page_get_appropriate_flag(uintptr_t addr_start)
+static uint32_t page_get_state_flag(uintptr_t addr_start)
 {
-	uintptr_t addr_end   = addr_start + PAGE_SIZE;
 	size_t    free_count = boot_allocator_get_region_count(FREE_MEMORY);
 	region_t *free_reg   = boot_allocator_get_region(FREE_MEMORY);
 
 	for (size_t i = 0; i < free_count; i++) {
-		if (addr_start >= free_reg[i].start && addr_end <= free_reg[i].end) {
+		if (addr_start >= free_reg[i].start && addr_start < free_reg[i].end) {
 			return PAGE_BUDDY;
 		}
 	}
 	return PAGE_RESERVED;
+}
+
+static uint32_t page_get_zone_flag(uintptr_t addr_start)
+{
+	if (addr_start >= HIGHMEM_START)
+		return PAGE_HIGHMEM;
+	else if (addr_start >= LOWMEM_START)
+		return PAGE_LOWMEM;
+	return PAGE_DMA;
+}
+
+static inline uint32_t page_get_appropriate_flag(uintptr_t addr_start)
+{
+	return page_get_state_flag(addr_start) | page_get_zone_flag(addr_start);
 }
 
 static void count_free_pages(page_t *page, void *counter)
@@ -129,7 +155,7 @@ uint32_t page_get_reserved_count(void) { return reserved_count; }
 
 void page_descriptor_init(void)
 {
-	page_descriptors = boot_alloc(total_pages * sizeof(page_t));
+	page_descriptors = boot_alloc(total_pages * sizeof(page_t), HIGHMEM_ZONE);
 	for (uint32_t i = 0; i < total_pages; i++) {
 		page_descriptors[i].flags        = page_get_appropriate_flag(i * PAGE_SIZE);
 		page_descriptors[i].private_data = PAGE_MAGIC;

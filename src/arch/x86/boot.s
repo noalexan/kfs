@@ -30,8 +30,8 @@ header_end:
 .section .text
 
 .global _start
-.extern gdt_init
-.extern idt_init
+
+.extern x86_init
 .extern kernel_main
 
 _start:
@@ -41,7 +41,5 @@ _start:
 	push ebx # ptr on mb2 info
 	push eax # magic number set by grub for mb2 info
 
+	call x86_init
 	call kernel_main
-
-	hlt
-	jmp . - 1

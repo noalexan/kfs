@@ -15,7 +15,7 @@ typedef struct __attribute__((packed)) {
 
 typedef void (*irqHandler)(REGISTERS registers, int interrupt, int error);
 
-void             x86_init(void);
+void             x86_init(uint32_t magic, uint32_t mbi_addr);
 const gdt_ptr_t *gdtr_getter(void);
 const idtr_t    *idtr_getter(void);
 void             idt_register_interrupt_handlers(uint8_t num, irqHandler handler);

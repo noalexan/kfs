@@ -1,15 +1,24 @@
 #include <drivers/keyboard.h>
 #include <drivers/tty.h>
-#include <kernel/mb2_info.h>
 #include <memory/memory.h>
-#include <x86.h>
 
-void kernel_main(uint32_t magic, uint32_t mbi_addr)
+void kernel_main()
 {
-	x86_init();
-	mb2_init(magic, mbi_addr);
-	page_descriptor_init();
-	buddy_init();
 	keyboard_init();
 	ttys_init();
+	buddy_init();
+
+	debug_buddy();
+	// vga_printf("DMA : \n");
+	// buddy_print(DMA_ZONE);
+	// vga_printf("LOW : \n");
+	// buddy_print(LOWMEM_ZONE);
+	// vga_printf("HIGH : \n");
+	// buddy_print(HIGHMEM_ZONE);
+
+	// boot_allocator_zones_printer();
+
+	while (true) // hang
+		__asm__ volatile("hlt");
+	;
 }
