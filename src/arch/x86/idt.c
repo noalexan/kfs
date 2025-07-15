@@ -143,7 +143,13 @@ const char *interrupt_names[] = {"Divide Error",
                                  "Virtualization Exception",
                                  "Control Protection Exception"};
 
-void exception_handler(REGISTERS, int interrupt, int) { kpanic(interrupt_names[interrupt]); }
+void exception_handler(REGISTERS reg, int interrupt, int error)
+{
+	if (interrupt_handlers[interrupt] != NULL)
+		interrupt_handlers[interrupt](reg, interrupt, error);
+	else
+		kpanic(interrupt_names[interrupt]);
+}
 
 inline void idt_register_interrupt_handlers(uint8_t num, irqHandler handler)
 {
