@@ -1,4 +1,9 @@
+#include <acpi.h>
+#include <drivers/vga.h>
+#include <kernel/panic.h>
 #include <memory/memory.h>
+#include <register.h>
+#include <x86.h>
 
 /*
  * Virtual-to-physical address translation (32-bit paging):
@@ -60,10 +65,48 @@ uint32_t       kernel_page_directory[1024] __attribute__((aligned(PAGE_SIZE)));
 uint32_t       first_page_table[1024] __attribute__((aligned(PAGE_SIZE)));
 
 /////////////////////////////////////////////////
+// Internal APIs
+void enable_paging(void)
+{
+	__asm__ volatile("movl $kernel_page_directory, %%eax\n"
+	                 "movl %%eax, %%cr3\n"
+	                 :
+	                 :
+	                 : "eax");
+
+	__asm__ volatile("movl %%cr0, %%eax\n"
+	                 "orl $0x80000001, %%eax\n"
+	                 "movl %%eax, %%cr0\n"
+	                 :
+	                 :
+	                 : "eax");
+}
+
+void page_fault_handler(void)
+{
+	uint32_t faulting_address;
+	uint32_t error_code;
+
+	asm volatile("mov %%cr2, %0" : "=r"(faulting_address));
+	asm volatile("mov 4(%%ebp), %0" : "=r"(error_code));
+
+	vga_printf("Faulting address: 0x%x\n", faulting_address);
+	vga_printf("Error code: 0x%x\n", error_code);
+
+	if (error_code & 0x1) {
+		vga_printf("Cause: Protection violation\n");
+	} else {
+		vga_printf("Cause: Page not present\n");
+	}
+	kpanic("Page fault");
+}
+
+/////////////////////////////////////////////////
 // External APIs
 
 void pagination_init(void)
 {
+	idt_register_interrupt_handlers(14, (irqHandler)page_fault_handler);
 	for (size_t i = 0; i < 1024; i++) {
 		kernel_page_directory[i] = default_flag;
 	}
@@ -71,4 +114,5 @@ void pagination_init(void)
 		first_page_table[i] = ((i * PAGE_SIZE) | PTE_PRESENT_BIT | PTE_RW_BIT);
 	}
 	kernel_page_directory[0] = ((unsigned int)first_page_table) | PTE_PRESENT_BIT | PTE_RW_BIT;
+	enable_paging();
 }

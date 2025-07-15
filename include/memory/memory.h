@@ -144,3 +144,5 @@ region_t *boot_allocator_get_zone(int type);
 uint32_t  boot_allocator_get_zones_count(int type);
 region_t *boot_allocator_get_region(enum mem_type type);
 uint32_t  boot_allocator_get_region_count(enum mem_type type);
+
+void pagination_init(void);

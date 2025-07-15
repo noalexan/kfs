@@ -7,4 +7,5 @@ void x86_init(uint32_t magic, uint32_t mbi_addr)
 	idt_init();
 	mb2_init(magic, mbi_addr);
 	page_descriptor_init();
+	pagination_init();
 }
