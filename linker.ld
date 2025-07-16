@@ -24,5 +24,10 @@ SECTIONS {
         *(COMMON)
         *(.bss)
     }
+    .stack ALIGN(16) : {
+        kernel_stack = .;
+        *(.stack)
+        kernel_stack_top = .;
+    }
     PROVIDE(kernel_end = .);
 }

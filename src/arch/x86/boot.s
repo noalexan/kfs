@@ -33,9 +33,10 @@ header_end:
 
 .extern x86_init
 .extern kernel_main
+.extern kernel_stack_top
 
 _start:
-	lea esp, [0x00090000]
+	lea esp, [kernel_stack_top]
 	mov ebp, esp
 
 	push ebx # ptr on mb2 info
