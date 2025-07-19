@@ -39,10 +39,6 @@ typedef enum {
 
 // Structures
 
-struct list_head {
-	struct list_head *next, *prev;
-};
-
 struct buddy_free_area {
 	struct list_head free_list[MAX_MIGRATION];
 	uint32_t         nr_free;
@@ -63,7 +59,7 @@ typedef struct buddy_allocator buddy_allocator_t;
 static buddy_allocator_t buddy[MAX_ZONE];
 
 /////////////////////////////////////////////////////////////////////////////////
-// Internal APIs
+// Internals APIs
 static const char *debug_buddy_order_to_string(int order)
 {
 	switch (order) {
@@ -94,32 +90,11 @@ static const char *debug_buddy_order_to_string(int order)
 	}
 }
 
-static struct list_head *page_to_list_node(page_t *page)
-{
-	uintptr_t phys_addr = page_to_phys(page);
-	return (struct list_head *)phys_addr;
-}
-
-static inline struct list_head *ptr_to_list(void *ptr)
-{
-	return page_to_list_node(page_addr_to_page((uintptr_t)ptr));
-}
-
 static inline bool order_is_valid(int order) { return order >= 0 && order <= MAX_ORDER; }
 
-static inline page_t *list_node_to_page(struct list_head *node)
+static inline uintptr_t *page_node_to_phys(struct list_head *page_node)
 {
-	return page_addr_to_page((uintptr_t)node);
-}
-
-static void buddy_list_add_head(struct list_head *new_node, struct list_head *head)
-{
-	struct list_head *old_next = head->next;
-
-	new_node->next = old_next;
-	new_node->prev = head;
-	old_next->prev = new_node;
-	head->next     = new_node;
+	return (uintptr_t *)page_to_phys(container_of(page_node, page_t, node));
 }
 
 static inline struct list_head *order_to_free_list(size_t order, zone_type zone)
@@ -132,6 +107,16 @@ static inline size_t order_to_nrFree(size_t order, zone_type zone)
 	return buddy[zone].areas[order].nr_free;
 }
 
+static void buddy_list_add_head(struct list_head *new_node, struct list_head *head)
+{
+	struct list_head *old_next = head->next;
+
+	new_node->next = old_next;
+	new_node->prev = head;
+	old_next->prev = new_node;
+	head->next     = new_node;
+}
+
 static size_t size_to_order(size_t size)
 {
 	size_t total_pages = DIV_ROUND_UP(size, PAGE_SIZE);
@@ -142,14 +127,14 @@ static size_t size_to_order(size_t size)
 	return BAD_ORDER;
 }
 
-static struct list_head *pop_node(struct list_head *node)
+static void pop_node(struct list_head *node)
 {
 	node->prev->next = node->next;
 	node->next->prev = node->prev;
 	node->next       = NULL;
 	node->prev       = NULL;
-	return node;
 }
+// container_of pour retrouver le page_t, puis page_to_phys pour retourner la vraie adresse physique
 
 static uintptr_t *pop_first_block(size_t order, zone_type zone)
 {
@@ -158,44 +143,49 @@ static uintptr_t *pop_first_block(size_t order, zone_type zone)
 	if (first_block == head)
 		return NULL;
 
+	pop_node(first_block);
 	buddy[zone].areas[order].nr_free--;
-	return (uintptr_t *)pop_node(first_block);
+	return page_node_to_phys(first_block);
 }
 
-static void set_block_metadata(uintptr_t *ret, size_t order, int type)
+static void set_block_metadata(void *ptr, size_t order, int type)
 {
-	page_t *first_page       = page_addr_to_page((uintptr_t)ret);
-	first_page->private_data = type == FREE ? PAGE_MAGIC : (uintptr_t)order;
-	type == FREE ? PAGE_SET_FREE(first_page) : PAGE_SET_ALLOCATED(first_page);
+	page_t *first_page = page_addr_to_page((uintptr_t)ptr);
+
+	first_page->private_data = (type == FREE) ? PAGE_MAGIC : (uintptr_t)order;
+	(type == FREE) ? PAGE_SET_FREE(first_page) : PAGE_SET_ALLOCATED(first_page);
+
+	size_t pages_in_block = PAGE_BY_ORDER(order);
+	for (size_t i = 1; i < pages_in_block; i++) {
+		(first_page + i)->private_data = PAGE_MAGIC;
+	}
 }
 
-static uintptr_t *alloc_block_with_order(size_t order, zone_type zone)
-{
-	uintptr_t *ret = pop_first_block(order, zone);
-	if (ret == NULL && order_to_nrFree(order, zone) > 0)
-		kpanic("Error : %s: free count mismatch (order %u, nrFree=%u)", __func__, order,
-		       order_to_nrFree(order, zone));
-	if (ret)
-		set_block_metadata(ret, order, ALLOCATED);
-	return ret;
-}
-
-static uintptr_t *split_block_to_order(size_t order_needed, size_t cur_order, uintptr_t *ret,
+static uintptr_t *split_block_to_order(size_t order_needed, size_t cur_order, uintptr_t *ptr,
                                        zone_type zone)
 {
 	if (!order_is_valid(order_needed) || !order_is_valid(cur_order))
 		kpanic("Error: %s: Invalid Order\n", __func__);
 	if (cur_order == order_needed) {
-		set_block_metadata(ret, order_needed, ALLOCATED);
-		return ret;
+		return (uintptr_t *)ptr;
 	}
-	page_t *first_page = page_addr_to_page((uintptr_t)ret);
-	page_t *buddy_page = first_page + PAGE_BY_ORDER((cur_order - 1));
 
-	buddy_list_add_head(page_to_list_node(buddy_page), order_to_free_list(cur_order - 1, zone));
-	buddy[zone].areas[cur_order - 1].nr_free++;
 	cur_order--;
-	return split_block_to_order(order_needed, cur_order, ret, zone);
+	size_t pages_by_block = PAGE_BY_ORDER(cur_order);
+
+	page_t *first_page      = page_addr_to_page((uintptr_t)ptr);
+	page_t *buddy_page_head = first_page + pages_by_block;
+
+	buddy_page_head->private_data = cur_order;
+	PAGE_SET_FREE(buddy_page_head);
+
+	for (size_t i = 1; i < pages_by_block; i++)
+		(buddy_page_head + i)->private_data = PAGE_MAGIC;
+
+	buddy_list_add_head(&buddy_page_head->node, order_to_free_list(cur_order, zone));
+	buddy[zone].areas[cur_order].nr_free++;
+
+	return split_block_to_order(order_needed, cur_order, ptr, zone);
 }
 
 static inline zone_type page_zone_flags_to_zone_type(uint32_t zone_flags)
@@ -224,20 +214,19 @@ static uintptr_t get_buddy_base(uintptr_t addr, zone_type zone)
 	return 0;
 }
 
-static struct list_head *get_buddy_node(void *block, size_t order, zone_type zone)
+static page_t *get_buddy_page(void *block, size_t order, zone_type zone)
 {
-	struct list_head *head = order_to_free_list(order, zone);
-	struct list_head *cur  = head->next;
-	uintptr_t         buddy_addr =
+	uintptr_t buddy_phys_addr =
 	    WHO_IS_MY_BUDDY((uintptr_t)block, order, get_buddy_base((uintptr_t)block, zone));
 
-	while (cur != head) {
-		if ((uintptr_t)cur == buddy_addr) {
-			return cur;
-		}
-		cur = cur->next;
+	page_t *buddy_page = page_addr_to_page(buddy_phys_addr);
+	if (!buddy_page) {
+		return NULL;
 	}
-	// print_buddy_free_list(order, zone);
+
+	if (PAGE_IS_FREE(buddy_page) && (size_t)buddy_page->private_data == order) {
+		return buddy_page;
+	}
 
 	return NULL;
 }
@@ -262,10 +251,6 @@ void buddy_print(zone_type zone)
 		}
 	}
 	vga_printf("\n");
-	// vga_printf("Total RAM : %u | Total pages : %u\n", total_RAM, total_pages);
-	// vga_printf("Total pages in buddy blocks: %u\n", total_pages_in_blocks);
-	// vga_printf("Free Pages : %u | Unusable pages : %u\n----\n", page_get_updated_free_count(),
-	//    page_get_updated_reserved_count());
 	if (!has_blocks) {
 		vga_printf("(empty)");
 	}
@@ -282,48 +267,63 @@ size_t buddy_get_var_size(void *var)
 uintptr_t *buddy_alloc_pages(size_t size, zone_type zone)
 {
 	size_t order_needed = size_to_order(size);
-	size_t cur_order    = order_needed;
+	if (!order_is_valid(order_needed))
+		return NULL;
+
+	size_t cur_order = order_needed;
 	while (cur_order != BAD_ORDER && !order_to_nrFree(cur_order, zone))
 		cur_order++;
 	if (cur_order == BAD_ORDER)
 		return NULL;
-	if (cur_order != order_needed) {
-		uintptr_t *ret = pop_first_block(cur_order, zone);
-		if (ret == NULL)
-			return NULL;
-		return split_block_to_order(order_needed, cur_order, ret, zone);
+
+	void *block = pop_first_block(cur_order, zone);
+	if (block == NULL) {
+		kpanic("nr_free mismatch in alloc_pages for order %u", cur_order);
+		return NULL;
 	}
-	return alloc_block_with_order(order_needed, zone);
+
+	void *ret = split_block_to_order(order_needed, cur_order, block, zone);
+
+	set_block_metadata(ret, order_needed, ALLOCATED);
+	return (uintptr_t *)ret;
 }
 
+// TODO : Compound page
 void buddy_free_block(void *ptr)
 {
 	page_t *page = page_addr_to_page((uintptr_t)ptr);
+
+	if (PAGE_IS_FREE(page)) {
+		kpanic("Double free detected on address %p", ptr);
+	}
 
 	size_t block_order = (size_t)page->private_data;
 	if (!order_is_valid(block_order)) {
 		kpanic("Error: buddy_free_block: incorrect block order: %x\n", block_order);
 	}
-	page->private_data = PAGE_MAGIC;
 	PAGE_SET_FREE(page);
-
 	zone_type zone = page_zone_flags_to_zone_type(PAGE_GET_ZONE(page));
 	while (block_order < MAX_ORDER) {
-		struct list_head *buddy_node = get_buddy_node(ptr, block_order, zone);
-		if (!buddy_node) {
+		page_t *buddy_page = get_buddy_page(ptr, block_order, zone);
+		if (!buddy_page) {
 			break;
 		}
 
-		buddy_node               = pop_node(buddy_node);
-		page_t *buddy_page       = page_addr_to_page((uintptr_t)buddy_node);
-		buddy_page->private_data = PAGE_MAGIC;
-		PAGE_SET_FREE(buddy_page);
+		pop_node(&buddy_page->node);
 		buddy[zone].areas[block_order].nr_free--;
-		ptr = (void *)MIN((uintptr_t)ptr, (uintptr_t)buddy_node);
+		ptr = (void *)MIN((uintptr_t)ptr, page_to_phys(buddy_page));
 		block_order++;
 	}
 
-	buddy_list_add_head(ptr_to_list(ptr), order_to_free_list(block_order, zone));
+	page_t *final_page       = page_addr_to_page((uintptr_t)ptr);
+	final_page->private_data = block_order;
+
+	size_t pages_in_final_block = PAGE_BY_ORDER(block_order);
+	for (size_t i = 1; i < pages_in_final_block; i++) {
+		(final_page + i)->private_data = PAGE_MAGIC;
+	}
+
+	buddy_list_add_head(&final_page->node, order_to_free_list(block_order, zone));
 	buddy[zone].areas[block_order].nr_free++;
 }
 
@@ -345,7 +345,6 @@ void buddy_init(void)
 		region_t *free_reg   = boot_allocator_get_zone(zone);
 
 		for (size_t i = 0; i < free_count; i++) {
-			// TODO : change
 			page_t *region_start_page = page_addr_to_usable(free_reg[i].start, NEXT);
 			page_t *region_end_page   = page_addr_to_usable(free_reg[i].end, PREV);
 
@@ -357,10 +356,10 @@ void buddy_init(void)
 				while (usable_page >= pages_per_block) {
 					if (order < 0)
 						break;
-					uintptr_t block_addr = page_to_phys(current_page);
 
-					struct list_head *new_node = (struct list_head *)block_addr;
-					ft_memset(new_node, 0, sizeof(struct list_head));
+					struct list_head *new_node = &current_page->node;
+
+					current_page->private_data = order;
 
 					buddy_list_add_head(new_node,
 					                    &buddy[zone].areas[order].free_list[MIGRATE_MOVABLE]);
@@ -376,9 +375,9 @@ void buddy_init(void)
 	}
 }
 
-/////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 // DEBUG
-/////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 
 static const char *debug_buddy_zone_to_str(zone_type zone)
 {
@@ -496,48 +495,40 @@ static void debug_buddy_check_lost_pages(void)
 	}
 }
 
-static void debug_buddy_alloc_still_free(size_t order, uintptr_t *phys, zone_type zone)
+static void debug_buddy_alloc_still_free(size_t order, void *phys, zone_type zone)
 {
-	bool              found = false;
-	struct list_head *head  = order_to_free_list(order, zone);
-	struct list_head *cur   = head->next;
-
-	while (cur != head) {
-		if ((uintptr_t *)cur == phys) {
-			found = true;
-			break;
+	struct list_head *head = order_to_free_list(order, zone);
+	for (struct list_head *cur = head->next; cur != head; cur = cur->next) {
+		if ((uintptr_t)page_node_to_phys(cur) == (uintptr_t)phys) {
+			vga_printf("Error: Test failed in %s: Allocated block (%p) is STILL present in free "
+			           "list for order %s!\n",
+			           __func__, phys, debug_buddy_order_to_string(order));
+			debug_buddy_panic(__func__);
 		}
-		cur = cur->next;
 	}
-	if (found) {
-		vga_printf("Error: %s : (%p) is STILL present in %s free list!\n", __func__, (void *)phys,
-		           debug_buddy_order_to_string(order));
-		debug_buddy_panic(__func__);
-	}
-	// else {
-	// vga_printf("OK: %s: (%p) is not present in %s free list!\n",
-	//    __func__, (void *)phys, debug_buddy_order_to_string(order));
-	// }
+}
+
+static inline uintptr_t *alloc_block_with_order(size_t order, zone_type zone)
+{
+	return buddy_alloc_pages(PAGE_BY_ORDER(order) * PAGE_SIZE, zone);
 }
 
 static void buddy_drain_lower_orders(zone_type zone)
 {
 	for (int order = 0; order < MAX_ORDER; order++) {
-		size_t free_blocks = order_to_nrFree(order, zone);
-		while (free_blocks-- > 0) {
+		while (buddy[zone].areas[order].nr_free > 0) {
 			uintptr_t *blk = alloc_block_with_order(order, zone);
 			if (blk == NULL) {
 				vga_printf("Error: Unexpected NULL while draining order %d\n", order);
 				debug_buddy_panic(__func__);
 			}
 		}
-		uintptr_t *blk = alloc_block_with_order(order, zone);
-		if (blk != NULL) {
-			vga_printf("Error: After draining, order %d still has a free block (%p)\n", order,
-			           (void *)blk);
+
+		if (order_to_nrFree(order, zone) != 0) {
+			vga_printf("Error: After draining, order %d still has %u free blocks\n", order,
+			           order_to_nrFree(order, zone));
 			debug_buddy_panic(__func__);
 		}
-		buddy[zone].areas[order].nr_free = 0;
 	}
 }
 
@@ -623,7 +614,7 @@ void debug_buddy(void)
 
 		// List Corrumption
 		debug_buddy_check_all_list_corrumption(zone);
-		vga_printf("[OK] Buddy free_list for order %s is healthy\n");
+		vga_printf("[OK] Buddy free_list is healthy\n");
 
 		// Simple alloc
 		debug_buddy_simple_alloc(zone);

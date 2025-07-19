@@ -5,19 +5,8 @@
 void kernel_main()
 {
 	keyboard_init();
-	ttys_init();
-	buddy_init();
-
-	debug_buddy();
-	// vga_printf("DMA : \n");
-	// buddy_print(DMA_ZONE);
-	// vga_printf("LOW : \n");
-	// buddy_print(LOWMEM_ZONE);
-	// vga_printf("HIGH : \n");
-	// buddy_print(HIGHMEM_ZONE);
-
-	// boot_allocator_zones_printer();
-
+	// uint16_t *high = 0xf0000000;
+	// *high = 0;
 	while (true) // hang
 		__asm__ volatile("hlt");
 	;

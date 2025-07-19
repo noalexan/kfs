@@ -79,9 +79,14 @@ enum mem_type { FREE_MEMORY = 0, RESERVED_MEMORY, HOLES_MEMORY };
 
 // Structures
 
+struct list_head {
+	struct list_head *next, *prev;
+};
+
 struct page {
-	uint32_t  flags;
-	uintptr_t private_data;
+	struct list_head node;
+	uint32_t         flags;
+	uintptr_t        private_data;
 };
 
 struct region_s {
