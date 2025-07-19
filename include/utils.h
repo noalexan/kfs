@@ -17,6 +17,11 @@
 #define FLAG_UNSET(flags, flag)  ((flags) &= ~(flag))
 #define MIN(a, b)                ((a) < (b) ? (a) : (b))
 #define MAX(a, b)                ((a) > (b) ? (a) : (b))
+#define container_of(ptr, type, member)                                                            \
+	({                                                                                             \
+		const typeof(((type *)0)->member) *__mptr = (ptr);                                         \
+		(type *)((char *)__mptr - offsetof(type, member));                                         \
+	})
 
 // Define
 
