@@ -21,6 +21,8 @@
 #define MiB_SIZE (1UL << 20)
 #define GiB_SIZE (1UL << 30)
 
+#define MAX_PAGES (1UL << 20)
+
 /* Zones and migrations types */
 
 #define DMA_START 0x00000000
@@ -150,4 +152,6 @@ uint32_t  boot_allocator_get_zones_count(int type);
 region_t *boot_allocator_get_region(enum mem_type type);
 uint32_t  boot_allocator_get_region_count(enum mem_type type);
 
-void pagination_init(void);
+void map_page(uint32_t *page_dir, uintptr_t v_addr, uintptr_t p_addr, uint32_t flags);
+void paging_init(void);
+void page_fault_handler(void);

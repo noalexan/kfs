@@ -1,12 +1,15 @@
 #include <drivers/keyboard.h>
 #include <drivers/tty.h>
 #include <memory/memory.h>
+#include <memory/paging.h>
 
 void kernel_main()
 {
+	page_descriptors = (page_t *)PAGE_DESCRIPTORS_VADDR;
+	buddy_init();
 	keyboard_init();
-	// uint16_t *high = 0xf0000000;
-	// *high = 0;
+	ttys_init();
+
 	while (true) // hang
 		__asm__ volatile("hlt");
 	;

@@ -1,8 +1,11 @@
 #include <acpi.h>
 #include <drivers/vga.h>
 #include <kernel/panic.h>
+#include <libft.h>
 #include <memory/memory.h>
+#include <memory/paging.h>
 #include <register.h>
+#include <utils.h>
 #include <x86.h>
 
 /*
@@ -17,70 +20,42 @@
 /////////////////////////////////////////////////
 // Defines
 
-#define GET_PDE_ADDR(pde) ((pde) & 0xFFFFF000)
-#define IS_ALIGN(addr)    (((addr) & 0xFFF) == 0)
+// Macro
 
-//  Page Table Entry (PTE)
-enum Page_Table_Entry {
-	PTE_PRESENT_BIT = 0b0000000000000001, // Bit 0  : Present         (page is in memory)
-	PTE_RW_BIT      = 0b0000000000000010, // Bit 1  : Read/Write      (1 = writable, 0 = read-only)
-	PTE_US_BIT =
-	    0b0000000000000100, // Bit 2  : User/Supervisor (1 = user mode, 0 = supervisor/kernel)
-	PTE_PWT_BIT =
-	    0b0000000000001000, // Bit 3  : Write-Through   (1 = write-through caching, 0 = write-back)
-	PTE_PCD_BIT      = 0b0000000000010000, // Bit 4  : Cache-Disable   (1 = no cache for this page)
-	PTE_ACCESSED_BIT = 0b0000000000100000, // Bit 5  : Accessed        (set by CPU on access)
-	PTE_DIRTY_BIT    = 0b0000000001000000, // Bit 6  : Dirty           (set by CPU on write)
-	PTE_PAT_BIT = 0b0000000010000000, // Bit 7  : PAT             (Page Attribute Table extension)
-	PTE_GLOBAL_BIT = 0b0000000100000000, // Bit 8  : Global          (1 = global page, not flushed
-	                                     // from TLB on context switch)
-	PTE_AVAIL1_BIT = 0b0000001000000000, // Bit 9  : Available       (for OS use)
-	PTE_AVAIL2_BIT = 0b0000010000000000, // Bit 10 : Available       (for OS use)
-	PTE_AVAIL3_BIT =
-	    0b0000100000000000 // Bit 11 : Available       (for OS use)
-	                       // Bits 12-31 : Physical address of the page (aligned on 4KiB)
-};
-
-// Page Directory Entry (PDE)
-enum Page_Directory_Entry {
-	PDE_PRESENT_BIT  = 0b0000000000000001, // Bit 0  : Present
-	PDE_RW_BIT       = 0b0000000000000010, // Bit 1  : Read/Write
-	PDE_US_BIT       = 0b0000000000000100, // Bit 2  : User/Supervisor
-	PDE_PWT_BIT      = 0b0000000000001000, // Bit 3  : Write-Through (PWT)
-	PDE_PCD_BIT      = 0b0000000000010000, // Bit 4  : Cache-Disable (PCD)
-	PDE_ACCESSED_BIT = 0b0000000000100000, // Bit 5  : Accessed
-	PDE_ALWAYS0_BIT  = 0b0000000001000000, // Bit 6  : Always 0 (must be zero for 4KiB pages)
-	PDE_PS_BIT       = 0b0000000010000000, // Bit 7  : Page Size (0 = 4KiB, 1 = 4MiB)
-	PDE_AVAIL1_BIT   = 0b0000000100000000, // Bit 8  : Available for OS
-	PDE_AVAIL2_BIT   = 0b0000001000000000, // Bit 9  : Available for OS
-	PDE_AVAIL3_BIT   = 0b0000010000000000, // Bit 10 : Available for OS
-	PDE_AVAIL4_BIT =
-	    0b0000100000000000 // Bit 11 : Available for OS
-	                       // Bits 12-31 : Physical address of the page table (aligned on 4KiB)
-};
+extern page_t *page_descriptors;
+extern uint8_t kernel_start[], kernel_end[];
+extern void    enter_higher_half(uint32_t *page_dir_phys);
 
 const uint32_t kernel_vstart = 0xC0000000;
 const uint32_t default_flag  = (PDE_RW_BIT);
-uint32_t       kernel_page_directory[1024] __attribute__((aligned(PAGE_SIZE)));
-uint32_t       first_page_table[1024] __attribute__((aligned(PAGE_SIZE)));
 
 /////////////////////////////////////////////////
 // Internal APIs
-void enable_paging(void)
-{
-	__asm__ volatile("movl $kernel_page_directory, %%eax\n"
-	                 "movl %%eax, %%cr3\n"
-	                 :
-	                 :
-	                 : "eax");
 
-	__asm__ volatile("movl %%cr0, %%eax\n"
-	                 "orl $0x80000001, %%eax\n"
-	                 "movl %%eax, %%cr0\n"
-	                 :
-	                 :
-	                 : "eax");
+void bootstrap_map_page(uint32_t *page_dir, uintptr_t v_addr, uintptr_t p_addr, uint32_t flags)
+{
+	uint32_t pde_idx = GET_PDE_INDEX(v_addr);
+	uint32_t pte_idx = GET_PTE_INDEX(v_addr);
+
+	uint32_t *page_table;
+
+	if (!(page_dir[pde_idx] & PDE_PRESENT_BIT)) {
+
+		page_table = boot_alloc(PAGE_SIZE, LOWMEM_ZONE);
+		if (!page_table) {
+			kpanic("map_page: Failed to allocate page table!");
+		}
+		ft_bzero(page_table, PAGE_SIZE);
+
+		page_dir[pde_idx] = (uint32_t)page_table | PDE_PRESENT_BIT | PDE_RW_BIT;
+	}
+
+	page_table          = GET_PT_FROM_PDE(page_dir[pde_idx]);
+	page_table[pte_idx] = p_addr | flags;
 }
+
+/////////////////////////////////////////////////
+// External APIs
 
 void page_fault_handler(void)
 {
@@ -101,18 +76,29 @@ void page_fault_handler(void)
 	kpanic("Page fault");
 }
 
-/////////////////////////////////////////////////
-// External APIs
-
-void pagination_init(void)
+void paging_init(void)
 {
-	idt_register_interrupt_handlers(14, (irqHandler)page_fault_handler);
-	for (size_t i = 0; i < 1024; i++) {
-		kernel_page_directory[i] = default_flag;
+	uint32_t *page_dir = boot_alloc(PAGE_SIZE, LOWMEM_ZONE);
+	if (!page_dir) {
+		kpanic("Failed to allocate Page Directory!");
 	}
-	for (size_t i = 0; i < 1024; i++) {
-		first_page_table[i] = ((i * PAGE_SIZE) | PTE_PRESENT_BIT | PTE_RW_BIT);
+	ft_bzero(page_dir, PAGE_SIZE);
+
+	// Identity Mapping && Higher Half Mapping (Memory Alias)
+	for (uintptr_t addr = 0; addr < 4 * MiB_SIZE; addr += PAGE_SIZE) {
+		bootstrap_map_page(page_dir, addr, addr, PTE_PRESENT_BIT | PTE_RW_BIT);
+		bootstrap_map_page(page_dir, addr + KERNEL_VADDR, addr, PTE_PRESENT_BIT | PTE_RW_BIT);
 	}
-	kernel_page_directory[0] = ((unsigned int)first_page_table) | PTE_PRESENT_BIT | PTE_RW_BIT;
-	enable_paging();
+
+	uintptr_t page_descriptors_ptr = (uintptr_t)page_descriptors;
+	size_t    desc_size            = MAX_PAGES * sizeof(page_t);
+
+	for (uintptr_t offset = 0; offset < desc_size; offset += PAGE_SIZE) {
+		uintptr_t p_addr = page_descriptors_ptr + offset;
+		uintptr_t v_addr = PAGE_DESCRIPTORS_VADDR + offset;
+		bootstrap_map_page(page_dir, v_addr, p_addr, PTE_PRESENT_BIT | PTE_RW_BIT);
+	}
+	// recurif mapping, here we use page dir as page table to simplify page dir access in futur
+	page_dir[PD_SLOT] = (uint32_t)page_dir | PDE_PRESENT_BIT | PDE_RW_BIT;
+	enter_higher_half(page_dir);
 }
