@@ -329,8 +329,6 @@ void buddy_free_block(void *ptr)
 
 void buddy_init(void)
 {
-	boot_allocator_freeze();
-
 	for (size_t zone = 0; zone < MAX_ZONE; zone++) {
 		for (int order = 0; order <= MAX_ORDER; order++) {
 			struct list_head *head           = &buddy[zone].areas[order].free_list[MIGRATE_MOVABLE];

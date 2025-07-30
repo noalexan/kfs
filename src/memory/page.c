@@ -155,7 +155,7 @@ uint32_t page_get_reserved_count(void) { return reserved_count; }
 
 void page_descriptor_init(void)
 {
-	page_descriptors = boot_alloc(MAX_PAGES * sizeof(page_t), LOWMEM_ZONE);
+	page_descriptors = boot_alloc(MAX_PAGES * sizeof(page_t), LOWMEM_ZONE, TO_KEEP);
 	for (uint32_t i = 0; i < MAX_PAGES; i++) {
 		page_descriptors[i].flags        = page_get_appropriate_flag(i * PAGE_SIZE);
 		page_descriptors[i].private_data = PAGE_MAGIC;

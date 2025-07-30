@@ -49,17 +49,16 @@ enum Page_Directory_Entry {
 	                       // Bits 12-31 : Physical address of the page table (aligned on 4KiB)
 };
 
-#define KERNEL_VADDR             0xC0000000
-#define PAGE_DESCRIPTORS_VADDR   0xC1000000
-#define PD_SLOT                  1022
-#define KERNEL_PAGE_TABLES_VADDR (PD_SLOT << 22)
-#define KERNEL_PAGE_DIR_VADDR    (KERNEL_PAGE_TABLES_VADDR | (PD_SLOT << 12))
+#define PD_SLOT                1022
+#define FIRST_PAGE_TABLE_VADDR (PD_SLOT << 22)
+#define PAGE_DIR_VADDR         (FIRST_PAGE_TABLE_VADDR | (PD_SLOT << 12))
 
 // Macros
 
-#define GET_PDE_INDEX(vaddr) (vaddr >> 22)
-#define GET_PTE_INDEX(vaddr) ((vaddr >> 12) & 0x3FF)
-#define GET_PT_FROM_PDE(pde) ((uint32_t *)(pde & ~0xFFF))
+#define GET_PDE_INDEX(vaddr)   (vaddr >> 22)
+#define GET_PTE_INDEX(vaddr)   ((vaddr >> 12) & 0x3FF)
+#define GET_PT_WITH_INDEX(idx) (FIRST_PAGE_TABLE_VADDR + (idx * PAGE_SIZE))
+#define GET_PT_FROM_PDE(pde)   ((uint32_t *)(pde & ~0xFFF))
 
 // ============================================================================
 // STRUCT

@@ -48,7 +48,6 @@ typedef struct boot_allocator boot_allocator_t;
 // ============================================================================
 
 bool      boot_allocator_range_overlaps(uintptr_t start, uintptr_t end, enum mem_type type);
-void     *boot_alloc(uint32_t size);
 void      boot_allocator_freeze(void);
 void      boot_allocator_printer(void);
 void      boot_allocator_init(multiboot_tag_mmap_t *mmap, uint8_t *mmap_end);

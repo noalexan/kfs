@@ -13,7 +13,7 @@
 
 #define END               0x00000000
 #define REGION_TYPE_COUNT 3
-#define MAX_REGIONS       128
+#define MAX_REGIONS       256
 
 // Macros
 
@@ -51,6 +51,7 @@
 typedef struct {
 	uintptr_t p_addr;
 	size_t    size;
+	bool      free;
 } boot_alloc_entry_t;
 
 typedef struct boot_allocator {
@@ -63,6 +64,9 @@ typedef struct boot_allocator {
 
 uint32_t zone_count[MAX_ZONE];
 region_t free_zones[MAX_ZONE][MAX_REGIONS];
+uint32_t free_snapshot_count[MAX_ZONE];
+region_t free_snapshot[MAX_ZONE][MAX_REGIONS];
+
 // Typedefs
 
 typedef void (*regions_foreach_fn)(region_t *regions);
@@ -292,6 +296,8 @@ static void boot_allocator_init_free_zones(void)
 			cur_start = sub_end;
 		}
 	}
+	ft_memcpy(free_snapshot, free_zones, sizeof(region_t));
+	ft_memcpy(free_snapshot_count, zone_count, sizeof(uint32_t));
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -306,6 +312,15 @@ region_t *boot_allocator_get_zone(int type) { return free_zones[type]; }
 uint32_t boot_allocator_get_zones_count(int type) { return zone_count[type]; }
 
 void boot_allocator_freeze(void) { bootmem.state = FROZEN; }
+
+size_t boot_allocator_get_initial_zone_size(zone_type zone)
+{
+	size_t total_size = 0;
+	for (uint32_t i = 0; i < free_snapshot_count[zone]; i++) {
+		total_size += free_snapshot[zone][i].end - free_snapshot[zone][i].start;
+	}
+	return total_size;
+}
 
 /*
  * Checks if a given address range overlaps with any region of the specified memory type
@@ -405,7 +420,26 @@ void boot_allocator_init(multiboot_tag_mmap_t *mmap, uint8_t *mmap_end)
 	}
 }
 
-void *boot_alloc(uint32_t size, zone_type zone)
+void boot_alloc_clean_up(void)
+{
+	for (int i = bootmem.num_allocations; i >= 0; i--) {
+		if (bootmem.allocations[i].free == TO_KEEP)
+			continue;
+		boot_alloc_entry_t *entry = &bootmem.allocations[i];
+		for (size_t offset = entry->p_addr; offset < entry->size; offset += PAGE_SIZE) {
+			page_t *page = page_addr_to_page(offset);
+			FLAG_UNSET(page->flags, PAGE_RESERVED);
+			FLAG_SET(page->flags, PAGE_BUDDY);
+			page->private_data = 0;
+		}
+		boot_allocator_add_region(&bootmem, entry->p_addr, entry->p_addr + entry->size,
+		                          FREE_MEMORY);
+	}
+	BOOT_ALLOCATOR_SORT_AND_MERGE(bootmem.regions[FREE_MEMORY], bootmem.count[FREE_MEMORY]);
+	boot_allocator_freeze();
+}
+
+void *boot_alloc(uint32_t size, zone_type zone, bool freeable)
 {
 	if (bootmem.state == FROZEN) {
 		vga_printf("Error: boot allocator is frozen\n");
@@ -431,6 +465,7 @@ void *boot_alloc(uint32_t size, zone_type zone)
 			}
 			uint32_t index                    = bootmem.num_allocations;
 			bootmem.allocations[index].p_addr = (uintptr_t)ret;
+			bootmem.allocations[index].free   = freeable;
 			bootmem.allocations[index].size   = size;
 			bootmem.num_allocations++;
 			return ret;

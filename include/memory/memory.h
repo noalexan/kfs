@@ -14,6 +14,9 @@
 
 // Defines
 
+#define TO_FREE false
+#define TO_KEEP true
+
 #define FREE      0
 #define ALLOCATED 1
 
@@ -60,7 +63,11 @@ typedef enum {
 #define PAGE_HIGHMEM   0b00100000
 #define PAGE_ZONE_MASK 0b00111000
 
+#define KERNEL_VADDR_BASE 0xC0000000
+
 // Macros
+#define PHYS_TO_VIRT_LINEAR(p_addr) ((void *)((uintptr_t)(p_addr) + KERNEL_VIRTUAL_BASE))
+#define VIRT_TO_PHYS_LINEAR(v_addr) ((uintptr_t)((v_addr) - KERNEL_VIRTUAL_BASE))
 
 #define PAGE_BY_ORDER(order)     (1 << order)
 #define PAGE_DATA_IS_MAGIC(page) ((page)->private_data == PAGE_MAGIC)
@@ -142,7 +149,7 @@ uint32_t  page_get_free_count(void);
 uint32_t  page_get_reserved_count(void);
 
 bool      boot_allocator_range_overlaps(uintptr_t start, uintptr_t end, enum mem_type type);
-void     *boot_alloc(uint32_t size, zone_type zone);
+void     *boot_alloc(uint32_t size, zone_type zone, bool freeable);
 void      boot_allocator_freeze(void);
 void      boot_allocator_printer(void);
 void      boot_allocator_zones_printer(void);
@@ -151,7 +158,10 @@ region_t *boot_allocator_get_zone(int type);
 uint32_t  boot_allocator_get_zones_count(int type);
 region_t *boot_allocator_get_region(enum mem_type type);
 uint32_t  boot_allocator_get_region_count(enum mem_type type);
+size_t    boot_allocator_get_initial_zone_size(zone_type zone);
+void      boot_alloc_clean_up(void);
 
 void map_page(uint32_t *page_dir, uintptr_t v_addr, uintptr_t p_addr, uint32_t flags);
 void paging_init(void);
 void page_fault_handler(void);
+void paging_cleanup(void);

@@ -32,7 +32,8 @@ const uint32_t default_flag  = (PDE_RW_BIT);
 /////////////////////////////////////////////////
 // Internal APIs
 
-void bootstrap_map_page(uint32_t *page_dir, uintptr_t v_addr, uintptr_t p_addr, uint32_t flags)
+void bootstrap_map_page(uint32_t *page_dir, uintptr_t v_addr, uintptr_t p_addr, uint32_t flags,
+                        bool freeable)
 {
 	uint32_t pde_idx = GET_PDE_INDEX(v_addr);
 	uint32_t pte_idx = GET_PTE_INDEX(v_addr);
@@ -41,11 +42,11 @@ void bootstrap_map_page(uint32_t *page_dir, uintptr_t v_addr, uintptr_t p_addr, 
 
 	if (!(page_dir[pde_idx] & PDE_PRESENT_BIT)) {
 
-		page_table = boot_alloc(PAGE_SIZE, LOWMEM_ZONE);
+		page_table = boot_alloc(1024 * sizeof(uint32_t), LOWMEM_ZONE, freeable);
 		if (!page_table) {
 			kpanic("map_page: Failed to allocate page table!");
 		}
-		ft_bzero(page_table, PAGE_SIZE);
+		ft_bzero(page_table, 1024 * sizeof(uint32_t));
 
 		page_dir[pde_idx] = (uint32_t)page_table | PDE_PRESENT_BIT | PDE_RW_BIT;
 	}
@@ -76,28 +77,91 @@ void page_fault_handler(void)
 	kpanic("Page fault");
 }
 
+static inline void paging_reload_cr3(uint32_t *pd_phys_addr)
+{
+	__asm__ volatile("mov %0, %%cr3" ::"r"(pd_phys_addr));
+}
+
+static inline void paging_invalid_TLB_addr(uint32_t addr)
+{
+	__asm__ volatile("invlpg (%0)" ::"r"(addr));
+}
+
+static inline void paging_flush_TLB(void)
+{
+	uint32_t cr3;
+	__asm__ volatile("mov %%cr3, %0" : "=r"(cr3));
+	__asm__ volatile("mov %0, %%cr3" ::"r"(cr3));
+}
+
+uintptr_t paging_virt_to_phy(uintptr_t v_addr)
+{
+	uint32_t  pde_idx  = GET_PDE_INDEX(v_addr);
+	uint32_t  pte_idx  = GET_PTE_INDEX(v_addr);
+	uint32_t *page_dir = (uint32_t *)PAGE_DIR_VADDR;
+
+	if (!(page_dir[pde_idx] & PDE_PRESENT_BIT))
+		return 0;
+
+	uint32_t *page_table = (uint32_t *)GET_PT_WITH_INDEX(pte_idx);
+
+	if (!(page_table[pte_idx] & PTE_PRESENT_BIT))
+		return 0;
+
+	uint32_t page_phys = page_table[pte_idx] & ~0xFFF;
+	uint32_t offset    = v_addr & 0xFFF;
+
+	return page_phys + offset;
+}
+
+void paging_cleanup(void)
+{
+	__asm__ volatile("cli");
+	gdt_ptr_t *old_gdtr_ptr = gdtr_getter();
+	idtr_t    *old_idtr_ptr = idtr_getter();
+
+	gdt_ptr_t higher_half_gdt;
+	idtr_t    higher_half_idt;
+
+	higher_half_gdt.limit = old_gdtr_ptr->limit;
+	higher_half_gdt.base  = old_gdtr_ptr->base + KERNEL_VADDR_BASE;
+
+	higher_half_idt.limit = old_idtr_ptr->limit;
+	higher_half_idt.base  = old_idtr_ptr->base + KERNEL_VADDR_BASE;
+
+	asm volatile("lgdt %0" : : "m"(higher_half_gdt));
+	asm volatile("lidt %0" : : "m"(higher_half_idt));
+
+	page_descriptors   = (page_t *)(((uintptr_t)page_descriptors) + KERNEL_VADDR_BASE);
+	uint32_t *page_dir = (uint32_t *)PAGE_DIR_VADDR;
+
+	// if (page_dir[0] & PDE_PRESENT_BIT)
+	// 	page_dir[0] = 0;
+
+	paging_flush_TLB();
+
+	__asm__ volatile("sti");
+
+	boot_alloc_clean_up();
+}
+
 void paging_init(void)
 {
-	uint32_t *page_dir = boot_alloc(PAGE_SIZE, LOWMEM_ZONE);
+	uint32_t *page_dir = boot_alloc(1024 * sizeof(uint32_t), LOWMEM_ZONE, TO_KEEP);
 	if (!page_dir) {
 		kpanic("Failed to allocate Page Directory!");
 	}
-	ft_bzero(page_dir, PAGE_SIZE);
+	ft_bzero(page_dir, 1024 * sizeof(uint32_t));
 
-	// Identity Mapping && Higher Half Mapping (Memory Alias)
-	for (uintptr_t addr = 0; addr < 4 * MiB_SIZE; addr += PAGE_SIZE) {
-		bootstrap_map_page(page_dir, addr, addr, PTE_PRESENT_BIT | PTE_RW_BIT);
-		bootstrap_map_page(page_dir, addr + KERNEL_VADDR, addr, PTE_PRESENT_BIT | PTE_RW_BIT);
+	// Linear Mapping
+	for (uintptr_t addr = 0; addr < LOWMEM_END; addr += PAGE_SIZE) {
+		bootstrap_map_page(page_dir, addr + KERNEL_VADDR_BASE, addr, PTE_PRESENT_BIT | PTE_RW_BIT,
+		                   TO_KEEP);
 	}
+	// Identity Mapping
+	for (uintptr_t addr = 0; addr < 4 * MiB_SIZE; addr += PAGE_SIZE)
+		bootstrap_map_page(page_dir, addr, addr, PTE_PRESENT_BIT | PTE_RW_BIT, TO_FREE);
 
-	uintptr_t page_descriptors_ptr = (uintptr_t)page_descriptors;
-	size_t    desc_size            = MAX_PAGES * sizeof(page_t);
-
-	for (uintptr_t offset = 0; offset < desc_size; offset += PAGE_SIZE) {
-		uintptr_t p_addr = page_descriptors_ptr + offset;
-		uintptr_t v_addr = PAGE_DESCRIPTORS_VADDR + offset;
-		bootstrap_map_page(page_dir, v_addr, p_addr, PTE_PRESENT_BIT | PTE_RW_BIT);
-	}
 	// recurif mapping, here we use page dir as page table to simplify page dir access in futur
 	page_dir[PD_SLOT] = (uint32_t)page_dir | PDE_PRESENT_BIT | PDE_RW_BIT;
 	enter_higher_half(page_dir);

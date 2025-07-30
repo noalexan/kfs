@@ -5,7 +5,7 @@
 
 void kernel_main()
 {
-	page_descriptors = (page_t *)PAGE_DESCRIPTORS_VADDR;
+	paging_cleanup();
 	buddy_init();
 	keyboard_init();
 	ttys_init();
