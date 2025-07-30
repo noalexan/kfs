@@ -48,10 +48,17 @@
 
 // Structures
 
+typedef struct {
+	uintptr_t p_addr;
+	size_t    size;
+} boot_alloc_entry_t;
+
 typedef struct boot_allocator {
-	bool     state;
-	uint32_t count[REGION_TYPE_COUNT];
-	region_t regions[REGION_TYPE_COUNT][MAX_REGIONS];
+	bool               state;
+	uint32_t           num_allocations;
+	boot_alloc_entry_t allocations[MAX_REGIONS];
+	uint32_t           count[REGION_TYPE_COUNT];
+	region_t           regions[REGION_TYPE_COUNT][MAX_REGIONS];
 } boot_allocator_t;
 
 uint32_t zone_count[MAX_ZONE];
@@ -359,6 +366,7 @@ void boot_allocator_init(multiboot_tag_mmap_t *mmap, uint8_t *mmap_end)
 	BOOT_ALLOC_FREE_COUNT(&bootmem)     = 0;
 	BOOT_ALLOC_RESERVED_COUNT(&bootmem) = 0;
 	BOOT_ALLOC_HOLE_COUNT(&bootmem)     = 0;
+	bootmem.num_allocations             = 0;
 	// Zone VGA/BIOS_ROM (0xa0000-0x100000)
 	boot_allocator_add_region(&bootmem, 0xa0000, 0x100000, RESERVED_MEMORY);
 	// Zone Low memory
@@ -397,12 +405,6 @@ void boot_allocator_init(multiboot_tag_mmap_t *mmap, uint8_t *mmap_end)
 	}
 }
 
-/*
- * TODO : improve this shitty allocator
- * Align Allocation without creating micro fragmentation
- * Deny allocation too small or handle it with more memory as you want bro
- */
-
 void *boot_alloc(uint32_t size, zone_type zone)
 {
 	if (bootmem.state == FROZEN) {
@@ -421,13 +423,16 @@ void *boot_alloc(uint32_t size, zone_type zone)
 			}
 
 			void *ret = (void *)(reg->end - size);
-
 			boot_allocator_add_region(&bootmem, (uintptr_t)ret, reg->end, RESERVED_MEMORY);
 			reg->end = (uintptr_t)ret;
 
 			if (reg->start == reg->end) {
 				*reg = free_zones[zone][--zone_count[zone]];
 			}
+			uint32_t index                    = bootmem.num_allocations;
+			bootmem.allocations[index].p_addr = (uintptr_t)ret;
+			bootmem.allocations[index].size   = size;
+			bootmem.num_allocations++;
 			return ret;
 		}
 	}
