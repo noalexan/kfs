@@ -9,7 +9,9 @@ void x86_init(uint32_t magic, uint32_t mbi_addr)
 	gdt_init();
 	idt_init();
 	idt_register_interrupt_handlers(14, (irqHandler)page_fault_handler);
-	mb2_init(magic, mbi_addr);
-	page_descriptor_init();
-	paging_init();
+	ttys_init();
+
+	mb2_init();
+
+	// page_descriptor_init();
 }

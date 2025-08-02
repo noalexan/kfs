@@ -66,8 +66,8 @@ typedef enum {
 #define KERNEL_VADDR_BASE 0xC0000000
 
 // Macros
-#define PHYS_TO_VIRT_LINEAR(p_addr) ((void *)((uintptr_t)(p_addr) + KERNEL_VIRTUAL_BASE))
-#define VIRT_TO_PHYS_LINEAR(v_addr) ((uintptr_t)((v_addr) - KERNEL_VIRTUAL_BASE))
+#define PHYS_TO_VIRT_LINEAR(p_addr) ((void *)((uintptr_t)(p_addr) + KERNEL_VADDR_BASE))
+#define VIRT_TO_PHYS_LINEAR(v_addr) ((uintptr_t)((v_addr) - KERNEL_VADDR_BASE))
 
 #define PAGE_BY_ORDER(order)     (1 << order)
 #define PAGE_DATA_IS_MAGIC(page) ((page)->private_data == PAGE_MAGIC)

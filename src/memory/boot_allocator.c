@@ -387,20 +387,20 @@ void boot_allocator_init(multiboot_tag_mmap_t *mmap, uint8_t *mmap_end)
 	// Zone Low memory
 	const gdt_ptr_t *gdtr = gdtr_getter();
 	const idtr_t    *idtr = idtr_getter();
-	boot_allocator_add_region(&bootmem, gdtr->base, (gdtr->base + gdtr->limit + 1),
-	                          RESERVED_MEMORY);
-	boot_allocator_add_region(&bootmem, idtr->base, (idtr->base + idtr->limit + 1),
-	                          RESERVED_MEMORY);
+	boot_allocator_add_region(&bootmem, VIRT_TO_PHYS_LINEAR(gdtr->base),
+	                          VIRT_TO_PHYS_LINEAR(gdtr->base + gdtr->limit + 1), RESERVED_MEMORY);
+	boot_allocator_add_region(&bootmem, VIRT_TO_PHYS_LINEAR(idtr->base),
+	                          VIRT_TO_PHYS_LINEAR(idtr->base + idtr->limit + 1), RESERVED_MEMORY);
 	boot_allocator_add_region(&bootmem, 0x0, 0x1000, RESERVED_MEMORY);
 	// Zone Inconnu --> todo : understand wtf is this shit, marked as problematic at the moment
 	boot_allocator_add_region(&bootmem, 0x1000, 0x9fc00, RESERVED_MEMORY);
 	// Zone Kernel Code
-	boot_allocator_add_region(&bootmem, (uintptr_t)kernel_start, (uintptr_t)kernel_end,
+	boot_allocator_add_region(&bootmem, VIRT_TO_PHYS_LINEAR(kernel_start), (uintptr_t)kernel_end,
 	                          RESERVED_MEMORY);
 
 	// Zone Boot_info
-	boot_allocator_add_region(&bootmem, (uintptr_t)mb2info,
-	                          (uintptr_t)(mb2info + mb2info->total_size), RESERVED_MEMORY);
+	boot_allocator_add_region(&bootmem, VIRT_TO_PHYS_LINEAR(mb2info),
+	                          VIRT_TO_PHYS_LINEAR(mb2info + mb2info->total_size), RESERVED_MEMORY);
 	// boot_allocator_add_region(&bootmem, 0xff00000000, 0xffffffffff, RESERVED_MEMORY);
 
 	mb2_mmap_iter(mmap, mmap_end, boot_allocator_reserved_wrapper, false);
@@ -439,6 +439,7 @@ void boot_alloc_clean_up(void)
 	boot_allocator_freeze();
 }
 
+// Be carful Only DMA/LOWMEM is USABLE otherwise u need to do a temp mapping
 void *boot_alloc(uint32_t size, zone_type zone, bool freeable)
 {
 	if (bootmem.state == FROZEN) {

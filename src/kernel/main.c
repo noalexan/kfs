@@ -5,10 +5,9 @@
 
 void kernel_main()
 {
-	paging_cleanup();
-	buddy_init();
+	// paging_cleanup();
+	// buddy_init();
 	keyboard_init();
-	ttys_init();
 
 	while (true) // hang
 		__asm__ volatile("hlt");

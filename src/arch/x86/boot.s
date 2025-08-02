@@ -24,53 +24,152 @@ header_end:
 
 #--------------------
 # --- BSS Section ---
-.section .bss
+.section .bss, "aw", @nobits
+.align 4096
 
-.align 4
-page_directory_ptr:
-    .long 0
+bootstrap_page_directory:
+	.skip 4096
+
+bootstrap_page_table_identity:
+	.skip 4096                      # PDE[0] first 4MiB
+
+bootstrap_page_table_higher:
+	.skip 4096                      # PDE[768] Higher half first 4MiB
+
+.global mb2_magic
+mb2_magic:
+    .skip 4
+
+.global mb2_mbi
+mb2_mbi:
+    .skip 4
 
 #---------------------
 # --- Text Section ---
 .section .text
 
 .global _start
-.global enter_higher_half
-
-.extern x86_init
+.extern kernel_init_higher_half
 .extern kernel_main
 .extern kernel_stack_top
 
+
+.macro clear_table addr
+    push edi
+    push ecx
+    push eax
+
+    mov edi, \addr
+    mov ecx, 1024
+    xor eax, eax
+    rep stosd
+
+    pop eax
+    pop ecx
+    pop edi
+.endm
+
 _start:
-	lea esp, [kernel_stack_top]
+	lea esp, [kernel_stack_top - 0xC0000000]
 	mov ebp, esp
 
-	push ebx # ptr on mb2 info
-	push eax # magic number set by grub for mb2 info
+    mov [mb2_magic - 0xC0000000], eax
+    mov [mb2_mbi - 0xC0000000], ebx
 
-	call x86_init
+	call boostrap_paging
+
+boostrap_paging:
+
+    mov ebp, esp
+
+    #--------------------------------------------------------
+    # Setup bootstrap paging tables
+
+    # Prepare paging vars into registers
+
+    mov edi, offset bootstrap_page_directory
+    sub edi, 0xC0000000
+    mov esi, offset bootstrap_page_table_identity
+    sub esi, 0xC0000000
+    mov edx, offset bootstrap_page_table_higher
+    sub edx, 0xC0000000
+
+    clear_table edi
+    clear_table esi
+    clear_table edx
 
 
-# Security Loop
-	cli
-hang:
-    hlt
-    jmp hang
+    # Set PD[0] flags
+
+    mov eax, esi
+    or eax, 3
+    mov [edi], eax
 
 
-enter_higher_half:
-	# Get page directory from C file
-    mov eax, [esp + 4]
-    mov [page_directory_ptr], eax
+    # Setup first page table for identity
 
-	# Load CR3
-    mov eax, [page_directory_ptr]
+    mov edi, esi
+    mov ecx, 1024
+    mov eax, 0 | 3
+fill_identity_loop:
+    stosd
+    add eax, 4096
+    loop fill_identity_loop
+
+
+    # Set PD[768] flags
+
+    mov edi, offset bootstrap_page_directory
+    sub edi, 0xC0000000
+    mov eax, edx
+    or eax, 3
+    mov [edi + 768 * 4], eax
+
+
+    # Setup first page table for higher half
+
+    mov edi, edx
+    mov ecx, 1024
+    mov eax, 0 | 3
+fill_kernel_loop:
+    stosd
+    add eax, 4096
+    loop fill_kernel_loop
+
+
+    #--------------------------------------------------------
+    # reload cr3 and enable paging
+
+    mov edi, offset bootstrap_page_directory
+    sub edi, 0xC0000000
+    mov eax, edi
     mov cr3, eax
-
-	# Enable paging
     mov eax, cr0
     or  eax, 0x80000001
     mov cr0, eax
 
-    push offset kernel_main
-    ret
+    jmp reload_eip
+
+    #--------------------------------------------------------
+    # reload stack and eip in higher half
+
+reload_eip:
+    lea esp, [kernel_stack_top]
+    mov ebp, esp
+
+
+    #--------------------------------------------------------
+    # push mb2 vars
+
+    push dword ptr [ebp + 12]
+    push dword ptr [ebp + 8]
+
+    call x86_init
+    call kernel_main
+
+    cli
+    jmp hang
+
+hang:
+    hlt
+    jmp hang

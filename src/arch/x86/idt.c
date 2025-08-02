@@ -4,6 +4,7 @@
 #include <io.h>
 #include <kernel/panic.h>
 #include <libft.h>
+#include <memory/memory.h>
 #include <types.h>
 #include <x86.h>
 
@@ -32,7 +33,7 @@ enum IDTTypeAttributes {
 
 typedef void (*syscallHandler)(REGISTERS registers);
 
-#define IDT_BASE        0x00000000
+#define IDT_BASE        0x00000000 + KERNEL_VADDR_BASE
 #define IDT_SIZE        256
 #define IDT_ENTRY(indx) (idt_entries + (indx))
 

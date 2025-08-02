@@ -1,4 +1,6 @@
+#include <acpi.h>
 #include <drivers/vga.h>
+#include <kernel/panic.h>
 #include <memory/memory.h>
 
 // Macro
@@ -155,7 +157,12 @@ uint32_t page_get_reserved_count(void) { return reserved_count; }
 
 void page_descriptor_init(void)
 {
-	page_descriptors = boot_alloc(MAX_PAGES * sizeof(page_t), LOWMEM_ZONE, TO_KEEP);
+	uintptr_t p_addr = (uintptr_t)boot_alloc(MAX_PAGES * sizeof(page_t), LOWMEM_ZONE, TO_KEEP);
+	if (!p_addr) {
+		kpanic("Failed to allocate page descriptors!");
+	}
+	page_descriptors = (page_t *)PHYS_TO_VIRT_LINEAR(p_addr);
+
 	for (uint32_t i = 0; i < MAX_PAGES; i++) {
 		page_descriptors[i].flags        = page_get_appropriate_flag(i * PAGE_SIZE);
 		page_descriptors[i].private_data = PAGE_MAGIC;
