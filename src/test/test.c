@@ -96,7 +96,7 @@ void test_boot_alocator(void)
 {
 
 	vga_printf("---------------------Testing Boot Allocator---------------------\n");
-	boot_allocator_printer();
+	boot_allocator_print_inital_layout();
 	vga_printf("-----------------------------------------------------------------\n");
 	void *a = boot_alloc(64, HIGHMEM_ZONE, TO_FREE);
 	void *b = boot_alloc(128, HIGHMEM_ZONE, TO_FREE);
@@ -107,6 +107,6 @@ void test_boot_alocator(void)
 	vga_printf("boot_alloc(256) , start = %p | end %p\n", c, c + 256);
 
 	vga_printf("-----------------------------------------------------------------\n");
-	boot_allocator_printer();
+	boot_allocator_print_inital_layout();
 	vga_printf("-----------------------------------------------------------------\n");
 }

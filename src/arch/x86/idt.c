@@ -194,7 +194,7 @@ void idt_init(void)
 {
 	init_pic();
 
-	ft_bzero(IDT_BASE, sizeof(idt_entry) * IDT_SIZE);
+	ft_bzero((void *)IDT_BASE, sizeof(idt_entry) * IDT_SIZE);
 
 	idt_set_entry(IDT_ENTRY(0x00), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)isr_0);
 	idt_set_entry(IDT_ENTRY(0x01), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)isr_1);

@@ -9,6 +9,9 @@
 ////////////////////////////////////////////////
 // Header
 
+static void     boot_allocator_sort_regions(region_t *reg, uint32_t count);
+static uint32_t boot_allocator_merge_contiguous_regions(region_t *reg, uint32_t count);
+
 // Defines
 
 #define END               0x00000000
@@ -62,10 +65,10 @@ typedef struct boot_allocator {
 	region_t           regions[REGION_TYPE_COUNT][MAX_REGIONS];
 } boot_allocator_t;
 
-uint32_t zone_count[MAX_ZONE];
+uint32_t free_count[MAX_ZONE];
 region_t free_zones[MAX_ZONE][MAX_REGIONS];
-uint32_t free_snapshot_count[MAX_ZONE];
-region_t free_snapshot[MAX_ZONE][MAX_REGIONS];
+uint32_t res_count[MAX_ZONE];
+region_t res_zones[MAX_ZONE][MAX_REGIONS];
 
 // Typedefs
 
@@ -93,6 +96,17 @@ extern uint8_t   kernel_end[];
 ////////////////////////////////////////////////
 // Code
 
+static zone_type boot_alloc_get_addr_zone(uintptr_t addr)
+{
+	if (addr >= HIGHMEM_START) {
+		return HIGHMEM_ZONE;
+	} else if (addr >= LOWMEM_START) {
+		return LOWMEM_ZONE;
+	} else {
+		return DMA_ZONE;
+	}
+}
+
 /*
  * Adds a memory region (reserved or free) to the boot allocator's region tables
  * Panics if the region is invalid or if the maximum number of regions is exceeded
@@ -115,6 +129,17 @@ static void boot_allocator_add_region(boot_allocator_t *alloc, uintptr_t start, 
 	uint32_t index              = alloc->count[type];
 	alloc->regions[type][index] = (region_t){start, end};
 	alloc->count[type]++;
+}
+static void boot_allocator_add_to_zones(uint32_t count[MAX_ZONE],
+                                        region_t zones[MAX_ZONE][MAX_REGIONS], uint32_t size,
+                                        uintptr_t start)
+{
+	zone_type zone = boot_alloc_get_addr_zone(start);
+	if (count[zone] >= MAX_REGIONS) {
+		kpanic("No more space in zone %d to add a new region!", zone);
+	}
+	zones[zone][count[zone]++] = (region_t){start, start + size};
+	BOOT_ALLOCATOR_SORT_AND_MERGE(zones[zone], count[zone]);
 }
 
 /*
@@ -189,7 +214,7 @@ static uint32_t boot_allocator_merge_contiguous_regions(region_t *reg, uint32_t 
  * Tools for debug :
  * boot_allocator_print_region_info
  * boot_allocator_for_each_regions
- * boot_allocator_printer
+ * boot_allocator_print_inital_layout
  */
 
 static void boot_allocator_print_region_info(region_t *reg)
@@ -264,14 +289,15 @@ static uint32_t boot_allocator_get_total_visibale_ram(boot_allocator_t *alloc)
 	return end;
 }
 
-static void boot_allocator_init_free_zones(void)
+static void boot_allocator_init_zones(uint32_t zcount[MAX_ZONE],
+                                      region_t zones[MAX_ZONE][MAX_REGIONS], enum mem_type type)
 {
-	size_t    free_count = boot_allocator_get_region_count(FREE_MEMORY);
-	region_t *free_reg   = boot_allocator_get_region(FREE_MEMORY);
+	size_t    reg_count = boot_allocator_get_region_count(type);
+	region_t *reg       = boot_allocator_get_region(type);
 
-	for (size_t i = 0; i < free_count; i++) {
-		uintptr_t region_start = free_reg[i].start;
-		uintptr_t region_end   = free_reg[i].end;
+	for (size_t i = 0; i < reg_count; i++) {
+		uintptr_t region_start = reg[i].start;
+		uintptr_t region_end   = reg[i].end;
 
 		uintptr_t cur_start = region_start;
 		while (cur_start < region_end) {
@@ -291,13 +317,11 @@ static void boot_allocator_init_free_zones(void)
 
 			uintptr_t sub_end = (region_end < zone_end) ? region_end : zone_end;
 			if (sub_end > cur_start) {
-				free_zones[zone][zone_count[zone]++] = (region_t){cur_start, sub_end};
+				zones[zone][zcount[zone]++] = (region_t){cur_start, sub_end};
 			}
 			cur_start = sub_end;
 		}
 	}
-	ft_memcpy(free_snapshot, free_zones, sizeof(region_t));
-	ft_memcpy(free_snapshot_count, zone_count, sizeof(uint32_t));
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -307,20 +331,12 @@ region_t *boot_allocator_get_region(enum mem_type type) { return bootmem.regions
 
 uint32_t boot_allocator_get_region_count(enum mem_type type) { return bootmem.count[type]; }
 
-region_t *boot_allocator_get_zone(int type) { return free_zones[type]; }
+region_t *boot_allocator_get_free_zone(int type) { return free_zones[type]; }
 
-uint32_t boot_allocator_get_zones_count(int type) { return zone_count[type]; }
+// refactor
+uint32_t boot_allocator_get_free_zones_count(int type) { return free_count[type]; }
 
 void boot_allocator_freeze(void) { bootmem.state = FROZEN; }
-
-size_t boot_allocator_get_initial_zone_size(zone_type zone)
-{
-	size_t total_size = 0;
-	for (uint32_t i = 0; i < free_snapshot_count[zone]; i++) {
-		total_size += free_snapshot[zone][i].end - free_snapshot[zone][i].start;
-	}
-	return total_size;
-}
 
 /*
  * Checks if a given address range overlaps with any region of the specified memory type
@@ -339,7 +355,7 @@ bool boot_allocator_range_overlaps(uintptr_t start, uintptr_t end, enum mem_type
 	return false;
 }
 
-void boot_allocator_printer(void)
+void boot_allocator_print_inital_layout(void)
 {
 	vga_printf("----------Boot Allocator Printer----------\n");
 	vga_printf("Reserved Areas : \n");
@@ -359,20 +375,65 @@ void boot_allocator_printer(void)
 	vga_printf("------------------------------------------\n");
 }
 
-void boot_allocator_zones_printer(void)
+void boot_allocator_free_zones_printer(void)
 {
-	vga_printf("----------Boot Allocator Zones Printer----------\n");
+	vga_printf("----------Boot Allocator Free Zones Printer----------\n");
 	vga_printf("Dma Zone : \n");
 	boot_allocator_for_each_regions(boot_allocator_print_region_info, free_zones[DMA_ZONE],
-	                                zone_count[DMA_ZONE]);
+	                                free_count[DMA_ZONE]);
 	vga_printf("----------\n");
 	vga_printf("Lowmem Zone : \n");
 	boot_allocator_for_each_regions(boot_allocator_print_region_info, free_zones[LOWMEM_ZONE],
-	                                zone_count[LOWMEM_ZONE]);
+	                                free_count[LOWMEM_ZONE]);
 	vga_printf("----------\n");
 	vga_printf("Highmem Zone : \n");
 	boot_allocator_for_each_regions(boot_allocator_print_region_info, free_zones[HIGHMEM_ZONE],
-	                                zone_count[HIGHMEM_ZONE]);
+	                                free_count[HIGHMEM_ZONE]);
+	vga_printf("------------------------------------------\n");
+}
+
+void boot_allocator_print_allocations(void)
+{
+	boot_allocator_t *alloc = &bootmem;
+	vga_printf("---------- Boot Allocator Allocations Log ----------\n");
+
+	if (alloc->num_allocations == 0) {
+		vga_printf("  No allocations have been made yet.\n");
+	} else {
+		vga_printf("Index\tP. Addr\t\tSize (B)\tSize (KiB)\tFreeable\n");
+		vga_printf("----------------------------------------------------------\n");
+
+		for (uint32_t i = 0; i < alloc->num_allocations; i++) {
+			boot_alloc_entry_t *entry = &alloc->allocations[i];
+
+			vga_printf("%u\t", i);
+			vga_printf("%p\t\t", (void *)entry->p_addr);
+			vga_printf("%u\t\t", entry->size);
+			vga_printf("%u\t\t", entry->size / 1024);
+			if (entry->free) {
+				vga_printf("Yes\n");
+			} else {
+				vga_printf("No\n");
+			}
+		}
+	}
+	vga_printf("----------------------------------------------------------\n");
+}
+
+void boot_allocator_res_zones_printer(void)
+{
+	vga_printf("----------Boot Allocator Reserved Zones Printer----------\n");
+	vga_printf("Dma Zone : \n");
+	boot_allocator_for_each_regions(boot_allocator_print_region_info, res_zones[DMA_ZONE],
+	                                res_count[DMA_ZONE]);
+	vga_printf("----------\n");
+	vga_printf("Lowmem Zone : \n");
+	boot_allocator_for_each_regions(boot_allocator_print_region_info, res_zones[LOWMEM_ZONE],
+	                                res_count[LOWMEM_ZONE]);
+	vga_printf("----------\n");
+	vga_printf("Highmem Zone : \n");
+	boot_allocator_for_each_regions(boot_allocator_print_region_info, res_zones[HIGHMEM_ZONE],
+	                                res_count[HIGHMEM_ZONE]);
 	vga_printf("------------------------------------------\n");
 }
 
@@ -395,8 +456,8 @@ void boot_allocator_init(multiboot_tag_mmap_t *mmap, uint8_t *mmap_end)
 	// Zone Inconnu --> todo : understand wtf is this shit, marked as problematic at the moment
 	boot_allocator_add_region(&bootmem, 0x1000, 0x9fc00, RESERVED_MEMORY);
 	// Zone Kernel Code
-	boot_allocator_add_region(&bootmem, VIRT_TO_PHYS_LINEAR(kernel_start), (uintptr_t)kernel_end,
-	                          RESERVED_MEMORY);
+	boot_allocator_add_region(&bootmem, VIRT_TO_PHYS_LINEAR(kernel_start),
+	                          VIRT_TO_PHYS_LINEAR(kernel_end), RESERVED_MEMORY);
 
 	// Zone Boot_info
 	boot_allocator_add_region(&bootmem, VIRT_TO_PHYS_LINEAR(mb2info),
@@ -414,30 +475,32 @@ void boot_allocator_init(multiboot_tag_mmap_t *mmap, uint8_t *mmap_end)
 	mb2_mmap_iter(mmap, mmap_end, boot_allocator_init_total_size, true);
 
 	total_pages = boot_allocator_get_total_visibale_ram(&bootmem) / PAGE_SIZE;
-	boot_allocator_init_free_zones();
+	boot_allocator_init_zones(free_count, free_zones, FREE_MEMORY);
+	boot_allocator_init_zones(res_count, res_zones, RESERVED_MEMORY);
 	for (int zone = 0; zone < MAX_ZONE; zone++) {
-		BOOT_ALLOCATOR_SORT_AND_MERGE(free_zones[zone], zone_count[zone]);
+		BOOT_ALLOCATOR_SORT_AND_MERGE(free_zones[zone], free_count[zone]);
+		BOOT_ALLOCATOR_SORT_AND_MERGE(res_zones[zone], res_count[zone]);
 	}
 }
 
-void boot_alloc_clean_up(void)
-{
-	for (int i = bootmem.num_allocations; i >= 0; i--) {
-		if (bootmem.allocations[i].free == TO_KEEP)
-			continue;
-		boot_alloc_entry_t *entry = &bootmem.allocations[i];
-		for (size_t offset = entry->p_addr; offset < entry->size; offset += PAGE_SIZE) {
-			page_t *page = page_addr_to_page(offset);
-			FLAG_UNSET(page->flags, PAGE_RESERVED);
-			FLAG_SET(page->flags, PAGE_BUDDY);
-			page->private_data = 0;
-		}
-		boot_allocator_add_region(&bootmem, entry->p_addr, entry->p_addr + entry->size,
-		                          FREE_MEMORY);
-	}
-	BOOT_ALLOCATOR_SORT_AND_MERGE(bootmem.regions[FREE_MEMORY], bootmem.count[FREE_MEMORY]);
-	boot_allocator_freeze();
-}
+// void boot_alloc_clean_up(void)
+// {
+// 	for (int i = bootmem.num_allocations; i >= 0; i--) {
+// 		if (bootmem.allocations[i].free == TO_KEEP)
+// 			continue;
+// 		boot_alloc_entry_t *entry = &bootmem.allocations[i];
+// 		for (size_t offset = entry->p_addr; offset < entry->size; offset += PAGE_SIZE) {
+// 			page_t *page = page_addr_to_page(offset);
+// 			FLAG_UNSET(page->flags, PAGE_RESERVED);
+// 			FLAG_SET(page->flags, PAGE_BUDDY);
+// 			page->private_data = 0;
+// 		}
+// boot_allocator_add_region(&bootmem, entry->p_addr, entry->p_addr + entry->size,
+//                           FREE_MEMORY);
+// 	}
+// 	BOOT_ALLOCATOR_SORT_AND_MERGE(bootmem.regions[FREE_MEMORY], bootmem.count[FREE_MEMORY]);
+// 	boot_allocator_freeze();
+// }
 
 // Be carful Only DMA/LOWMEM is USABLE otherwise u need to do a temp mapping
 void *boot_alloc(uint32_t size, zone_type zone, bool freeable)
@@ -447,7 +510,7 @@ void *boot_alloc(uint32_t size, zone_type zone, bool freeable)
 		return NULL;
 	}
 
-	for (int i = zone_count[zone] - 1; i >= 0; i--) {
+	for (int i = free_count[zone] - 1; i >= 0; i--) {
 		region_t *reg         = &free_zones[zone][i];
 		uint32_t  region_size = reg->end - reg->start;
 
@@ -458,11 +521,11 @@ void *boot_alloc(uint32_t size, zone_type zone, bool freeable)
 			}
 
 			void *ret = (void *)(reg->end - size);
-			boot_allocator_add_region(&bootmem, (uintptr_t)ret, reg->end, RESERVED_MEMORY);
+			boot_allocator_add_to_zones(res_count, res_zones, size, reg->end - size);
 			reg->end = (uintptr_t)ret;
 
 			if (reg->start == reg->end) {
-				*reg = free_zones[zone][--zone_count[zone]];
+				*reg = free_zones[zone][--free_count[zone]];
 			}
 			uint32_t index                    = bootmem.num_allocations;
 			bootmem.allocations[index].p_addr = (uintptr_t)ret;
@@ -473,5 +536,53 @@ void *boot_alloc(uint32_t size, zone_type zone, bool freeable)
 		}
 	}
 	vga_printf("Error: %s: No space left on device\n", __func__);
+	return NULL;
+}
+
+void *boot_alloc_at(uint32_t size, zone_type zone, bool freeable, uintptr_t start, uintptr_t end)
+{
+	if (bootmem.state == FROZEN || size == 0 || start + size > end) {
+		vga_printf("Error: %s: Invalid parameters or allocator frozen.\n");
+		return NULL;
+	}
+
+	for (uint32_t i = 0; i < free_count[zone]; i++) {
+		region_t *reg = &free_zones[zone][i];
+
+		if (reg->start >= end || reg->end <= start)
+			continue;
+
+		uintptr_t alloc_start      = reg->start >= start ? reg->start : start;
+		uintptr_t alloc_end        = (reg->end < end) ? reg->end : end;
+		uintptr_t original_reg_end = reg->end;
+
+		if (alloc_start + size <= alloc_end) {
+			alloc_end = alloc_start + size;
+
+			boot_allocator_add_to_zones(res_count, res_zones, size, alloc_start);
+
+			uint32_t index                    = bootmem.num_allocations++;
+			bootmem.allocations[index].p_addr = alloc_start;
+			bootmem.allocations[index].free   = freeable;
+			bootmem.allocations[index].size   = size;
+
+			reg->end = alloc_start;
+
+			if (alloc_end < original_reg_end) {
+				if (free_count[zone] >= MAX_REGIONS)
+					kpanic("No more space for free regions!");
+				free_zones[zone][free_count[zone]++] = (region_t){alloc_end, original_reg_end};
+				BOOT_ALLOCATOR_SORT_AND_MERGE(free_zones[zone], free_count[zone]);
+			}
+
+			if (reg->start >= reg->end)
+				*reg = free_zones[zone][--free_count[zone]];
+
+			return (void *)alloc_start;
+		}
+	}
+
+	vga_printf("Error: %s: No suitable alloc with %u size, with range %p -> %p \n", __func__, size,
+	           start, end);
 	return NULL;
 }

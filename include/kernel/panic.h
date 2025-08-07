@@ -1,5 +1,6 @@
 #pragma once
 
+#include <acpi.h>
 #include <drivers/vga.h>
 #include <types.h>
 

@@ -23,17 +23,21 @@
 typedef void (*pages_foreach_fn)(page_t *page, void *data);
 
 uint32_t reserved_count   = 0;
-uint32_t free_count       = 0;
+uint32_t page_free_count  = 0;
 page_t  *page_descriptors = NULL;
 
 static uint32_t page_get_state_flag(uintptr_t addr_start)
 {
-	size_t    free_count = boot_allocator_get_region_count(FREE_MEMORY);
-	region_t *free_reg   = boot_allocator_get_region(FREE_MEMORY);
+	for (int zone_idx = 0; zone_idx < MAX_ZONE; zone_idx++) {
 
-	for (size_t i = 0; i < free_count; i++) {
-		if (addr_start >= free_reg[i].start && addr_start < free_reg[i].end) {
-			return PAGE_BUDDY;
+		uint32_t  region_count_in_zone = boot_allocator_get_free_zones_count(zone_idx);
+		region_t *free_regions_in_zone = boot_allocator_get_free_zone(zone_idx);
+
+		for (uint32_t i = 0; i < region_count_in_zone; i++) {
+			region_t *reg = &free_regions_in_zone[i];
+			if (addr_start >= reg->start && addr_start < reg->end) {
+				return PAGE_BUDDY;
+			}
 		}
 	}
 	return PAGE_RESERVED;
@@ -130,11 +134,11 @@ uint32_t page_get_updated_reserved_count(void)
 	return reserved_count;
 }
 
-uint32_t page_get_updated_free_count(void)
+uint32_t page_get_updated_page_free_count(void)
 {
-	free_count = 0;
-	page_descriptor_foreach(count_free_pages, &free_count);
-	return free_count;
+	page_free_count = 0;
+	page_descriptor_foreach(count_free_pages, &page_free_count);
+	return page_free_count;
 }
 
 page_t *page_addr_to_usable(uintptr_t addr, bool direction)
@@ -151,7 +155,7 @@ page_t *page_addr_to_usable(uintptr_t addr, bool direction)
 	return NULL;
 }
 
-uint32_t page_get_free_count(void) { return free_count; }
+uint32_t page_get_page_free_count(void) { return page_free_count; }
 
 uint32_t page_get_reserved_count(void) { return reserved_count; }
 
