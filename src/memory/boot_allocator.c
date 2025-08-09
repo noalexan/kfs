@@ -92,6 +92,7 @@ uint32_t         total_RAM   = 0;
 boot_allocator_t bootmem;
 extern uint8_t   kernel_start[];
 extern uint8_t   kernel_end[];
+extern uint8_t   kernel_stack_top[];
 
 ////////////////////////////////////////////////
 // Code
@@ -462,7 +463,6 @@ void boot_allocator_init(multiboot_tag_mmap_t *mmap, uint8_t *mmap_end)
 	// Zone Boot_info
 	boot_allocator_add_region(&bootmem, VIRT_TO_PHYS_LINEAR(mb2info),
 	                          VIRT_TO_PHYS_LINEAR(mb2info + mb2info->total_size), RESERVED_MEMORY);
-	// boot_allocator_add_region(&bootmem, 0xff00000000, 0xffffffffff, RESERVED_MEMORY);
 
 	mb2_mmap_iter(mmap, mmap_end, boot_allocator_reserved_wrapper, false);
 	BOOT_ALLOCATOR_SORT_AND_MERGE(bootmem.regions[RESERVED_MEMORY], bootmem.count[RESERVED_MEMORY]);
@@ -539,10 +539,11 @@ void *boot_alloc(uint32_t size, zone_type zone, bool freeable)
 	return NULL;
 }
 
-void *boot_alloc_at(uint32_t size, zone_type zone, bool freeable, uintptr_t start, uintptr_t end)
+void *boot_alloc_at(uint32_t size, zone_type zone, bool freeable, uintptr_t start, uintptr_t end,
+                    int align)
 {
 	if (bootmem.state == FROZEN || size == 0 || start + size > end) {
-		vga_printf("Error: %s: Invalid parameters or allocator frozen.\n");
+		vga_printf("Error: %s: Invalid parameters or allocator frozen.\n", __func__);
 		return NULL;
 	}
 
@@ -552,12 +553,16 @@ void *boot_alloc_at(uint32_t size, zone_type zone, bool freeable, uintptr_t star
 		if (reg->start >= end || reg->end <= start)
 			continue;
 
-		uintptr_t alloc_start      = reg->start >= start ? reg->start : start;
-		uintptr_t alloc_end        = (reg->end < end) ? reg->end : end;
-		uintptr_t original_reg_end = reg->end;
+		uintptr_t alloc_start     = reg->start >= start ? reg->start : start;
+		uintptr_t alloc_end_limit = (reg->end < end) ? reg->end : end;
+		if (align != -1) {
+			alloc_start = ALIGN(alloc_start, align);
+		}
 
-		if (alloc_start + size <= alloc_end) {
-			alloc_end = alloc_start + size;
+		if (alloc_start + size <= alloc_end_limit) {
+
+			uintptr_t alloc_end        = alloc_start + size;
+			uintptr_t original_reg_end = reg->end;
 
 			boot_allocator_add_to_zones(res_count, res_zones, size, alloc_start);
 
@@ -566,22 +571,21 @@ void *boot_alloc_at(uint32_t size, zone_type zone, bool freeable, uintptr_t star
 			bootmem.allocations[index].free   = freeable;
 			bootmem.allocations[index].size   = size;
 
-			reg->end = alloc_start;
-
 			if (alloc_end < original_reg_end) {
 				if (free_count[zone] >= MAX_REGIONS)
 					kpanic("No more space for free regions!");
 				free_zones[zone][free_count[zone]++] = (region_t){alloc_end, original_reg_end};
-				BOOT_ALLOCATOR_SORT_AND_MERGE(free_zones[zone], free_count[zone]);
 			}
 
-			if (reg->start >= reg->end)
+			reg->end = alloc_start;
+			if (reg->start >= reg->end) {
 				*reg = free_zones[zone][--free_count[zone]];
+			}
+			boot_allocator_sort_regions(free_zones[zone], free_count[zone]);
 
 			return (void *)alloc_start;
 		}
 	}
-
 	vga_printf("Error: %s: No suitable alloc with %u size, with range %p -> %p \n", __func__, size,
 	           start, end);
 	return NULL;

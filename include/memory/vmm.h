@@ -49,16 +49,11 @@ enum Page_Directory_Entry {
 	                       // Bits 12-31 : Physical address of the page table (aligned on 4KiB)
 };
 
-#define PD_SLOT                1022
-#define FIRST_PAGE_TABLE_VADDR (PD_SLOT << 22)
-#define PAGE_DIR_VADDR         (FIRST_PAGE_TABLE_VADDR | (PD_SLOT << 12))
-
 // Macros
 
-#define GET_PDE_INDEX(vaddr)   (vaddr >> 22)
-#define GET_PTE_INDEX(vaddr)   ((vaddr >> 12) & 0x3FF)
-#define GET_PT_WITH_INDEX(idx) (FIRST_PAGE_TABLE_VADDR + (idx * PAGE_SIZE))
-#define GET_PT_FROM_PDE(pde)   ((uint32_t *)(pde & ~0xFFF))
+#define GET_PDE_INDEX(vaddr) (vaddr >> 22)
+#define GET_PTE_INDEX(vaddr) ((vaddr >> 12) & 0x3FF)
+#define GET_PT_FROM_PDE(pde) ((uint32_t *)(pde & ~0xFFF))
 
 // ============================================================================
 // STRUCT
@@ -77,3 +72,41 @@ enum Page_Directory_Entry {
 // ============================================================================
 // EXTERNAL APIs
 // ============================================================================
+
+static inline uintptr_t get_current_page_directory_phys(void)
+{
+	uintptr_t pd_phys;
+	asm volatile("mov %%cr3, %0" : "=r"(pd_phys));
+	return pd_phys;
+}
+
+static inline void paging_reload_cr3(uintptr_t pd_phys_addr)
+{
+	asm volatile("mov %0, %%cr3" : : "r"(pd_phys_addr) : "memory");
+}
+
+static inline void paging_invalid_TLB_addr(uint32_t addr)
+{
+	__asm__ volatile("invlpg (%0)" ::"r"(addr));
+}
+
+static inline void paging_flush_TLB(void)
+{
+	uint32_t cr3;
+	__asm__ volatile("mov %%cr3, %0" : "=r"(cr3));
+	__asm__ volatile("mov %0, %%cr3" ::"r"(cr3));
+}
+
+static inline void paging_disable_ro(void)
+{
+	uint32_t cr0;
+	asm volatile("mov %%cr0, %0" : "=r"(cr0));
+	asm volatile("mov %0, %%cr0" ::"r"(cr0 & ~0x10000));
+}
+
+static inline void paging_enable_ro(void)
+{
+	uint32_t cr0;
+	asm volatile("mov %%cr0, %0" : "=r"(cr0));
+	asm volatile("mov %0, %%cr0" ::"r"(cr0 | 0x10000));
+}

@@ -5,6 +5,7 @@
 // ============================================================================
 
 #include <kernel/mb2_info.h>
+#include <register.h>
 #include <types.h>
 #include <utils.h>
 
@@ -153,7 +154,8 @@ uint32_t  boot_allocator_get_region_count(enum mem_type type);
 region_t *boot_allocator_get_free_zone(int type);
 region_t *boot_allocator_get_region(enum mem_type type);
 void     *boot_alloc(uint32_t size, zone_type zone, bool freeable);
-void *boot_alloc_at(uint32_t size, zone_type zone, bool freeable, uintptr_t start, uintptr_t end);
+void *boot_alloc_at(uint32_t size, zone_type zone, bool freeable, uintptr_t start, uintptr_t end,
+                    int align);
 bool  boot_allocator_range_overlaps(uintptr_t start, uintptr_t end, enum mem_type type);
 void  boot_allocator_freeze(void);
 void  boot_allocator_print_inital_layout(void);
@@ -165,5 +167,7 @@ void  boot_allocator_print_allocations(void);
 
 void map_page(uint32_t *page_dir, uintptr_t v_addr, uintptr_t p_addr, uint32_t flags);
 void paging_init(void);
-void page_fault_handler(void);
+void page_fault_handler(REGISTERS reg, int interrupt, int error);
 void paging_cleanup(void);
+
+void vmm_finalize(void);

@@ -2,13 +2,13 @@ ENTRY(_start)
 
 SECTIONS {
     . = 1M;
-    PROVIDE(kernel_start = .);
 
     .multiboot2_header ALIGN(8) : {
         *(.multiboot2_header)
     }
 
 	. += 0xC0000000;
+    PROVIDE(kernel_start = .);
 
     .text ALIGN(4K) : AT(ADDR(.text) - 0xC0000000) {
         *(.text)

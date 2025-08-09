@@ -137,13 +137,6 @@ fill_kernel_loop:
     loop fill_kernel_loop
 
 
-    # Recursive mapping for page_dir easy access
-
-    mov eax, edi
-    or eax, 3
-    mov [edi + 1022 * 4], eax
-
-
     #--------------------------------------------------------
     # reload cr3 and enable paging
 
