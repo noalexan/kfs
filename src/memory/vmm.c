@@ -2,7 +2,7 @@
 #include <kernel/panic.h>
 #include <libft.h>
 #include <memory/memory.h>
-#include <memory/paging.h>
+#include <memory/vmm.h>
 
 /*
  * Virtual-to-physical address translation (32-bit paging):
@@ -32,6 +32,9 @@ void page_fault_handler(REGISTERS reg, int interrupt, int error)
 	uint32_t faulting_address;
 	uint32_t error_code;
 
+	(void)interrupt;
+	(void)error;
+	(void)reg;
 	asm volatile("mov %%cr2, %0" : "=r"(faulting_address));
 	asm volatile("mov 4(%%ebp), %0" : "=r"(error_code));
 
@@ -97,7 +100,7 @@ void vmm_finalize(void)
 			current_pt_ptr[j] = p_addr | PTE_PRESENT_BIT | PTE_RW_BIT;
 		}
 	}
-	paging_reload_cr3((void *)page_dir_phys);
+	paging_reload_cr3(page_dir_phys);
 }
 
 // uintptr_t paging_virt_to_phy(uintptr_t v_addr)

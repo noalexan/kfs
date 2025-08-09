@@ -202,22 +202,24 @@ static inline zone_type page_zone_flags_to_zone_type(uint32_t zone_flags)
 	}
 }
 
-static uintptr_t get_buddy_base(uintptr_t addr, zone_type zone)
+static uintptr_t get_buddy_base(zone_type zone)
 {
-	size_t    free_count = boot_allocator_get_zones_count(zone);
-	region_t *free_reg   = boot_allocator_get_zone(zone);
-
-	for (size_t i = 0; i < free_count; i++) {
-		if (addr >= free_reg[i].start && addr < free_reg[i].end)
-			return ALIGN(free_reg[i].start, PAGE_SIZE);
+	switch (zone) {
+	case DMA_ZONE:
+		return 0; // La zone DMA commence à l'adresse physique 0.
+	case LOWMEM_ZONE:
+		return LOWMEM_START; // Typiquement 1Mo.
+	case HIGHMEM_ZONE:
+		return HIGHMEM_START; // Typiquement 16Mo.
+	default:
+		kpanic("get_buddy_base: Invalid zone type %d", zone);
+		return 0; // Inatteignable.
 	}
-	return 0;
 }
 
 static page_t *get_buddy_page(void *block, size_t order, zone_type zone)
 {
-	uintptr_t buddy_phys_addr =
-	    WHO_IS_MY_BUDDY((uintptr_t)block, order, get_buddy_base((uintptr_t)block, zone));
+	uintptr_t buddy_phys_addr = WHO_IS_MY_BUDDY((uintptr_t)block, order, get_buddy_base(zone));
 
 	page_t *buddy_page = page_addr_to_page(buddy_phys_addr);
 	if (!buddy_page) {
@@ -339,8 +341,8 @@ void buddy_init(void)
 	}
 	for (size_t zone = 0; zone < MAX_ZONE; zone++) {
 
-		size_t    free_count = boot_allocator_get_zones_count(zone);
-		region_t *free_reg   = boot_allocator_get_zone(zone);
+		size_t    free_count = boot_allocator_get_free_zones_count(zone);
+		region_t *free_reg   = boot_allocator_get_free_zone(zone);
 
 		for (size_t i = 0; i < free_count; i++) {
 			page_t *region_start_page = page_addr_to_usable(free_reg[i].start, NEXT);
