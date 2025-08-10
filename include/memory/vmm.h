@@ -73,6 +73,8 @@ enum Page_Directory_Entry {
 // EXTERNAL APIs
 // ============================================================================
 
+void page_fault_handler(REGISTERS reg, int interrupt, int error);
+
 static inline uintptr_t get_current_page_directory_phys(void)
 {
 	uintptr_t pd_phys;

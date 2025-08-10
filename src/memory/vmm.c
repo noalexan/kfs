@@ -1,6 +1,7 @@
 #include <drivers/vga.h>
 #include <kernel/panic.h>
 #include <libft.h>
+#include <memory/boot_allocator.h>
 #include <memory/memory.h>
 #include <memory/vmm.h>
 

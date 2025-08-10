@@ -13,8 +13,6 @@
 
 // Defines
 
-enum allocator_state { ACTIVE = 0, FROZEN };
-
 // Macros
 
 // ============================================================================
@@ -24,6 +22,7 @@ enum allocator_state { ACTIVE = 0, FROZEN };
 // Enums
 
 enum mem_type { FREE_MEMORY = 0, RESERVED_MEMORY, HOLES_MEMORY };
+// typedef enum { LOWMEM_ZONE = 0, DMA_ZONE, HIGHMEM_ZONE, INVALID_ZONE } zone_type;
 
 // Structures
 
@@ -31,8 +30,6 @@ struct region_s {
 	uintptr_t start;
 	uintptr_t end;
 };
-
-struct boot_allocator;
 
 // Typedefs
 
@@ -47,9 +44,18 @@ typedef struct boot_allocator boot_allocator_t;
 // EXTERNAL APIs
 // ============================================================================
 
-bool      boot_allocator_range_overlaps(uintptr_t start, uintptr_t end, enum mem_type type);
-void      boot_allocator_freeze(void);
-void      boot_allocator_print_inital_layout(void);
-void      boot_allocator_init(multiboot_tag_mmap_t *mmap, uint8_t *mmap_end);
+uint32_t  boot_allocator_get_free_zones_count(int type);
 uint32_t  boot_allocator_get_region_count(enum mem_type type);
+region_t *boot_allocator_get_free_zone(int type);
 region_t *boot_allocator_get_region(enum mem_type type);
+void     *boot_alloc(uint32_t size, zone_type zone, bool freeable);
+void *boot_alloc_at(uint32_t size, zone_type zone, bool freeable, uintptr_t start, uintptr_t end,
+                    int align);
+bool  boot_allocator_range_overlaps(uintptr_t start, uintptr_t end, enum mem_type type);
+void  boot_allocator_freeze(void);
+void  boot_allocator_print_inital_layout(void);
+void  boot_allocator_res_zones_printer(void);
+void  boot_allocator_free_zones_printer(void);
+void  boot_allocator_init(multiboot_tag_mmap_t *mmap, uint8_t *mmap_end);
+void  boot_alloc_clean_up(void);
+void  boot_allocator_print_allocations(void);

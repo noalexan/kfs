@@ -80,8 +80,6 @@ _start:
 
 boostrap_paging:
 
-    mov ebp, esp
-
     #--------------------------------------------------------
     # Setup bootstrap paging tables
 
@@ -148,21 +146,19 @@ fill_kernel_loop:
     or  eax, 0x80000001
     mov cr0, eax
 
-    jmp reload_eip
+    lea eax, [reload_eip]
+    jmp eax
 
     #--------------------------------------------------------
     # reload stack and eip in higher half
 
 reload_eip:
+
     lea esp, [kernel_stack_top]
     mov ebp, esp
 
-
     #--------------------------------------------------------
-    # push mb2 vars
 
-    push dword ptr [ebp + 12]
-    push dword ptr [ebp + 8]
 
     call x86_init
     call kernel_main

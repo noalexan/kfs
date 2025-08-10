@@ -1,7 +1,9 @@
 #include <acpi.h>
 #include <drivers/vga.h>
 #include <kernel/panic.h>
+#include <memory/boot_allocator.h>
 #include <memory/memory.h>
+#include <memory/page.h>
 
 // Macro
 
@@ -9,6 +11,7 @@
 #define PAGE_IS_DMA(page)         (FLAG_IS_SET((page)->flags, PAGE_DMA))
 #define PAGE_IS_LOWMEM(page)      (FLAG_IS_SET((page)->flags, PAGE_LOWMEM))
 #define PAGE_IS_HIGHMEM(page)     (FLAG_IS_SET((page)->flags, PAGE_HIGHMEM))
+#define PAGE_IS_FREE(page)        (!FLAG_IS_SET((page)->flags, PAGE_ALLOCATED))
 
 // struct page {
 //     uint32_t flags;

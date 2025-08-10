@@ -2,55 +2,28 @@
 #include <drivers/vga.h>
 #include <kernel/panic.h>
 #include <libft.h>
+#include <memory/boot_allocator.h>
+#include <memory/buddy.h>
 #include <memory/memory.h>
 #include <utils.h>
 
 // Defines
 
-#define MAX_ORDER 10
-
 // Macros
 
-#define WHO_IS_MY_BUDDY(addr, order, base) ((((addr) - (base)) ^ ORDER_TO_BYTES(order)) + (base))
-#define ORDER_TO_BYTES(order)              (PAGE_BY_ORDER(order) * PAGE_SIZE)
+#define ORDER_TO_BYTES(order)    (PAGE_BY_ORDER(order) * PAGE_SIZE)
+#define PAGE_BY_ORDER(order)     (1 << order)
+#define PAGE_DATA_IS_MAGIC(page) ((page)->private_data == PAGE_MAGIC)
+#define PAGE_GET_ZONE(page)      ((page)->flags & PAGE_ZONE_MASK)
+#define PAGE_IS_FREE(page)                                                                         \
+	(FLAG_IS_SET((page)->flags, PAGE_BUDDY) && !FLAG_IS_SET((page)->flags, PAGE_ALLOCATED))
 #define PAGE_SET_ALLOCATED(page)           FLAG_SET((page)->flags, PAGE_ALLOCATED)
+#define WHO_IS_MY_BUDDY(addr, order, base) ((((addr) - (base)) ^ ORDER_TO_BYTES(order)) + (base))
 #define PAGE_SET_FREE(page)                FLAG_UNSET((page)->flags, PAGE_ALLOCATED)
 
 // ============================================================================
 // STRUCT
 // ============================================================================
-
-// Enums
-
-typedef enum {
-	ORDER_4KIB = 0,
-	ORDER_8KIB,
-	ORDER_16KIB,
-	ORDER_32KIB,
-	ORDER_64KIB,
-	ORDER_128KIB,
-	ORDER_256KIB,
-	ORDER_512KIB,
-	ORDER_1MIB,
-	ORDER_2MIB,
-	ORDER_4MIB,
-	BAD_ORDER,
-} order_size;
-
-// Structures
-
-struct buddy_free_area {
-	struct list_head free_list[MAX_MIGRATION];
-	uint32_t         nr_free;
-};
-
-struct buddy_allocator {
-	struct buddy_free_area areas[MAX_ORDER + 1];
-};
-
-// Typedefs
-
-typedef struct buddy_allocator buddy_allocator_t;
 
 // ============================================================================
 // VARIABLES GLOBALES
@@ -206,14 +179,14 @@ static uintptr_t get_buddy_base(zone_type zone)
 {
 	switch (zone) {
 	case DMA_ZONE:
-		return 0; // La zone DMA commence à l'adresse physique 0.
+		return 0;
 	case LOWMEM_ZONE:
-		return LOWMEM_START; // Typiquement 1Mo.
+		return LOWMEM_START;
 	case HIGHMEM_ZONE:
-		return HIGHMEM_START; // Typiquement 16Mo.
+		return HIGHMEM_START;
 	default:
 		kpanic("get_buddy_base: Invalid zone type %d", zone);
-		return 0; // Inatteignable.
+		return 0;
 	}
 }
 
@@ -339,41 +312,62 @@ void buddy_init(void)
 			buddy[zone].areas[order].nr_free = 0;
 		}
 	}
-	for (size_t zone = 0; zone < MAX_ZONE; zone++) {
 
-		size_t    free_count = boot_allocator_get_free_zones_count(zone);
-		region_t *free_reg   = boot_allocator_get_free_zone(zone);
+	for (uint32_t i = 0; i < total_pages; i++) {
+		page_t *page = &page_descriptors[i];
 
-		for (size_t i = 0; i < free_count; i++) {
-			page_t *region_start_page = page_addr_to_usable(free_reg[i].start, NEXT);
-			page_t *region_end_page   = page_addr_to_usable(free_reg[i].end, PREV);
-
-			size_t  usable_page  = region_end_page - region_start_page;
-			page_t *current_page = region_start_page;
-
-			for (int order = MAX_ORDER; order >= 0; order--) {
-				size_t pages_per_block = PAGE_BY_ORDER(order);
-				while (usable_page >= pages_per_block) {
-					if (order < 0)
-						break;
-
-					struct list_head *new_node = &current_page->node;
-
-					current_page->private_data = order;
-
-					buddy_list_add_head(new_node,
-					                    &buddy[zone].areas[order].free_list[MIGRATE_MOVABLE]);
-					buddy[zone].areas[order].nr_free++;
-
-					current_page += pages_per_block;
-					usable_page -= pages_per_block;
-				}
-			}
-			if (usable_page != 0)
-				kpanic("%d page lost in the hood\n", usable_page);
+		if (FLAG_IS_SET(page->flags, PAGE_BUDDY)) {
+			page->private_data = 0;
+			buddy_free_block((void *)page_to_phys(page));
 		}
 	}
+	vga_printf("[Buddy] Buddy allocator initialized for all zones.\n");
 }
+// void buddy_init(void)
+// {
+// 	for (size_t zone = 0; zone < MAX_ZONE; zone++) {
+// 		for (int order = 0; order <= MAX_ORDER; order++) {
+// 			struct list_head *head           = &buddy[zone].areas[order].free_list[MIGRATE_MOVABLE];
+// 			head->next                       = head;
+// 			head->prev                       = head;
+// 			buddy[zone].areas[order].nr_free = 0;
+// 		}
+// 	}
+// 	for (size_t zone = 0; zone < MAX_ZONE; zone++) {
+
+// 		size_t    free_count = boot_allocator_get_free_zones_count(zone);
+// 		region_t *free_reg   = boot_allocator_get_free_zone(zone);
+
+// 		for (size_t i = 0; i < free_count; i++) {
+// 			page_t *region_start_page = page_addr_to_usable(free_reg[i].start, NEXT);
+// 			page_t *region_end_page   = page_addr_to_usable(free_reg[i].end, PREV);
+
+// 			size_t  usable_page  = region_end_page - region_start_page;
+// 			page_t *current_page = region_start_page;
+
+// 			for (int order = MAX_ORDER; order >= 0; order--) {
+// 				size_t pages_per_block = PAGE_BY_ORDER(order);
+// 				while (usable_page >= pages_per_block) {
+// 					if (order < 0)
+// 						break;
+
+// 					struct list_head *new_node = &current_page->node;
+
+// 					current_page->private_data = order;
+
+// 					buddy_list_add_head(new_node,
+// 					                    &buddy[zone].areas[order].free_list[MIGRATE_MOVABLE]);
+// 					buddy[zone].areas[order].nr_free++;
+
+// 					current_page += pages_per_block;
+// 					usable_page -= pages_per_block;
+// 				}
+// 			}
+// 			if (usable_page != 0)
+// 				kpanic("%d page lost in the hood\n", usable_page);
+// 		}
+// 	}
+// }
 
 ///////////////////////////////////////////////////////////////////////////////
 // DEBUG

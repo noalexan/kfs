@@ -1,6 +1,8 @@
 #include "internal/x86.h"
 #include <drivers/tty.h>
 #include <memory/memory.h>
+#include <memory/page.h>
+#include <memory/vmm.h>
 #include <x86.h>
 
 __attribute__((section(".stack"))) uint8_t kernel_stack[16 * 1024] __attribute__((aligned(16)));
