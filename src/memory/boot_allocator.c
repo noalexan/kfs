@@ -335,8 +335,11 @@ uint32_t boot_allocator_get_region_count(enum mem_type type) { return bootmem.co
 
 region_t *boot_allocator_get_free_zone(int type) { return free_zones[type]; }
 
-// refactor
 uint32_t boot_allocator_get_free_zones_count(int type) { return free_count[type]; }
+
+region_t *boot_allocator_get_res_zone(int type) { return res_zones[type]; }
+
+uint32_t boot_allocator_get_res_zones_count(int type) { return res_count[type]; }
 
 void boot_allocator_freeze(void) { bootmem.state = FROZEN; }
 

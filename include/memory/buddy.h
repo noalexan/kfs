@@ -62,8 +62,10 @@ typedef struct buddy_allocator buddy_allocator_t;
 // VARIABLES GLOBALES
 // ============================================================================
 
-// (aucune variable globale à exposer ici)
-
 // ============================================================================
 // EXTERNAL APIs
 // ============================================================================
+
+void   debug_buddy(void);
+void   buddy_print_summary(void);
+size_t buddy_print(zone_type zone);

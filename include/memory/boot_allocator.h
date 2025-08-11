@@ -44,8 +44,10 @@ typedef struct boot_allocator boot_allocator_t;
 // EXTERNAL APIs
 // ============================================================================
 
+uint32_t  boot_allocator_get_res_zones_count(int type);
 uint32_t  boot_allocator_get_free_zones_count(int type);
 uint32_t  boot_allocator_get_region_count(enum mem_type type);
+region_t *boot_allocator_get_res_zone(int type);
 region_t *boot_allocator_get_free_zone(int type);
 region_t *boot_allocator_get_region(enum mem_type type);
 void     *boot_alloc(uint32_t size, zone_type zone, bool freeable);

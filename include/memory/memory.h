@@ -78,8 +78,6 @@ typedef enum {
 // ============================================================================
 
 uintptr_t *buddy_alloc_pages(size_t size, zone_type zone);
-void       buddy_print(zone_type zone);
 void       buddy_free_block(void *ptr);
 void       buddy_init(void);
-void       debug_buddy(void);
 void       vmm_finalize(void);

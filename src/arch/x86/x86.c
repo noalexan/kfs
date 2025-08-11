@@ -17,6 +17,7 @@ void x86_init(void)
 
 	mb2_init();
 	vmm_finalize();
-
+	// Cleanup here
+	// paging_cleanup();
 	page_descriptor_init();
 }

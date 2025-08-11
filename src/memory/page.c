@@ -5,54 +5,48 @@
 #include <memory/memory.h>
 #include <memory/page.h>
 
-// Macro
-
-#define PAGE_SET_ZONE(page, zone) ((page)->flags = ((page)->flags & ~PAGE_ZONE_MASK) | (zone))
-#define PAGE_IS_DMA(page)         (FLAG_IS_SET((page)->flags, PAGE_DMA))
-#define PAGE_IS_LOWMEM(page)      (FLAG_IS_SET((page)->flags, PAGE_LOWMEM))
-#define PAGE_IS_HIGHMEM(page)     (FLAG_IS_SET((page)->flags, PAGE_HIGHMEM))
-#define PAGE_IS_FREE(page)        (!FLAG_IS_SET((page)->flags, PAGE_ALLOCATED))
-
-// struct page {
-//     uint32_t flags;
-// #define PAGE_RESERVED       0b00000001
-// #define PAGE_BUDDY          0b00000010
-// #define PAGE_ALLOCATED      0b00000100
-// #define PAGE_DMA		       0b00001000
-// #define PAGE_LOWMEM         0b00010000
-// #define PAGE_HIGHMEM        0b00100000
-// };
-
 typedef void (*pages_foreach_fn)(page_t *page, void *data);
 
 uint32_t reserved_count   = 0;
 uint32_t page_free_count  = 0;
 page_t  *page_descriptors = NULL;
 
+static bool page_addr_is_in_reg(region_t *free_regions_in_zone, uint32_t region_count_in_zone,
+                                uintptr_t addr)
+{
+	for (uint32_t i = 0; i < region_count_in_zone; i++) {
+		region_t *reg = &free_regions_in_zone[i];
+		if (addr >= reg->start && addr < reg->end) {
+			return true;
+		}
+	}
+	return false;
+}
+
 static uint32_t page_get_state_flag(uintptr_t addr_start)
 {
 	for (int zone_idx = 0; zone_idx < MAX_ZONE; zone_idx++) {
 
-		uint32_t  region_count_in_zone = boot_allocator_get_free_zones_count(zone_idx);
-		region_t *free_regions_in_zone = boot_allocator_get_free_zone(zone_idx);
+		uint32_t  free_count = boot_allocator_get_free_zones_count(zone_idx);
+		region_t *free_reg   = boot_allocator_get_free_zone(zone_idx);
+		uint32_t  res_count  = boot_allocator_get_res_zones_count(zone_idx);
+		region_t *res_reg    = boot_allocator_get_res_zone(zone_idx);
 
-		for (uint32_t i = 0; i < region_count_in_zone; i++) {
-			region_t *reg = &free_regions_in_zone[i];
-			if (addr_start >= reg->start && addr_start < reg->end) {
-				return PAGE_BUDDY;
-			}
-		}
+		if (page_addr_is_in_reg(free_reg, free_count, addr_start))
+			return (PAGE_STATE_AVAILABLE);
+		else if (page_addr_is_in_reg(res_reg, res_count, addr_start))
+			return (PAGE_STATE_RESERVED);
 	}
-	return PAGE_RESERVED;
+	return PAGE_STATE_UNUSABLE;
 }
 
 static uint32_t page_get_zone_flag(uintptr_t addr_start)
 {
 	if (addr_start >= HIGHMEM_START)
-		return PAGE_HIGHMEM;
+		return PAGE_ZONE_HIGHMEM;
 	else if (addr_start >= LOWMEM_START)
-		return PAGE_LOWMEM;
-	return PAGE_DMA;
+		return PAGE_ZONE_LOWMEM;
+	return PAGE_ZONE_DMA;
 }
 
 static inline uint32_t page_get_appropriate_flag(uintptr_t addr_start)
@@ -113,21 +107,62 @@ bool page_addr_is_same_page(uintptr_t addr1, uintptr_t addr2)
 void page_print_info(page_t *page)
 {
 	if (!page) {
-		vga_printf("page_print_info: NULL page\n");
+		vga_printf("page_print_info: Page pointer is NULL\n");
 		return;
 	}
 
 	uint32_t  index = page_to_index(page);
 	uintptr_t addr  = page_to_phys(page);
 
-	vga_printf("Page: idx=%u addr=0x%x flags=0x%x\n", index, addr, page->flags);
+	vga_printf("Page Info for PFN %u (Phys Addr: %p):\n", index, addr);
+	vga_printf("  - Raw Flags: 0x%x\n", page->flags);
 
-	if (page->flags & PAGE_RESERVED)
-		vga_printf("  - RESERVED\n");
-	if (page->flags & PAGE_BUDDY)
-		vga_printf("  - BUDDY\n");
-	if (page->flags & PAGE_ALLOCATED)
-		vga_printf("  - ALLOCATED\n");
+	vga_printf("  - State: ");
+	switch (PAGE_GET_STATE(page)) {
+	case PAGE_STATE_UNUSABLE:
+		vga_printf("UNUSABLE (Memory hole or MMIO)\n");
+		break;
+	case PAGE_STATE_RESERVED:
+		vga_printf("RESERVED (By boot allocator)\n");
+		break;
+	case PAGE_STATE_AVAILABLE:
+		vga_printf("AVAILABLE (Ready for Buddy System)\n");
+		break;
+	case PAGE_STATE_FREE:
+		vga_printf("FREE (In Buddy free list)\n");
+		break;
+	case PAGE_STATE_ALLOCATED:
+		vga_printf("ALLOCATED (By Buddy)\n");
+		break;
+	case PAGE_STATE_SLAB:
+		vga_printf("SLAB (Allocated for Slab)\n");
+		break;
+	default:
+		vga_printf("UNKNOWN STATE!\n");
+		break;
+	}
+
+	vga_printf("  - Zone:  ");
+	switch (PAGE_GET_ZONE(page)) {
+	case PAGE_ZONE_DMA:
+		vga_printf("DMA (< 16MB)\n");
+		break;
+	case PAGE_ZONE_LOWMEM:
+		vga_printf("LOWMEM (16MB - 896MB)\n");
+		break;
+	case PAGE_ZONE_HIGHMEM:
+		vga_printf("HIGHMEM (> 896MB)\n");
+		break;
+	default:
+		vga_printf("N/A\n");
+		break;
+	}
+
+	if (PAGE_IS_FREE(page) || PAGE_IS_ALLOCATED(page)) {
+		vga_printf("  - Buddy Order: %u\n", page->private_data);
+	} else if (page->private_data != 0) {
+		vga_printf("  - Private Data: 0x%x\n", page->private_data);
+	}
 }
 
 uint32_t page_get_updated_reserved_count(void)
