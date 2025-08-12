@@ -13,14 +13,7 @@
 
 // Defines
 
-#define FREE      0
-#define ALLOCATED 1
-
-#define KiB_SIZE (1UL << 10)
-#define MiB_SIZE (1UL << 20)
-#define GiB_SIZE (1UL << 30)
-
-#define MAX_ZONE      1
+#define MAX_ORDER     10
 #define MAX_MIGRATION 1
 
 // Macros
@@ -46,19 +39,20 @@ typedef enum {
 	BAD_ORDER,
 } order_size;
 
-typedef enum {
-	NORMAL_ZONE = 0,
-	// Not Implemented
-	DMA_ZONE,
-	ZONE_HIGHMEM,
-} zone_type;
+// Structures
 
-typedef enum {
-	MIGRATE_MOVABLE = 0,
-	// Not Implemented
-	MIGRATE_UNMOVABLE,
-	MIGRATE_RECLAIMABLE,
-} migration_type;
+struct buddy_free_area {
+	struct list_head free_list[MAX_MIGRATION];
+	uint32_t         nr_free;
+};
+
+struct buddy_allocator {
+	struct buddy_free_area areas[MAX_ORDER + 1];
+};
+
+// Typedefs
+
+typedef struct buddy_allocator buddy_allocator_t;
 
 // Structures
 
@@ -68,14 +62,10 @@ typedef enum {
 // VARIABLES GLOBALES
 // ============================================================================
 
-// (aucune variable globale à exposer ici)
-
 // ============================================================================
 // EXTERNAL APIs
 // ============================================================================
 
-uintptr_t *buddy_alloc_pages(size_t size);
-void       buddy_print(void);
-void       buddy_free_block(void *ptr);
-void       buddy_init(void);
-void       debug_buddy(void);
+void   debug_buddy(void);
+void   buddy_print_summary(void);
+size_t buddy_print(zone_type zone);

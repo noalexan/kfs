@@ -4,6 +4,7 @@
 #include <io.h>
 #include <kernel/panic.h>
 #include <libft.h>
+#include <memory/memory.h>
 #include <types.h>
 #include <x86.h>
 
@@ -32,7 +33,7 @@ enum IDTTypeAttributes {
 
 typedef void (*syscallHandler)(REGISTERS registers);
 
-#define IDT_BASE        0x00000000
+#define IDT_BASE        0x00000000 + KERNEL_VADDR_BASE
 #define IDT_SIZE        256
 #define IDT_ENTRY(indx) (idt_entries + (indx))
 
@@ -143,7 +144,13 @@ const char *interrupt_names[] = {"Divide Error",
                                  "Virtualization Exception",
                                  "Control Protection Exception"};
 
-void exception_handler(REGISTERS, int interrupt, int) { kpanic(interrupt_names[interrupt]); }
+void exception_handler(REGISTERS reg, int interrupt, int error)
+{
+	if (interrupt_handlers[interrupt] != NULL)
+		interrupt_handlers[interrupt](reg, interrupt, error);
+	else
+		kpanic(interrupt_names[interrupt]);
+}
 
 inline void idt_register_interrupt_handlers(uint8_t num, irqHandler handler)
 {
@@ -187,7 +194,7 @@ void idt_init(void)
 {
 	init_pic();
 
-	ft_bzero(IDT_BASE, sizeof(idt_entry) * IDT_SIZE);
+	ft_bzero((void *)IDT_BASE, sizeof(idt_entry) * IDT_SIZE);
 
 	idt_set_entry(IDT_ENTRY(0x00), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)isr_0);
 	idt_set_entry(IDT_ENTRY(0x01), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)isr_1);

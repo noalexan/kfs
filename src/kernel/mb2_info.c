@@ -1,4 +1,5 @@
 #include "internal/mb2_info.h"
+#include <memory/boot_allocator.h>
 
 ////////////////////////////////////////////////////////////
 // Globals
@@ -53,14 +54,17 @@ void mb2_mmap_iter(multiboot_tag_mmap_t *mmap, uint8_t *mmap_end, entry_handler_
 	}
 }
 
-void mb2_init(uint32_t magic, uint32_t mbi_addr)
+extern uint32_t mb2_magic;
+extern uint32_t mb2_mbi;
+
+void mb2_init(void)
 {
 	/* Make sure the magic number matches for memory mapping*/
-	if (magic != MULTIBOOT2_BOOTLOADER_MAGIC)
+	if (mb2_magic != MULTIBOOT2_BOOTLOADER_MAGIC)
 		kpanic("Invalid magic number: expected 0x%x | used 0x%x\n", MULTIBOOT2_BOOTLOADER_MAGIC,
-		       magic);
+		       mb2_magic);
 	int tags_found            = 0;
-	mb2info                   = (multiboot_info_t *)mbi_addr;
+	mb2info                   = (multiboot_info_t *)mb2_mbi;
 	struct multiboot_tag *tag = (struct multiboot_tag *)&mb2info->tags[0];
 
 	while (tag->type != MULTIBOOT_TAG_TYPE_END) {

@@ -1,19 +1,14 @@
-#include <memory/memory.h>
+#pragma once
 
-/*
- * Virtual-to-physical address translation (32-bit paging):
- * - Bits 31-22: Page Directory index
- * - Bits 21-12: Page Table index
- * - Bits 11-0 : Offset within 4KB page
- *
- * See: https://wiki.osdev.org/Paging#32-bit_Paging_(Protected_Mode)
- */
+// ============================================================================
+// IMCLUDES
+// ============================================================================
 
-/////////////////////////////////////////////////
+// ============================================================================
+// DEFINE AND MACRO
+// ============================================================================
+
 // Defines
-
-#define GET_PDE_ADDR(pde) ((pde) & 0xFFFFF000)
-#define IS_ALIGN(addr)    (((addr) & 0xFFF) == 0)
 
 //  Page Table Entry (PTE)
 enum Page_Table_Entry {
@@ -54,21 +49,66 @@ enum Page_Directory_Entry {
 	                       // Bits 12-31 : Physical address of the page table (aligned on 4KiB)
 };
 
-const uint32_t kernel_vstart = 0xC0000000;
-const uint32_t default_flag  = (PDE_RW_BIT);
-uint32_t       kernel_page_directory[1024] __attribute__((aligned(PAGE_SIZE)));
-uint32_t       first_page_table[1024] __attribute__((aligned(PAGE_SIZE)));
+// Macros
 
-/////////////////////////////////////////////////
-// External APIs
+#define GET_PDE_INDEX(vaddr) (vaddr >> 22)
+#define GET_PTE_INDEX(vaddr) ((vaddr >> 12) & 0x3FF)
+#define GET_PT_FROM_PDE(pde) ((uint32_t *)(pde & ~0xFFF))
 
-void pagination_init(void)
+// ============================================================================
+// STRUCT
+// ============================================================================
+
+// Enums
+
+// Structures
+
+// Typedefs
+
+// ============================================================================
+// VARIABLES GLOBALES
+// ============================================================================
+
+// ============================================================================
+// EXTERNAL APIs
+// ============================================================================
+
+void page_fault_handler(REGISTERS reg, int interrupt, int error);
+
+static inline uintptr_t get_current_page_directory_phys(void)
 {
-	for (size_t i = 0; i < 1024; i++) {
-		kernel_page_directory[i] = default_flag;
-	}
-	for (size_t i = 0; i < 1024; i++) {
-		first_page_table[i] = ((i * PAGE_SIZE) | PTE_PRESENT_BIT | PTE_RW_BIT);
-	}
-	kernel_page_directory[0] = ((unsigned int)first_page_table) | PTE_PRESENT_BIT | PTE_RW_BIT;
+	uintptr_t pd_phys;
+	asm volatile("mov %%cr3, %0" : "=r"(pd_phys));
+	return pd_phys;
+}
+
+static inline void paging_reload_cr3(uintptr_t pd_phys_addr)
+{
+	asm volatile("mov %0, %%cr3" : : "r"(pd_phys_addr) : "memory");
+}
+
+static inline void paging_invalid_TLB_addr(uint32_t addr)
+{
+	__asm__ volatile("invlpg (%0)" ::"r"(addr));
+}
+
+static inline void paging_flush_TLB(void)
+{
+	uint32_t cr3;
+	__asm__ volatile("mov %%cr3, %0" : "=r"(cr3));
+	__asm__ volatile("mov %0, %%cr3" ::"r"(cr3));
+}
+
+static inline void paging_disable_ro(void)
+{
+	uint32_t cr0;
+	asm volatile("mov %%cr0, %0" : "=r"(cr0));
+	asm volatile("mov %0, %%cr0" ::"r"(cr0 & ~0x10000));
+}
+
+static inline void paging_enable_ro(void)
+{
+	uint32_t cr0;
+	asm volatile("mov %%cr0, %0" : "=r"(cr0));
+	asm volatile("mov %0, %%cr0" ::"r"(cr0 | 0x10000));
 }

@@ -1,4 +1,5 @@
 #include <libft.h>
+#include <memory/memory.h>
 #include <types.h>
 #include <x86.h>
 
@@ -6,7 +7,7 @@
 // Structs & Defines
 
 #define GDT_MAX_ENTRIES 7
-#define GDT_ADDR        0x00000800
+#define GDT_ADDR        0x00000800 + KERNEL_VADDR_BASE
 #define GDT_ENTRY(indx) (gdt_entries + (indx))
 #define GDT_FLAGS       (SEGMENT_SIZE_BIT | GRANULARITY_BIT)
 

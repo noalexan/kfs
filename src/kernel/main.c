@@ -1,22 +1,17 @@
 #include <drivers/keyboard.h>
 #include <drivers/tty.h>
+#include <memory/boot_allocator.h>
+#include <memory/buddy.h>
 #include <memory/memory.h>
+#include <memory/vmm.h>
 
 void kernel_main()
 {
 	keyboard_init();
-	ttys_init();
 	buddy_init();
-
-	debug_buddy();
-	// vga_printf("DMA : \n");
-	// buddy_print(DMA_ZONE);
-	// vga_printf("LOW : \n");
-	// buddy_print(LOWMEM_ZONE);
-	// vga_printf("HIGH : \n");
-	// buddy_print(HIGHMEM_ZONE);
-
-	// boot_allocator_zones_printer();
+	// boot_allocator_print_allocations();
+	// buddy_print_summary();
+	// debug_buddy();
 
 	while (true) // hang
 		__asm__ volatile("hlt");
