@@ -22,6 +22,9 @@
 #define PAGE_DIR_VADDR         ((PD_SLOT << 22) | (PD_SLOT << 12))
 #define GET_PT_WITH_INDEX(idx) (FIRST_PAGE_TABLE_VADDR + (idx * PAGE_SIZE))
 
+uintptr_t kpage_dir;
+uintptr_t current_page_dir;
+
 /////////////////////////////////////////////////
 // Internal APIs
 
@@ -101,52 +104,86 @@ void vmm_finalize(void)
 			current_pt_ptr[j] = p_addr | PTE_PRESENT_BIT | PTE_RW_BIT;
 		}
 	}
+	kpage_dir        = page_dir_phys;
+	current_page_dir = page_dir_phys;
 	paging_reload_cr3(page_dir_phys);
 }
 
-// uintptr_t paging_virt_to_phy(uintptr_t v_addr)
-// {
-// 	uint32_t  pde_idx  = GET_PDE_INDEX(v_addr);
-// 	uint32_t  pte_idx  = GET_PTE_INDEX(v_addr);
-// 	uint32_t *page_dir = (uint32_t *)PAGE_DIR_VADDR;
+bool vmm_map_page(uintptr_t page_dir_phys, uintptr_t v_addr, uintptr_t p_addr, uint32_t flags)
+{
+	uint32_t pde_idx = GET_PDE_INDEX(v_addr);
+	uint32_t pte_idx = GET_PTE_INDEX(v_addr);
 
-// 	if (!(page_dir[pde_idx] & PDE_PRESENT_BIT))
-// 		return 0;
+	uint32_t *pd_ptr = (uint32_t *)page_dir_phys;
+	uint32_t  pde    = pd_ptr[pde_idx];
 
-// 	uint32_t *page_table = (uint32_t *)GET_PT_WITH_INDEX(pte_idx);
+	uintptr_t pt_phys;
+	uint32_t *page_table;
 
-// 	if (!(page_table[pte_idx] & PTE_PRESENT_BIT))
-// 		return 0;
+	if (!(pde & PDE_PRESENT_BIT)) {
+		pt_phys = (uintptr_t)buddy_alloc_pages(PAGE_SIZE, LOWMEM_ZONE);
+		if (!pt_phys) {
+			return false;
+		}
 
-// 	uint32_t page_phys = page_table[pte_idx] & ~0xFFF;
-// 	uint32_t offset    = v_addr & 0xFFF;
+		page_table = (uint32_t *)pt_phys;
+		ft_bzero(page_table, PAGE_SIZE);
 
-// 	return page_phys + offset;
-// }
+		pd_ptr[pde_idx] = pt_phys | PDE_PRESENT_BIT | PDE_RW_BIT | PDE_US_BIT;
+	} else {
+		pt_phys    = GET_ENTRY_ADDR(pde);
+		page_table = (uint32_t *)pt_phys;
+	}
 
-// void paging_cleanup(void)
-// {
-// 	page_descriptors   = (page_t *)(((uintptr_t)page_descriptors) + KERNEL_VADDR_BASE);
-// 	uint32_t *page_dir = (uint32_t *)PAGE_DIR_VADDR;
+	page_table[pte_idx] = p_addr | flags;
 
-// 	if (!(page_dir[0] & PDE_PRESENT_BIT)) {
-// 		vga_printf("PDE[0] already not present\n");
-// 		return;
-// 	}
+	paging_invalid_TLB_addr(v_addr);
+	return true;
+}
 
-// 	uint32_t *page_table = (uint32_t *)GET_PT_WITH_INDEX(0);
+bool vmm_unmap_page(uintptr_t page_dir_phys, uintptr_t v_addr)
+{
+	uint32_t  pde_idx  = GET_PDE_INDEX(v_addr);
+	uint32_t  pte_idx  = GET_PTE_INDEX(v_addr);
+	uint32_t *page_dir = (uint32_t *)page_dir_phys;
 
-// 	for (int pte_idx = 0; pte_idx < 1024; pte_idx++) {
-// 		if (page_table[pte_idx] & PTE_PRESENT_BIT) {
-// 			uint32_t vaddr = pte_idx * PAGE_SIZE;
-// 			// vga_printf("Unmapping 0x%x\n", vaddr);
+	if (!(page_dir[pde_idx] & PDE_PRESENT_BIT))
+		return false;
 
-// 			page_table[pte_idx] = 0;
-// 			asm volatile("invlpg (%0)" ::"r"(vaddr));
-// 		}
-// 	}
-// 	page_dir[0] = 0;
-// 	paging_flush_TLB();
+	uintptr_t pt_phys = GET_ENTRY_ADDR(page_dir[pde_idx]);
 
-// 	boot_alloc_clean_up();
-// }
+	uint32_t *page_table = (uint32_t *)pt_phys;
+
+	if (!(page_table[pte_idx] & PTE_PRESENT_BIT))
+		return false;
+
+	page_table[pte_idx] = 0;
+	paging_invalid_TLB_addr(v_addr);
+	return true;
+}
+
+uintptr_t vmm_get_mapping(uintptr_t page_dir_phys, uintptr_t v_addr)
+{
+	uint32_t pde_idx = GET_PDE_INDEX(v_addr);
+	uint32_t pte_idx = GET_PTE_INDEX(v_addr);
+
+	uint32_t *pd_ptr = (uint32_t *)page_dir_phys;
+	uint32_t  pde    = pd_ptr[pde_idx];
+
+	if (!(pde & PDE_PRESENT_BIT)) {
+		return 0;
+	}
+
+	uintptr_t page_table = GET_ENTRY_ADDR(pde);
+	uint32_t *pt_ptr     = (uint32_t *)page_table;
+	uint32_t  pte        = pt_ptr[pte_idx];
+
+	if (!(pte & PTE_PRESENT_BIT)) {
+		return 0;
+	}
+
+	uintptr_t page_phys_base = GET_ENTRY_ADDR(pte);
+	uintptr_t offset         = v_addr & 0xFFF;
+
+	return page_phys_base + offset;
+}
