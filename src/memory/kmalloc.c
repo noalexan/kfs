@@ -1,5 +1,3 @@
-#pragma once
-
 // ============================================================================
 // IMCLUDES
 // ============================================================================
@@ -11,6 +9,7 @@
 #include <memory/memory.h>
 #include <memory/page.h>
 #include <memory/slab.h>
+
 // ============================================================================
 // DEFINE AND MACRO
 // ============================================================================
@@ -77,7 +76,7 @@ void kfree(void *ptr)
 	if (page_state == PAGE_STATE_SLAB)
 		slab_free(ptr);
 	else if (page_state == PAGE_STATE_ALLOCATED)
-		buddy_free_block(phys_addr);
+		buddy_free_block((void *)phys_addr);
 }
 
 // TODO: implement ATOMIC gfp flags handling when SMP or multi process is ok

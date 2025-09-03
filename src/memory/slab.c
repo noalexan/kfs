@@ -178,7 +178,7 @@ void slab_free(void *ptr)
 	page_t *page = page_addr_to_page((uintptr_t)VIRT_TO_PHYS_LINEAR(ptr));
 	if (PAGE_GET_STATE(page) != PAGE_STATE_SLAB)
 		kpanic("Error: %s: try to free memory not handled by slab.\n", __func__);
-	slab_t       *slab  = page->private_data;
+	slab_t       *slab  = (slab_t *)page->private_data;
 	slab_cache_t *cache = slab->parent_cache;
 
 	char *obj      = ptr;
