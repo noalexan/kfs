@@ -4,7 +4,6 @@
 #include <libft.h>
 #include <memory/boot_allocator.h>
 #include <memory/buddy.h>
-#include <memory/memory.h>
 #include <memory/page.h>
 #include <utils.h>
 
@@ -105,7 +104,6 @@ static void pop_node(struct list_head *node)
 	node->prev       = NULL;
 }
 
-// container_of pour retrouver le page_t, puis page_to_phys pour retourner la vraie adresse physique
 static uintptr_t *pop_first_block(size_t order, zone_type zone)
 {
 	struct list_head *head        = order_to_free_list(order, zone);

@@ -4,8 +4,6 @@
 // INCLUDES
 // ============================================================================
 
-#include <kernel/mb2_info.h>
-#include <memory/page.h>
 #include <register.h>
 #include <types.h>
 #include <utils.h>
