@@ -32,4 +32,6 @@
 // EXTERNAL APIs
 // ============================================================================
 
-void *kmalloc(size_t size, gfp_t flags);
+void  *kmalloc(size_t size, gfp_t flags);
+size_t ksize(void *ptr);
+void   kfree(void *ptr);

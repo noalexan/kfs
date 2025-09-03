@@ -4,6 +4,7 @@
 #include <memory/kmalloc.h>
 #include <memory/memory.h>
 #include <memory/page.h>
+#include <memory/slab.h>
 #include <types.h>
 #include <utils.h>
 
@@ -48,22 +49,6 @@ typedef enum {
 } cache_size;
 
 // Structures
-
-typedef struct slab_cache {
-	struct list_head slabs_full;
-	struct list_head slabs_partial;
-	struct list_head slabs_empty;
-	size_t           object_size;
-	uint32_t         objects_per_slab;
-
-} slab_cache_t;
-
-typedef struct slab {
-	struct list_head list;
-	void            *freelist;
-	uint32_t         inuse;
-	slab_cache_t    *parent_cache;
-} slab_t;
 
 // ============================================================================
 // VARIABLES GLOBALES
@@ -259,4 +244,114 @@ void slab_init(void)
 			    cache_sizes[i];
 		}
 	}
+}
+
+// ============================================================================
+// DEBUG APIs
+// ============================================================================
+
+static size_t list_count_nodes(struct list_head *head)
+{
+	size_t            count = 0;
+	struct list_head *iter;
+	for (iter = head->next; iter != head; iter = iter->next) {
+		count++;
+	}
+	return count;
+}
+
+static const char *debug_slab_size_to_str(cache_size size)
+{
+	switch (size) {
+	case CACHE_8B:
+		return "8B";
+	case CACHE_16B:
+		return "16B";
+	case CACHE_32B:
+		return "32B";
+	case CACHE_64B:
+		return "64B";
+	case CACHE_128B:
+		return "128B";
+	case CACHE_256B:
+		return "256B";
+	case CACHE_512B:
+		return "512B";
+	case CACHE_1024B:
+		return "1024B";
+	case CACHE_2048B:
+		return "2048B";
+	default:
+		return "??B";
+	}
+}
+
+static size_t slab_print_zone_summary(zone_type zone)
+{
+	vga_printf("\n--- Slab Caches in Zone: %s ---\n", (zone == DMA_ZONE) ? "DMA" : "LOWMEM");
+
+	size_t zone_total_mem_held = 0;
+	bool   has_active_caches   = false;
+
+	for (int i = 0; i < NUM_SLAB_CACHES; i++) {
+		slab_cache_t *cache = &slab_caches[zone][i];
+
+		size_t full_slabs    = list_count_nodes(&cache->slabs_full);
+		size_t partial_slabs = list_count_nodes(&cache->slabs_partial);
+		size_t empty_slabs   = list_count_nodes(&cache->slabs_empty);
+		size_t total_slabs   = full_slabs + partial_slabs + empty_slabs;
+
+		if (total_slabs == 0) {
+			continue;
+		}
+
+		has_active_caches = true;
+
+		size_t total_objects = total_slabs * cache->objects_per_slab;
+
+		size_t            total_inuse = 0;
+		struct list_head *iter;
+		total_inuse += full_slabs * cache->objects_per_slab;
+		for (iter = cache->slabs_partial.next; iter != &cache->slabs_partial; iter = iter->next) {
+			slab_t *s = container_of(iter, slab_t, list);
+			total_inuse += s->inuse;
+		}
+
+		size_t mem_held = total_slabs * PAGE_SIZE;
+		zone_total_mem_held += mem_held;
+		size_t mem_used = total_inuse * cache->object_size;
+
+		uint32_t efficiency = (mem_held > 0) ? (mem_used * 100) / mem_held : 0;
+
+		vga_printf("  Cache %s:\n", debug_slab_size_to_str(i));
+		vga_printf("    Slabs: %u (Full: %u, Partial: %u, Empty: %u)\n", total_slabs, full_slabs,
+		           partial_slabs, empty_slabs);
+		vga_printf("    Objects: %u used of %u total (Free: %u)\n", total_inuse, total_objects,
+		           total_objects - total_inuse);
+		vga_printf("    Memory: %u KiB used / %u KiB held | Efficacité: %u%%\n", mem_used / 1024,
+		           mem_held / 1024, efficiency);
+	}
+
+	if (!has_active_caches) {
+		vga_printf("  (No active caches in this zone)\n");
+	}
+
+	return zone_total_mem_held;
+}
+
+void slab_print_summary(void)
+{
+	vga_printf("\n=================== Slab Allocator Summary ===================\n");
+
+	size_t total_mem_held = 0;
+	for (int zone = 0; zone < MAX_ZONE; zone++) {
+		if (zone >= DMA_ZONE + 1)
+			continue;
+		total_mem_held += slab_print_zone_summary((zone_type)zone);
+	}
+
+	vga_printf("\n------------------------------------------------------------\n");
+	vga_printf("Total Memory Held by Slab Caches: %u KiB (%u MiB)\n", total_mem_held / 1024,
+	           total_mem_held / (1024 * 1024));
+	vga_printf("============================================================\n");
 }

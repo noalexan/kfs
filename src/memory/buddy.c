@@ -12,7 +12,6 @@ static const char *debug_buddy_zone_to_str(zone_type zone);
 
 // Macros
 
-#define ORDER_TO_BYTES(order)              (PAGE_BY_ORDER(order) * PAGE_SIZE)
 #define PAGE_BY_ORDER(order)               (1 << order)
 #define PAGE_DATA_IS_MAGIC(page)           ((page)->private_data == PAGE_MAGIC)
 #define WHO_IS_MY_BUDDY(addr, order, base) ((((addr) - (base)) ^ ORDER_TO_BYTES(order)) + (base))

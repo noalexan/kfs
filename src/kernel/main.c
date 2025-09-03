@@ -11,6 +11,7 @@ void kernel_main()
 
 	// boot_allocator_print_allocations();
 	// buddy_print_summary();
+	// slab_print_summary();
 	// debug_buddy();
 
 	while (true) // hang
