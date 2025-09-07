@@ -116,6 +116,10 @@ setup-dev:
 	@pip install --target $(TOOLSDIR) pre-commit
 	@PYTHONPATH="$(TOOLSDIR):$$PYTHONPATH" python -m pre_commit install
 
+.PHONY: doxy
+doxy:
+	doxygen Doxyfile
+
 .PHONY: run
 run: all
 	$(QEMU) $(QEMUFLAGS) -cdrom $(BUILDDIR)/boot.iso

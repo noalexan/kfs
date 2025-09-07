@@ -1,0 +1,82 @@
+# Doxyfile 1.9.x - Configuration for KFS (Kernel FileSystem) project
+
+# Project settings
+PROJECT_NAME           = "KFS - Kernel FileSystem"
+PROJECT_BRIEF          = "A custom kernel and filesystem implementation with memory management, drivers, and x86 architecture support"
+OUTPUT_DIRECTORY       = docs
+
+# Input
+INPUT                  = src include doc/
+FILE_PATTERNS          = *.c *.cpp *.h *.hpp *.md
+RECURSIVE              = YES
+USE_MDFILE_AS_MAINPAGE = doc/Roadmap.md
+
+# Output formats
+GENERATE_HTML          = YES
+GENERATE_LATEX         = NO
+HTML_OUTPUT            = html
+HTML_FILE_EXTENSION    = .html
+HTML_HEADER            = 
+HTML_FOOTER            = 
+HTML_STYLESHEET        = 
+HTML_COLORSTYLE_HUE    = 220
+HTML_COLORSTYLE_SAT    = 100
+HTML_COLORSTYLE_GAMMA  = 80
+
+# Source code browsing
+SOURCE_BROWSER         = YES
+INLINE_SOURCES         = YES
+STRIP_CODE_COMMENTS    = NO
+REFERENCED_BY_RELATION = YES
+REFERENCES_RELATION    = YES
+REFERENCES_LINK_SOURCE = YES
+
+# Extract all entities
+EXTRACT_ALL            = YES
+EXTRACT_PRIVATE        = YES
+EXTRACT_STATIC         = YES
+EXTRACT_LOCAL_CLASSES  = YES
+EXTRACT_LOCAL_METHODS  = YES
+EXTRACT_ANON_NSPACES   = YES
+
+# Exclude build artifacts
+EXCLUDE                = build docs/html lib/libft
+EXCLUDE_PATTERNS       = */build/* */bin/* *.o *.iso
+
+# Miscellaneous
+QUIET                  = YES
+WARN_IF_UNDOCUMENTED   = YES
+WARN_IF_DOC_ERROR      = YES
+WARN_NO_PARAMDOC       = YES
+
+# Diagrams and graphs
+HAVE_DOT               = YES
+COLLABORATION_GRAPH    = YES
+GROUP_GRAPHS           = YES
+UML_LOOK               = YES
+INCLUDE_GRAPH          = YES
+INCLUDED_BY_GRAPH      = YES
+CALL_GRAPH             = YES
+CALLER_GRAPH           = YES
+GRAPHICAL_HIERARCHY    = YES
+DIRECTORY_GRAPH        = YES
+DOT_GRAPH_MAX_NODES    = 100
+
+# Search engine
+SEARCHENGINE           = YES
+
+# Preprocessing
+ENABLE_PREPROCESSING   = YES
+MACRO_EXPANSION        = YES
+EXPAND_ONLY_PREDEF     = NO
+SEARCH_INCLUDES        = YES
+INCLUDE_PATH           = include
+PREDEFINED             = __KERNEL__ \
+                         __x86__ \
+                         DOXYGEN_SHOULD_SKIP_THIS
+
+# Optimization for C
+OPTIMIZE_OUTPUT_FOR_C  = YES
+
+# File version filter
+FILE_VERSION_FILTER    = 
