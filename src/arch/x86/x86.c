@@ -1,4 +1,4 @@
-#include "internal/x86.h"
+#include "x86.h"
 #include <drivers/tty.h>
 #include <memory/memory.h>
 #include <memory/page.h>

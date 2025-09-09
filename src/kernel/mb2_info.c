@@ -1,4 +1,4 @@
-#include "internal/mb2_info.h"
+#include "mb2_info.h"
 #include <memory/boot_allocator.h>
 
 ////////////////////////////////////////////////////////////
