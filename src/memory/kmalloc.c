@@ -16,8 +16,6 @@
 
 // Defines
 
-#define MAX_KMALLOC_SIZE (MiB_SIZE * 4)
-
 // Macros
 
 // ============================================================================
@@ -46,9 +44,11 @@ size_t ksize(void *ptr)
 {
 	if (!ptr)
 		return 0;
+
 	uintptr_t phys_addr  = VIRT_TO_PHYS_LINEAR(ptr);
 	page_t   *page       = page_addr_to_page(phys_addr);
 	size_t    page_state = PAGE_GET_STATE(page);
+
 	if (page_state == PAGE_STATE_SLAB) {
 		slab_t *slab = (slab_t *)page->private_data;
 		return slab->parent_cache->object_size;
