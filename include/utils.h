@@ -11,7 +11,7 @@
 // Macro
 #define ALIGN(x, a)              __ALIGN_MASK(x, (typeof(x))(a) - 1)
 #define __ALIGN_MASK(x, mask)    (((x) + (mask)) & ~(mask))
-#define ALIGN_DOWN(x, a) ((x) & ~((typeof(x))(a) - 1))
+#define ALIGN_DOWN(x, a)         ((x) & ~((typeof(x))(a) - 1))
 #define IS_ALIGNED(addr, a)      (ALIGN((addr), (a)) == (addr))
 #define DIV_ROUND_UP(x, y)       (x + y - 1) / y
 #define FLAG_IS_SET(flags, flag) (((flags) & (flag)) != 0)
