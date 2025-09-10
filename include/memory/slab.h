@@ -36,7 +36,7 @@ typedef struct slab {
 	void            *freelist;
 	uint32_t         inuse;
 	slab_cache_t    *parent_cache;
-	char _padding[12]; 
+	char             _padding[12];
 } slab_t;
 
 // Typedefs
