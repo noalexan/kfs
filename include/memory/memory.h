@@ -42,6 +42,9 @@
 #define MAX_MIGRATION 1
 #define MAX_ZONE      3
 
+#define VMALLOC_START 0xF8000000
+#define VMALLOC_END   0xFFFFFFFF
+
 // Macros
 #define PHYS_TO_VIRT_LINEAR(p_addr) ((void *)((uintptr_t)(p_addr) + KERNEL_VADDR_BASE))
 #define VIRT_TO_PHYS_LINEAR(v_addr) ((uintptr_t)((v_addr) - KERNEL_VADDR_BASE))
