@@ -114,51 +114,71 @@ bool vmm_map_page(uintptr_t page_dir_phys, uintptr_t v_addr, uintptr_t p_addr, u
 	uint32_t pde_idx = GET_PDE_INDEX(v_addr);
 	uint32_t pte_idx = GET_PTE_INDEX(v_addr);
 
-	uint32_t *pd_ptr = (uint32_t *)page_dir_phys;
-	uint32_t  pde    = pd_ptr[pde_idx];
+	uint32_t *pd_virt = (uint32_t *)PHYS_TO_VIRT_LINEAR(page_dir_phys);
+	uint32_t  pde     = pd_virt[pde_idx];
 
-	uintptr_t pt_phys;
-	uint32_t *page_table;
+	uint32_t *pt_virt;
+	bool      needs_cr3_reload = false;
 
 	if (!(pde & PDE_PRESENT_BIT)) {
-		pt_phys = (uintptr_t)buddy_alloc_pages(PAGE_SIZE, LOWMEM_ZONE);
-		if (!pt_phys) {
+		uintptr_t pt_phys = (uintptr_t)buddy_alloc_pages(PAGE_SIZE, LOWMEM_ZONE);
+		if (!pt_phys)
 			return false;
-		}
 
-		page_table = (uint32_t *)pt_phys;
-		ft_bzero(page_table, PAGE_SIZE);
+		pt_virt = (uint32_t *)PHYS_TO_VIRT_LINEAR(pt_phys);
+		ft_bzero(pt_virt, PAGE_SIZE);
 
-		pd_ptr[pde_idx] = pt_phys | PDE_PRESENT_BIT | PDE_RW_BIT | PDE_US_BIT;
+		pd_virt[pde_idx] = pt_phys | PDE_PRESENT_BIT | PDE_RW_BIT | PDE_US_BIT;
+		needs_cr3_reload = true;
 	} else {
-		pt_phys    = GET_ENTRY_ADDR(pde);
-		page_table = (uint32_t *)pt_phys;
+		uintptr_t pt_phys = GET_ENTRY_ADDR(pde);
+		pt_virt           = (uint32_t *)PHYS_TO_VIRT_LINEAR(pt_phys);
 	}
+	pt_virt[pte_idx] = p_addr | flags;
 
-	page_table[pte_idx] = p_addr | flags;
-
-	paging_invalid_TLB_addr(v_addr);
+	if (needs_cr3_reload) {
+		paging_reload_cr3(page_dir_phys);
+	} else {
+		paging_invalid_TLB_addr(v_addr);
+	}
 	return true;
 }
 
 bool vmm_unmap_page(uintptr_t page_dir_phys, uintptr_t v_addr)
 {
-	uint32_t  pde_idx  = GET_PDE_INDEX(v_addr);
-	uint32_t  pte_idx  = GET_PTE_INDEX(v_addr);
-	uint32_t *page_dir = (uint32_t *)page_dir_phys;
+	uint32_t pde_idx = GET_PDE_INDEX(v_addr);
+	uint32_t pte_idx = GET_PTE_INDEX(v_addr);
 
-	if (!(page_dir[pde_idx] & PDE_PRESENT_BIT))
+	uint32_t *pd_virt = (uint32_t *)PHYS_TO_VIRT_LINEAR(page_dir_phys);
+	uint32_t  pde     = pd_virt[pde_idx];
+
+	if (!(pde & PDE_PRESENT_BIT))
 		return false;
 
-	uintptr_t pt_phys = GET_ENTRY_ADDR(page_dir[pde_idx]);
+	uintptr_t pt_phys = GET_ENTRY_ADDR(pde);
+	uint32_t *pt_virt = (uint32_t *)PHYS_TO_VIRT_LINEAR(pt_phys);
 
-	uint32_t *page_table = (uint32_t *)pt_phys;
-
-	if (!(page_table[pte_idx] & PTE_PRESENT_BIT))
+	if (!(pt_virt[pte_idx] & PTE_PRESENT_BIT))
 		return false;
 
-	page_table[pte_idx] = 0;
+	pt_virt[pte_idx] = 0;
 	paging_invalid_TLB_addr(v_addr);
+
+	bool is_pt_empty = true;
+	for (int i = 0; i < 1024; i++) {
+		if (pt_virt[i] & PTE_PRESENT_BIT) {
+			is_pt_empty = false;
+			break;
+		}
+	}
+
+	if (is_pt_empty) {
+		pd_virt[pde_idx] = 0;
+		buddy_free_block((void *)pt_phys);
+		if (page_dir_phys == get_current_page_directory_phys())
+			paging_reload_cr3(page_dir_phys);
+	}
+
 	return true;
 }
 
