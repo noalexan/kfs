@@ -18,4 +18,6 @@ typedef void (*irqHandler)(REGISTERS registers, int interrupt, int error);
 void             x86_init(void);
 const gdt_ptr_t *gdtr_getter(void);
 const idtr_t    *idtr_getter(void);
+void             gdt_init(void);
+void             idt_init(void);
 void             idt_register_interrupt_handlers(uint8_t num, irqHandler handler);

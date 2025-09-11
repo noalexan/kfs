@@ -1,9 +1,9 @@
-#include "internal/mb2_info.h"
+#include <kernel/mb2_info.h>
+#include <kernel/panic.h>
 #include <memory/boot_allocator.h>
 
 ////////////////////////////////////////////////////////////
 // Globals
-#define TAGS_NEEDED 1
 
 multiboot_info_t *mb2info = NULL;
 

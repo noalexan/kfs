@@ -96,7 +96,7 @@ page_t *page_index_to_page(uint32_t idx)
 
 page_t *page_addr_to_page(uintptr_t addr)
 {
-	return &page_descriptors[ALIGN(addr, PAGE_SIZE) / PAGE_SIZE];
+	return &page_descriptors[ALIGN_DOWN(addr, PAGE_SIZE) / PAGE_SIZE];
 }
 
 bool page_addr_is_same_page(uintptr_t addr1, uintptr_t addr2)

@@ -51,9 +51,9 @@ enum Page_Directory_Entry {
 
 // Macros
 
-#define GET_PDE_INDEX(vaddr) (vaddr >> 22)
-#define GET_PTE_INDEX(vaddr) ((vaddr >> 12) & 0x3FF)
-#define GET_PT_FROM_PDE(pde) ((uint32_t *)(pde & ~0xFFF))
+#define GET_PDE_INDEX(vaddr)  (vaddr >> 22)
+#define GET_PTE_INDEX(vaddr)  ((vaddr >> 12) & 0x3FF)
+#define GET_ENTRY_ADDR(entry) ((entry & ~0xFFF))
 
 // ============================================================================
 // STRUCT
@@ -69,11 +69,16 @@ enum Page_Directory_Entry {
 // VARIABLES GLOBALES
 // ============================================================================
 
+extern uintptr_t current_page_dir;
+
 // ============================================================================
 // EXTERNAL APIs
 // ============================================================================
 
-void page_fault_handler(REGISTERS reg, int interrupt, int error);
+void      page_fault_handler(REGISTERS reg, int interrupt, int error);
+uintptr_t vmm_get_mapping(uintptr_t page_dir_phys, uintptr_t v_addr);
+bool      vmm_map_page(uintptr_t page_dir_phys, uintptr_t v_addr, uintptr_t p_addr, uint32_t flags);
+bool      vmm_unmap_page(uintptr_t page_dir_phys, uintptr_t v_addr);
 
 static inline uintptr_t get_current_page_directory_phys(void)
 {
