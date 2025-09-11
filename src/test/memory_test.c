@@ -1,11 +1,11 @@
 #include <drivers/vga.h>
 #include <kernel/panic.h>
 #include <libft.h>
-#include <memory/buddy.h> // Pour buddy_print_summary (optionnel)
+#include <memory/buddy.h> // For buddy_print_summary (optional)
 #include <memory/kmalloc.h>
 #include <memory/memory.h>
 #include <memory/page.h>
-#include <memory/slab.h> // Pour slab_print_summary (optionnel)
+#include <memory/slab.h> // For slab_print_summary (optional)
 #include <test/mm_test.h>
 
 // ============================================================================
