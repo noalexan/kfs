@@ -6,7 +6,6 @@
 #include <memory/page.h>
 #include <memory/slab.h>
 #include <memory/vmalloc.h>
-#include <test/mm_test.h>
 
 void kernel_main()
 {
