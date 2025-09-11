@@ -21,19 +21,4 @@ struct list_head {
 	struct list_head *next, *prev;
 };
 
-typedef unsigned int gfp_t;
-
-#define __GFP_KERNEL 0b00000001 // For lazy allocation
-#define __GFP_ATOMIC 0b00000010 // Usefull in futur when scheduler is OK
-#define __GFP_DMA    0b00000100 // asking for dma
-// #define __GFP_HIGH    	0b00001000 // asking for highmem
-#define __GFP_ZERO 0b00010000 // asking to fill memory with zero
-
-#define GFP_DMA        (__GFP_DMA | __GFP_KERNEL)
-#define GFP_ATOMIC_DMA (__GFP_DMA | __GFP_ATOMIC)
-
-// Standard flags to choose lowmem
-#define GFP_KERNEL (__GFP_KERNEL)
-#define GFP_ATOMIC (__GFP_ATOMIC)
-
 #endif

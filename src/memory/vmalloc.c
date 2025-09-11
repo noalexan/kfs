@@ -6,6 +6,7 @@
 #include <libft.h>
 #include <memory/buddy.h>
 #include <memory/kmalloc.h>
+#include <memory/memory.h>
 #include <memory/page.h>
 #include <memory/vmm.h>
 

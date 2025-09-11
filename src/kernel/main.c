@@ -17,6 +17,9 @@ void kernel_main()
 
 	// void *test = vmalloc(127 * MiB_SIZE);
 	// vga_printf("test size : %d\n", vsize(test));
+	// vfree(test);
+	// *(char*)test = 1;
+	// vga_printf("test size : %d\n", vsize(test));
 
 	// boot_allocator_print_allocations();
 	// buddy_print_summary();
