@@ -195,7 +195,7 @@ uintptr_t vmm_get_mapping(uintptr_t page_dir_phys, uintptr_t v_addr)
 	}
 
 	uintptr_t page_table = GET_ENTRY_ADDR(pde);
-	uint32_t *pt_ptr     = (uint32_t *)page_table;
+	uint32_t *pt_ptr     = (uint32_t *)PHYS_TO_VIRT_LINEAR(page_table);
 	uint32_t  pte        = pt_ptr[pte_idx];
 
 	if (!(pte & PTE_PRESENT_BIT)) {
