@@ -189,7 +189,7 @@ void slab_free(void *ptr)
 		pop_node(&slab->list);
 		list_add_head(&slab->list, &cache->slabs_partial);
 	} else if (slab->inuse == 0) {
-		// TODO : implement an memory shrinker logique to simplify logic and dont implement an
+		// TODO : implement a memory shrinker logic to simplify logic and don't implement a
 		// memory reclaimer
 		pop_node(&slab->list);
 		list_add_head(&slab->list, &cache->slabs_empty);
