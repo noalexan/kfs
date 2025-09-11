@@ -145,8 +145,9 @@ static slab_t *slab_create(slab_cache_t *cache, zone_type zone)
 	void   *new_page_virt = PHYS_TO_VIRT_LINEAR(new_page_phy);
 	if (SLAB_IS_EXTERNAL(cache->object_size)) {
 		/* Using kmalloc here is really smart,
-		 * but we need to keep in mind that if this current kernel implementation supports multi-core (SMP) architecture,
-		 * concurrency can create race conditions or at least deadlocks.
+		 * but we need to keep in mind that if this current kernel implementation supports
+		 * multi-core (SMP) architecture, concurrency can create race conditions or at least
+		 * deadlocks.
 		 */
 		ret = kmalloc(sizeof(slab_t), GFP_KERNEL);
 		if (!ret) {
