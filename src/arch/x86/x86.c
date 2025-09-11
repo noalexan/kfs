@@ -1,5 +1,5 @@
-#include "x86.h"
 #include <drivers/tty.h>
+#include <kernel/mb2_info.h>
 #include <memory/memory.h>
 #include <memory/page.h>
 #include <memory/vmm.h>

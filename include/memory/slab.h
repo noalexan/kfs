@@ -4,22 +4,15 @@
 // INCLUDES
 // ============================================================================
 
-#include <memory/memory.h>
-#include <types.h>
-
 // ============================================================================
 // DEFINE AND MACRO
 // ============================================================================
 
 // Defines
 
-#define MAX_ORDER     10
-#define MAX_MIGRATION 1
+#define MAX_SLAB_SIZE 2048
 
 // Macros
-
-#define PAGE_BY_ORDER(order)  (1 << order)
-#define ORDER_TO_BYTES(order) (PAGE_BY_ORDER(order) * PAGE_SIZE)
 
 // ============================================================================
 // STRUCT
@@ -27,37 +20,24 @@
 
 // Enums
 
-typedef enum {
-	ORDER_4KIB = 0,
-	ORDER_8KIB,
-	ORDER_16KIB,
-	ORDER_32KIB,
-	ORDER_64KIB,
-	ORDER_128KIB,
-	ORDER_256KIB,
-	ORDER_512KIB,
-	ORDER_1MIB,
-	ORDER_2MIB,
-	ORDER_4MIB,
-	BAD_ORDER,
-} order_size;
-
 // Structures
 
-struct buddy_free_area {
-	struct list_head free_list[MAX_MIGRATION];
-	uint32_t         nr_free;
-};
+typedef struct slab_cache {
+	struct list_head slabs_full;
+	struct list_head slabs_partial;
+	struct list_head slabs_empty;
+	size_t           object_size;
+	uint32_t         objects_per_slab;
 
-struct buddy_allocator {
-	struct buddy_free_area areas[MAX_ORDER + 1];
-};
+} slab_cache_t;
 
-// Typedefs
-
-typedef struct buddy_allocator buddy_allocator_t;
-
-// Structures
+typedef struct slab {
+	struct list_head list;
+	void            *freelist;
+	uint32_t         inuse;
+	slab_cache_t    *parent_cache;
+	char             _padding[12];
+} slab_t;
 
 // Typedefs
 
@@ -69,6 +49,7 @@ typedef struct buddy_allocator buddy_allocator_t;
 // EXTERNAL APIs
 // ============================================================================
 
-void   debug_buddy(void);
-void   buddy_print_summary(void);
-size_t buddy_print(zone_type zone);
+void  slab_init(void);
+void  slab_free(void *ptr);
+void *slab_alloc(size_t size, zone_type zone);
+void  slab_print_summary(void);
