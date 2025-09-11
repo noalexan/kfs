@@ -1,4 +1,4 @@
-#include "internal/vga.h"
+#include "vga.h"
 
 #define KERNEL_BANNER                                                                              \
 	"  /$$   /$$   /$$   /$$               /$$   /$$\n"                                            \

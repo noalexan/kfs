@@ -1,4 +1,4 @@
-#include "internal/tty.h"
+#include "tty.h"
 
 static bool ft_strequ(const char *s1, const char *s2)
 {

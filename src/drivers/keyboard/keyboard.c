@@ -1,5 +1,5 @@
-#include "internal/keyboard.h"
-#include "internal/layout.h"
+#include "keyboard.h"
+#include "layout.h"
 
 TTY               *current_tty;
 TTY                ttys[12];
