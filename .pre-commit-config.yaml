@@ -12,4 +12,3 @@ repos:
         entry: make format
         language: system
         pass_filenames: false
-        stages: [manual]
