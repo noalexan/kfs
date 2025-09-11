@@ -328,7 +328,7 @@ static size_t slab_print_zone_summary(zone_type zone)
 		           partial_slabs, empty_slabs);
 		vga_printf("    Objects: %u used of %u total (Free: %u)\n", total_inuse, total_objects,
 		           total_objects - total_inuse);
-		vga_printf("    Memory: %u KiB used / %u KiB held | Efficacité: %u%%\n", mem_used / 1024,
+		vga_printf("    Memory: %u KiB used / %u KiB held | Efficiency: %u%%\n", mem_used / 1024,
 		           mem_held / 1024, efficiency);
 	}
 
