@@ -147,12 +147,15 @@ static slab_t *slab_create(slab_cache_t *cache, zone_type zone)
 	size_t  available_space;
 	void   *new_page_virt = PHYS_TO_VIRT_LINEAR(new_page_phy);
 	if (SLAB_IS_EXTERNAL(cache->object_size)) {
+		gfp_t flags = GFP_KERNEL; // Commencer avec les flags de base
+		if (zone == DMA_ZONE)
+			flags |= __GFP_DMA;
 		/* Using kmalloc here is really smart,
 		 * but we need to keep in mind that if this current kernel implementation supports
 		 * multi-core (SMP) architecture, concurrency can create race conditions or at least
 		 * deadlocks.
 		 */
-		ret = kmalloc(sizeof(slab_t), GFP_KERNEL);
+		ret = kmalloc(sizeof(slab_t), flags);
 		if (!ret) {
 			buddy_free_block(new_page_phy);
 			return NULL;
