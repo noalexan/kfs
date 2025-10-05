@@ -147,7 +147,7 @@ static slab_t *slab_create(slab_cache_t *cache, zone_type zone)
 	size_t  available_space;
 	void   *new_page_virt = PHYS_TO_VIRT_LINEAR(new_page_phy);
 	if (SLAB_IS_EXTERNAL(cache->object_size)) {
-		gfp_t flags = GFP_KERNEL; // Commencer avec les flags de base
+		gfp_t flags = GFP_KERNEL; // Start with the basic flags
 		if (zone == DMA_ZONE)
 			flags |= __GFP_DMA;
 		/* Using kmalloc here is really smart,
