@@ -36,6 +36,29 @@
 // INTERNAL APIs
 // ============================================================================
 
+void *get_allocation(zone_type zone, size_t size)
+{
+	void *ret = NULL;
+
+	if (size > MAX_SLAB_SIZE) {
+		uintptr_t phys_addr = (uintptr_t)buddy_alloc_pages(size, zone);
+		if (phys_addr != 0)
+			ret = PHYS_TO_VIRT_LINEAR(phys_addr);
+	} else
+		ret = slab_alloc(size, zone);
+	return ret;
+}
+
+void *try_alloc_with_reclaim(zone_type zone, size_t size)
+{
+	void *alloc = get_allocation(zone, size);
+	if (alloc == NULL) {
+		slab_shrink_caches(zone);
+		return get_allocation(zone, size);
+	}
+	return alloc;
+}
+
 // ============================================================================
 // EXTERNAL APIs
 // ============================================================================
@@ -82,6 +105,7 @@ void kfree(void *ptr)
 // TODO: implement ATOMIC gfp flags handling when SMP or multi process is ok
 void *kmalloc(size_t size, gfp_t flags)
 {
+
 	void     *ret  = NULL;
 	zone_type zone = LOWMEM_ZONE;
 	if (FLAG_IS_SET(flags, __GFP_DMA))
@@ -89,18 +113,12 @@ void *kmalloc(size_t size, gfp_t flags)
 
 	if (size == 0)
 		return NULL;
-	else if (size >= MAX_KMALLOC_SIZE)
+	else if (size > MAX_KMALLOC_SIZE)
 		return NULL;
 
-	if (size > MAX_SLAB_SIZE) {
-		uintptr_t phys_addr = (uintptr_t)buddy_alloc_pages(size, zone);
-		if (phys_addr != 0)
-			ret = PHYS_TO_VIRT_LINEAR(phys_addr);
-	} else
-		ret = slab_alloc(size, zone);
+	ret = try_alloc_with_reclaim(zone, size);
 
 	if (ret != NULL && FLAG_IS_SET(flags, __GFP_ZERO))
 		ft_bzero(ret, size);
-
 	return ret;
 }
