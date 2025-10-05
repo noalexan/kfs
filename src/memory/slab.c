@@ -205,7 +205,6 @@ void slab_shrink_caches(zone_type zone)
 			empty_list = next;
 		}
 	}
-	return;
 }
 
 void slab_free(void *ptr)
