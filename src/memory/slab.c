@@ -194,8 +194,8 @@ void slab_shrink_caches(zone_type zone)
 			slab_t           *slab = container_of(empty_list, slab_t, list);
 
 			void *phys_addr_in_page =
-			    (SLAB_IS_EXTERNAL(cache->object_size) ? VIRT_TO_PHYS_LINEAR(slab->freelist)
-			                                          : VIRT_TO_PHYS_LINEAR(slab));
+			    (void *)(SLAB_IS_EXTERNAL(cache->object_size) ? VIRT_TO_PHYS_LINEAR(slab->freelist)
+			                                                  : VIRT_TO_PHYS_LINEAR(slab));
 			page_t *page = page_addr_to_page((uintptr_t)phys_addr_in_page);
 			PAGE_SET_STATE(page, PAGE_STATE_ALLOCATED);
 			page->private_data = 0;
