@@ -183,9 +183,8 @@ static slab_t *slab_create(slab_cache_t *cache, zone_type zone)
 void slab_shrink_caches(zone_type zone)
 {
 	for (size_t i = 0; i < NUM_SLAB_CACHES; i++) {
-		slab_cache_t *cache       = &slab_caches[zone][i];
-		size_t        empty_slabs = list_count_nodes(&cache->slabs_empty);
-		if (empty_slabs == 0)
+		slab_cache_t *cache = &slab_caches[zone][i];
+		if (cache->slabs_empty.next == &cache->slabs_empty)
 			continue;
 		struct list_head *head       = &cache->slabs_empty;
 		struct list_head *empty_list = head->next;
