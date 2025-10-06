@@ -53,3 +53,4 @@ void  slab_init(void);
 void  slab_free(void *ptr);
 void *slab_alloc(size_t size, zone_type zone);
 void  slab_print_summary(void);
+void  slab_shrink_caches(zone_type zone);

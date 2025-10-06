@@ -62,6 +62,9 @@ static slab_cache_t slab_caches[MAX_ZONE][NUM_SLAB_CACHES];
 // INTERNAL APIs
 // ============================================================================
 
+static size_t slab_print_zone_summary(zone_type zone);
+static size_t list_count_nodes(struct list_head *head);
+
 static void list_add_head(struct list_head *new_node, struct list_head *head)
 {
 	struct list_head *old_next = head->next;
@@ -144,12 +147,15 @@ static slab_t *slab_create(slab_cache_t *cache, zone_type zone)
 	size_t  available_space;
 	void   *new_page_virt = PHYS_TO_VIRT_LINEAR(new_page_phy);
 	if (SLAB_IS_EXTERNAL(cache->object_size)) {
+		gfp_t flags = GFP_KERNEL; // Start with the basic flags
+		if (zone == DMA_ZONE)
+			flags |= __GFP_DMA;
 		/* Using kmalloc here is really smart,
 		 * but we need to keep in mind that if this current kernel implementation supports
 		 * multi-core (SMP) architecture, concurrency can create race conditions or at least
 		 * deadlocks.
 		 */
-		ret = kmalloc(sizeof(slab_t), GFP_KERNEL);
+		ret = kmalloc(sizeof(slab_t), flags);
 		if (!ret) {
 			buddy_free_block(new_page_phy);
 			return NULL;
@@ -174,6 +180,32 @@ static slab_t *slab_create(slab_cache_t *cache, zone_type zone)
 // EXTERNAL APIs
 // ============================================================================
 
+void slab_shrink_caches(zone_type zone)
+{
+	for (size_t i = 0; i < NUM_SLAB_CACHES; i++) {
+		slab_cache_t *cache = &slab_caches[zone][i];
+		if (cache->slabs_empty.next == &cache->slabs_empty)
+			continue;
+		struct list_head *head       = &cache->slabs_empty;
+		struct list_head *empty_list = head->next;
+		while (empty_list != head) {
+			struct list_head *next = empty_list->next;
+			slab_t           *slab = container_of(empty_list, slab_t, list);
+
+			void *phys_addr_in_page =
+			    (void *)(SLAB_IS_EXTERNAL(cache->object_size) ? VIRT_TO_PHYS_LINEAR(slab->freelist)
+			                                                  : VIRT_TO_PHYS_LINEAR(slab));
+			page_t *page = page_addr_to_page((uintptr_t)phys_addr_in_page);
+			PAGE_SET_STATE(page, PAGE_STATE_ALLOCATED);
+			page->private_data = 0;
+			buddy_free_block((void *)page_to_phys(page));
+			if (SLAB_IS_EXTERNAL(cache->object_size))
+				kfree(slab);
+			empty_list = next;
+		}
+	}
+}
+
 void slab_free(void *ptr)
 {
 	page_t *page = page_addr_to_page((uintptr_t)VIRT_TO_PHYS_LINEAR(ptr));
@@ -190,8 +222,6 @@ void slab_free(void *ptr)
 		pop_node(&slab->list);
 		list_add_head(&slab->list, &cache->slabs_partial);
 	} else if (slab->inuse == 0) {
-		// TODO : implement a memory shrinker logic to simplify logic and don't implement a
-		// memory reclaimer
 		pop_node(&slab->list);
 		list_add_head(&slab->list, &cache->slabs_empty);
 	}
