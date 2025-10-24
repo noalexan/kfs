@@ -1,10 +1,10 @@
 #include "tty.h"
-#include "memory/memory.h"
-#include "memory/kmalloc.h"
 #include "kernel/panic.h"
+#include "memory/kmalloc.h"
+#include "memory/memory.h"
 
-TTY               *current_tty;
-TTY                ttys[12];
+TTY *current_tty;
+TTY  ttys[12];
 
 static bool ft_strequ(const char *s1, const char *s2)
 {
@@ -60,10 +60,10 @@ void tty_cli_handle_nl(void)
 
 void tty_init(TTY *tty)
 {
-	tty->cursor = (struct s_cursor){0, 1};
-	tty->mode   = VGA_DEFAULT_MODE;
+	tty->cursor           = (struct s_cursor){0, 1};
+	tty->mode             = VGA_DEFAULT_MODE;
 	tty->framebuffer_size = (VGA_WIDTH * VGA_HEIGHT) * sizeof(vga_entry);
-	tty->framebuffer = NULL;
+	tty->framebuffer      = NULL;
 	ft_bzero(tty->cli, 256);
 }
 

@@ -1,11 +1,11 @@
-#include <drivers/tty.h>
 #include <drivers/keyboard.h>
+#include <drivers/tty.h>
 #include <kernel/mb2_info.h>
-#include <memory/memory.h>
-#include <memory/slab.h>
 #include <memory/buddy.h>
-#include <memory/vmalloc.h>
+#include <memory/memory.h>
 #include <memory/page.h>
+#include <memory/slab.h>
+#include <memory/vmalloc.h>
 #include <memory/vmm.h>
 #include <x86.h>
 

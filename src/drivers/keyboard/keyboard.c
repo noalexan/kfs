@@ -90,10 +90,7 @@ static void keyboard_navigation_handler(keyboard_key_t key)
 /////////////////////////////////////////////////////////////////////////////////////////////
 // Function Group
 
-static void keyboard_function_handler(keyboard_key_t key)
-{
-	tty_switch(ttys + key.value);
-}
+static void keyboard_function_handler(keyboard_key_t key) { tty_switch(ttys + key.value); }
 
 // Function Group
 /////////////////////////////////////////////////////////////////////////////////////////////
@@ -134,7 +131,9 @@ static void keyboard_backspace_handler(keyboard_key_t key)
 		}
 
 		vga_set_cursor_position(current_tty->cursor.x, current_tty->cursor.y);
-		VGA_ENTRY(current_tty->cursor.x, current_tty->cursor.y)->character = 0;
+		size_t offset = ((current_tty->cursor.y % VGA_HEIGHT) * VGA_WIDTH +
+		                 (current_tty->cursor.x % VGA_WIDTH));
+		current_tty->framebuffer[offset].character = 0;
 	}
 }
 
@@ -247,6 +246,7 @@ void keyboard_handle()
 			current_layout[keycode].handler(key);
 		}
 	}
+	vga_refresh_screen();
 }
 
 void keyboard_init(void)
