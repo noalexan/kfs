@@ -1,4 +1,10 @@
 #include "tty.h"
+#include "memory/memory.h"
+#include "memory/kmalloc.h"
+#include "kernel/panic.h"
+
+TTY               *current_tty;
+TTY                ttys[12];
 
 static bool ft_strequ(const char *s1, const char *s2)
 {

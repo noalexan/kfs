@@ -1,8 +1,6 @@
 #include "keyboard.h"
 #include "layout.h"
 
-TTY               *current_tty;
-TTY                ttys[12];
 Layout             current_layout_type = QWERTY;
 scancode_routine_t current_layout[256] = {0};
 
