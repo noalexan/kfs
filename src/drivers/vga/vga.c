@@ -11,6 +11,8 @@
 	" | $$ \\  $$ /$$$$$$|  $$$$/|  $$$$$$/| $$  \\ $$\n"                                          \
 	" |__/  \\__/|______/ \\___/   \\______/ |__/  |__/\n"
 
+#define GET_OFFSET(x, y)((y % VGA_HEIGHT) * VGA_WIDTH + (x % VGA_WIDTH))
+
 static uint8_t  vga_mode = VGA_DEFAULT_MODE;
 
 static int ft_putchar(char c)
@@ -44,7 +46,6 @@ static int ft_putchar(char c)
 		current_tty->cursor.y--;
 	}
 
-	vga_set_cursor_position(current_tty->cursor.x, current_tty->cursor.y);
 	return 1;
 }
 
@@ -101,8 +102,8 @@ void vga_setup_default_screen()
 {
 	vga_clear();
 	vga_enable_cursor(14, 15);
-	vga_set_cursor_position(0, 1);
-
+	vga_set_cursor_position(current_tty->cursor.x, current_tty->cursor.y);
+	vga_set_screen_mode(VGA_DEFAULT_MODE);
 	vga_printf(KERNEL_BANNER "\n" TTY_PROMPT);
 }
 
@@ -123,7 +124,6 @@ void vga_disable_cursor(void)
 
 void vga_set_cursor_position(uint8_t x, uint8_t y)
 {
-	current_tty->cursor     = (struct s_cursor){x, y};
 	uint16_t pos = y * VGA_WIDTH + x;
 
 	outb(0x3D4, 0x0F);
@@ -134,15 +134,20 @@ void vga_set_cursor_position(uint8_t x, uint8_t y)
 
 void vga_set_char(int x, int y, char c)
 {
-	*VGA_ENTRY(x % VGA_WIDTH, y % VGA_HEIGHT) = (vga_entry){c, vga_mode};
+    if (!current_tty || !current_tty->framebuffer)
+		return;
+    current_tty->framebuffer[GET_OFFSET(x, y)] = (vga_entry){c, current_tty->mode}; 
 }
 
 void vga_scroll_down(void)
 {
-	for (int y = 0; y < (VGA_HEIGHT - 1); y++)
-		ft_memcpy(VGA_ENTRY(0, y), VGA_ENTRY(0, y + 1), VGA_WIDTH * 2);
+	for (int y = 0; y < (VGA_HEIGHT - 1); y++) {
+		size_t cur_offset = GET_OFFSET(0, y);
+		size_t next_offset = GET_OFFSET(0, y + 1);
+		ft_memcpy(&current_tty->framebuffer[cur_offset], &current_tty->framebuffer[next_offset], VGA_WIDTH * 2);
+	}
 	for (int x = 0; x < VGA_WIDTH; x++)
-		*VGA_ENTRY(x, VGA_HEIGHT - 1) = (vga_entry){0, vga_mode};
+		current_tty->framebuffer[GET_OFFSET(x, VGA_HEIGHT - 1)] = (vga_entry){0, current_tty->mode};
 }
 
 void vga_set_screen_mode(enum vga_color mode)
@@ -150,7 +155,7 @@ void vga_set_screen_mode(enum vga_color mode)
 	vga_mode = mode;
 	for (int y = 0; y < VGA_HEIGHT; y++)
 		for (int x = 0; x < VGA_WIDTH; x++)
-			VGA_ENTRY(x, y)->mode = vga_mode;
+    		current_tty->framebuffer[GET_OFFSET(x, y)].mode = vga_mode; 
 }
 
 void vga_set_mode(enum vga_color mode) { vga_mode = mode; }
@@ -159,7 +164,15 @@ void vga_clear(void)
 {
 	for (int y = 0; y < VGA_HEIGHT; y++)
 		for (int x = 0; x < VGA_WIDTH; x++)
-			*VGA_ENTRY(x, y) = (vga_entry){.character = 0x00, .mode = vga_mode};
+    		current_tty->framebuffer[GET_OFFSET(x, y)] = (vga_entry){.character = 0x00, .mode = current_tty->mode};
+}
+
+void vga_refresh_screen(void)
+{
+    if (current_tty && current_tty->framebuffer) {
+        ft_memcpy(VGA_BUFFER, current_tty->framebuffer, current_tty->framebuffer_size);
+    }
+	vga_set_cursor_position(current_tty->cursor.x, current_tty->cursor.y);
 }
 
 void vga_printf(const char *fmt, ...)
@@ -205,4 +218,5 @@ void vga_printf(const char *fmt, ...)
 		} else
 			ft_putchar(fmt[i]);
 	}
+	vga_refresh_screen();
 }

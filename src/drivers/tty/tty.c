@@ -62,8 +62,8 @@ void tty_init(TTY *tty)
 {
 	tty->cursor = (struct s_cursor){0, 1};
 	tty->mode   = VGA_DEFAULT_MODE;
-
-	ft_memcpy(tty->framebuffer, VGA_BUFFER, 2 * VGA_WIDTH * VGA_HEIGHT);
+	tty->framebuffer_size = (VGA_WIDTH * VGA_HEIGHT) * sizeof(vga_entry);
+	tty->framebuffer = NULL;
 	ft_bzero(tty->cli, 256);
 }
 
@@ -75,23 +75,27 @@ void tty_switch_color(uint8_t mode)
 
 void ttys_init(void)
 {
-	vga_setup_default_screen();
 	for (unsigned long i = 0; i < sizeof(ttys) / sizeof(TTY); i++)
 		tty_init(ttys + i);
-	current_tty = ttys;
+	tty_switch(&ttys[0]);
 }
 
 void tty_load(TTY *tty)
 {
-	ft_memcpy(VGA_BUFFER, tty->framebuffer, sizeof(tty->framebuffer));
+	if (tty->framebuffer == NULL) {
+		tty->framebuffer = kmalloc(tty->framebuffer_size, (GFP_KERNEL | __GFP_ZERO));
+		if (tty->framebuffer == NULL)
+			kpanic("No space left to init ttys.");
+		vga_setup_default_screen();
+	}
+	ft_memcpy(VGA_BUFFER, tty->framebuffer, tty->framebuffer_size);
 	vga_set_cursor_position(tty->cursor.x, tty->cursor.y);
-	vga_set_screen_mode(current_tty->mode);
 }
 
 void tty_save(TTY *tty)
 {
-	ft_memcpy(tty->framebuffer, VGA_BUFFER, sizeof(tty->framebuffer));
-	tty->cursor = current_tty->cursor;
+	// ft_memcpy(tty->framebuffer, VGA_BUFFER, sizeof(tty->framebuffer));
+	// tty->cursor = current_tty->cursor;
 }
 
 void tty_switch(TTY *tty)

@@ -92,9 +92,7 @@ static void keyboard_navigation_handler(keyboard_key_t key)
 
 static void keyboard_function_handler(keyboard_key_t key)
 {
-	tty_save(current_tty);
-	current_tty = ttys + key.value;
-	tty_load(current_tty);
+	tty_switch(ttys + key.value);
 }
 
 // Function Group

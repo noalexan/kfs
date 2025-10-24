@@ -73,4 +73,5 @@ void vga_set_screen_mode(enum vga_color mode);
 void vga_set_mode(enum vga_color mode);
 void vga_clear(void);
 void vga_setup_default_screen();
+void vga_refresh_screen(void);
 void vga_printf(const char *fmt, ...);
