@@ -7,7 +7,7 @@
 #define TTY_PROMPT  "$> "
 
 typedef struct TTY {
-	vga_entry       buffer[VGA_WIDTH * VGA_HEIGHT];
+	vga_entry       framebuffer[VGA_WIDTH * VGA_HEIGHT];
 	struct s_cursor cursor;
 	uint8_t         mode;
 	char            cli[256];

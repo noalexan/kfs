@@ -57,7 +57,7 @@ void tty_init(TTY *tty)
 	tty->cursor = (struct s_cursor){0, 1};
 	tty->mode   = VGA_DEFAULT_MODE;
 
-	ft_memcpy(tty->buffer, VGA_BUFFER, 2 * VGA_WIDTH * VGA_HEIGHT);
+	ft_memcpy(tty->framebuffer, VGA_BUFFER, 2 * VGA_WIDTH * VGA_HEIGHT);
 	ft_bzero(tty->cli, 256);
 }
 
@@ -77,14 +77,14 @@ void ttys_init(void)
 
 void tty_load(TTY *tty)
 {
-	ft_memcpy(VGA_BUFFER, tty->buffer, sizeof(tty->buffer));
+	ft_memcpy(VGA_BUFFER, tty->framebuffer, sizeof(tty->framebuffer));
 	vga_set_cursor_position(tty->cursor.x, tty->cursor.y);
 	vga_set_screen_mode(current_tty->mode);
 }
 
 void tty_save(TTY *tty)
 {
-	ft_memcpy(tty->buffer, VGA_BUFFER, sizeof(tty->buffer));
+	ft_memcpy(tty->framebuffer, VGA_BUFFER, sizeof(tty->framebuffer));
 	tty->cursor = current_tty->cursor;
 }
 
