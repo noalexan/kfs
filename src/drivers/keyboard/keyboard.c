@@ -126,19 +126,19 @@ static void keyboard_backspace_handler(keyboard_key_t key)
 	if (len) {
 		current_tty->cli[len - 1] = 0;
 
-		if (g_cursor.x == 0) {
-			if (g_cursor.y > 0) {
-				g_cursor.x = VGA_WIDTH - 1;
-				g_cursor.y--;
+		if (current_tty->cursor.x == 0) {
+			if (current_tty->cursor.y > 0) {
+				current_tty->cursor.x = VGA_WIDTH - 1;
+				current_tty->cursor.y--;
 			}
 		}
 
 		else {
-			g_cursor.x--;
+			current_tty->cursor.x--;
 		}
 
-		vga_set_cursor_position(g_cursor.x, g_cursor.y);
-		VGA_ENTRY(g_cursor.x, g_cursor.y)->character = 0;
+		vga_set_cursor_position(current_tty->cursor.x, current_tty->cursor.y);
+		VGA_ENTRY(current_tty->cursor.x, current_tty->cursor.y)->character = 0;
 	}
 }
 

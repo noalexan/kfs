@@ -54,7 +54,7 @@ void tty_cli_handle_nl(void)
 
 void tty_init(TTY *tty)
 {
-	tty->cursor = g_cursor;
+	tty->cursor = (struct s_cursor){0, 1};
 	tty->mode   = VGA_DEFAULT_MODE;
 
 	ft_memcpy(tty->buffer, VGA_BUFFER, 2 * VGA_WIDTH * VGA_HEIGHT);
@@ -85,7 +85,7 @@ void tty_load(TTY *tty)
 void tty_save(TTY *tty)
 {
 	ft_memcpy(tty->buffer, VGA_BUFFER, sizeof(tty->buffer));
-	tty->cursor = g_cursor;
+	tty->cursor = current_tty->cursor;
 }
 
 void tty_switch(TTY *tty)

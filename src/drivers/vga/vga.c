@@ -1,4 +1,5 @@
 #include "vga.h"
+#include "drivers/keyboard.h"
 
 #define KERNEL_BANNER                                                                              \
 	"  /$$   /$$   /$$   /$$               /$$   /$$\n"                                            \
@@ -10,41 +11,40 @@
 	" | $$ \\  $$ /$$$$$$|  $$$$/|  $$$$$$/| $$  \\ $$\n"                                          \
 	" |__/  \\__/|______/ \\___/   \\______/ |__/  |__/\n"
 
-struct s_cursor g_cursor;
 static uint8_t  vga_mode = VGA_DEFAULT_MODE;
 
 static int ft_putchar(char c)
 {
 	switch (c) {
 	case '\n':
-		g_cursor.y++;
+		current_tty->cursor.y++;
 		fallthrough;
 
 	case '\r':
-		g_cursor.x = 0;
+		current_tty->cursor.x = 0;
 		break;
 
 	case '\t':
 		do {
 			ft_putchar(' ');
-		} while (g_cursor.x % 4);
+		} while (current_tty->cursor.x % 4);
 		break;
 
 	default:
-		vga_set_char(g_cursor.x++, g_cursor.y, c);
+		vga_set_char(current_tty->cursor.x++, current_tty->cursor.y, c);
 	}
 
-	while (g_cursor.x >= VGA_WIDTH) {
-		g_cursor.x -= VGA_WIDTH;
-		g_cursor.y++;
+	while (current_tty->cursor.x >= VGA_WIDTH) {
+		current_tty->cursor.x -= VGA_WIDTH;
+		current_tty->cursor.y++;
 	}
 
-	while (g_cursor.y >= VGA_HEIGHT) {
+	while (current_tty->cursor.y >= VGA_HEIGHT) {
 		vga_scroll_down();
-		g_cursor.y--;
+		current_tty->cursor.y--;
 	}
 
-	vga_set_cursor_position(g_cursor.x, g_cursor.y);
+	vga_set_cursor_position(current_tty->cursor.x, current_tty->cursor.y);
 	return 1;
 }
 
@@ -123,7 +123,7 @@ void vga_disable_cursor(void)
 
 void vga_set_cursor_position(uint8_t x, uint8_t y)
 {
-	g_cursor     = (struct s_cursor){x, y};
+	current_tty->cursor     = (struct s_cursor){x, y};
 	uint16_t pos = y * VGA_WIDTH + x;
 
 	outb(0x3D4, 0x0F);
