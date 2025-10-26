@@ -8,7 +8,7 @@ static uint8_t stack_snapshot[4096];
 void __assert_fail(const char *expr, const char *file, size_t line)
 {
 	vga_disable_cursor();
-	vga_set_screen_mode(VGA_COLOR(VGA_COLOR_RED, VGA_COLOR_WHITE));
+	tty_framebuffer_set_screen_mode(VGA_COLOR(VGA_COLOR_RED, VGA_COLOR_WHITE));
 	vga_printf("Assertion failed:%s:%u: %s\n", file, line, expr);
 	halt();
 }

@@ -79,7 +79,7 @@ static key_handler_t keyboard_get_control_handler(uint8_t state)
 static void keyboard_navigation_handler(keyboard_key_t key)
 {
 	if (!*(key.state_ptr))
-		tty_switch_color(key.value);
+		tty_frambuffer_switch_color(key.value);
 	else
 		keyboard_printable_handler(key);
 }
