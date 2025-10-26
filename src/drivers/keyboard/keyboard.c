@@ -139,8 +139,8 @@ static void keyboard_backspace_handler(keyboard_key_t key)
 		}
 
 		vga_set_cursor_position(current_tty->cursor.x, current_tty->cursor.y);
-		size_t offset = ((current_tty->cursor.y % VGA_HEIGHT) * VGA_WIDTH +
-		                 (current_tty->cursor.x % VGA_WIDTH));
+		uint8_t real_y = (uint8_t)current_tty->top_line_index + (uint8_t)current_tty->cursor.y;
+		int     offset = (real_y * VGA_WIDTH) + current_tty->cursor.x;
 		current_tty->framebuffer[offset].character = 0;
 	}
 }
