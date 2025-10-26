@@ -14,7 +14,7 @@ void tty_framebuffer_set_screen_mode(enum vga_color mode)
 		current_tty->framebuffer[i].mode = mode;
 }
 
-void tty_frambuffer_switch_color(uint8_t mode)
+void tty_framebuffer_switch_color(uint8_t mode)
 {
 	current_tty->mode = mode;
 	tty_framebuffer_set_screen_mode(current_tty->mode);
@@ -28,24 +28,23 @@ void tty_framebuffer_clear(void)
 	current_tty->cursor = (struct s_cursor){0, 1};
 }
 
-void tty_frambuffer_clear_new_line(void)
+void tty_framebuffer_scroll_down(void)
 {
-	current_tty->top_line_index++;
-	for (size_t i = 0; i < VGA_WIDTH; i++) {
-		uint8_t real_y = (uint8_t)current_tty->top_line_index + (uint8_t)current_tty->cursor.y;
-		int offset = (real_y * VGA_WIDTH) + i;
-		// current_tty->framebuffer[offset] = (vga_entry){.character = 0x00, .mode = current_tty->mode};
-	}
+    current_tty->top_line_index++;
+    uint8_t bottom_line = (uint8_t)current_tty->top_line_index + (uint8_t)(VGA_HEIGHT - 1);
+    for (size_t x = 0; x < VGA_WIDTH; x++) {
+        int offset = (bottom_line * VGA_WIDTH) + x;
+        current_tty->framebuffer[offset] = (vga_entry){.character = 0x00, .mode = current_tty->mode};
+    }
 }
 
-void tty_frambuffer_write(char c) {
+void tty_framebuffer_write(char c) {
 	if (!current_tty || !current_tty->framebuffer)
 		return;
 	uint8_t real_y = (uint8_t)current_tty->top_line_index + (uint8_t)current_tty->cursor.y;
     int offset = (real_y * VGA_WIDTH) + current_tty->cursor.x;
 	current_tty->framebuffer[offset] = (vga_entry){c, current_tty->mode};
 }
-
 
 static bool ft_strequ(const char *s1, const char *s2)
 {

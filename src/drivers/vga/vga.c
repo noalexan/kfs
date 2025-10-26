@@ -31,18 +31,17 @@ static int ft_putchar(char c)
 		break;
 
 	default:
-		tty_frambuffer_write(c);
+		tty_framebuffer_write(c);
 		current_tty->cursor.x++;
 	}
 
 	while (current_tty->cursor.x >= VGA_WIDTH) {
 		current_tty->cursor.x -= VGA_WIDTH;
 		current_tty->cursor.y++;
-		tty_frambuffer_clear_new_line();
 	}
 
 	while (current_tty->cursor.y >= VGA_HEIGHT) {
-		tty_frambuffer_clear_new_line();
+		tty_framebuffer_scroll_down();
 		current_tty->cursor.y--;
 	}
 

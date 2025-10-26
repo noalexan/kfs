@@ -27,12 +27,12 @@ void       ttys_init(void);
 void       tty_init(TTY *tty);
 void       tty_load(TTY *tty);
 void       tty_switch(TTY *tty);
-void       tty_frambuffer_switch_color(uint8_t mode);
+void       tty_framebuffer_switch_color(uint8_t mode);
 void       tty_cli_handle_nl(void);
 void       tty_framebuffer_set_screen_mode(enum vga_color mode);
 void	   tty_framebuffer_clear(void);
-void	   tty_frambuffer_write(char c);
-void	   tty_frambuffer_clear_new_line(void);
+void	   tty_framebuffer_write(char c);
+void	   tty_framebuffer_scroll_down(void);
 
 
 extern TTY *current_tty;
