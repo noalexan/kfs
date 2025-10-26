@@ -1,4 +1,5 @@
 #include "keyboard.h"
+#include "drivers/tty.h"
 #include "layout.h"
 
 Layout             current_layout_type = QWERTY;
@@ -78,7 +79,14 @@ static key_handler_t keyboard_get_control_handler(uint8_t state)
 
 static void keyboard_navigation_handler(keyboard_key_t key)
 {
-	if (!*(key.state_ptr))
+	if (key.value == COLOR_PGUP || (key.value == COLOR_UP && left_ctrl))
+		tty_history_enable();
+	if (current_tty->history.status) {
+		if (key.value == COLOR_PGUP || key.value == COLOR_UP)
+			tty_history_scroll_up();
+		else if (key.value == COLOR_PGDN || key.value == COLOR_DOWN)
+			tty_history_scroll_down();
+	} else if (!*(key.state_ptr))
 		tty_framebuffer_switch_color(key.value);
 	else
 		keyboard_printable_handler(key);

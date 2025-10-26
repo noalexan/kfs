@@ -25,24 +25,69 @@ void tty_framebuffer_clear(void)
 	for (unsigned long i = 0; i < VGA_WIDTH * TTY_HIST_SIZE; i++)
 		current_tty->framebuffer[i] = (vga_entry){.character = 0x00, .mode = current_tty->mode};
 	current_tty->top_line_index = 0;
-	current_tty->cursor = (struct s_cursor){0, 1};
+	current_tty->cursor         = (struct s_cursor){0, 1};
+}
+
+void tty_history_enable(void)
+{
+	vga_disable_cursor();
+	current_tty->history.status        = true;
+	current_tty->history.top_line_save = current_tty->top_line_index;
+}
+
+void tty_history_disable(void)
+{
+	vga_enable_cursor(14, 15);
+	current_tty->history.status = false;
+	current_tty->top_line_index = current_tty->history.top_line_save;
+}
+
+void tty_history_scroll_up(void)
+{
+	if (!current_tty->history.status)
+		return;
+	uint8_t oldest_line;
+	if (current_tty->history.stop_scroll == true)
+		oldest_line = 0;
+	else
+		oldest_line = (uint8_t)current_tty->history.top_line_save + 1;
+	if (current_tty->top_line_index == oldest_line)
+		return;
+	current_tty->top_line_index--;
+}
+
+void tty_history_scroll_down(void)
+{
+	if (!current_tty->history.status)
+		return;
+	uint8_t real_y = (uint8_t)current_tty->history.top_line_save + (uint8_t)current_tty->cursor.y;
+	uint8_t cur_y  = (uint8_t)current_tty->top_line_index + (uint8_t)current_tty->cursor.y;
+	if (real_y == cur_y)
+		return;
+	current_tty->top_line_index++;
 }
 
 void tty_framebuffer_scroll_down(void)
 {
-    current_tty->top_line_index++;
-    uint8_t bottom_line = (uint8_t)current_tty->top_line_index + (uint8_t)(VGA_HEIGHT - 1);
-    for (size_t x = 0; x < VGA_WIDTH; x++) {
-        int offset = (bottom_line * VGA_WIDTH) + x;
-        current_tty->framebuffer[offset] = (vga_entry){.character = 0x00, .mode = current_tty->mode};
-    }
+	current_tty->top_line_index++;
+	if (current_tty->top_line_index == 0)
+		current_tty->history.stop_scroll = false;
+	uint8_t bottom_line = (uint8_t)current_tty->top_line_index + (uint8_t)(VGA_HEIGHT - 1);
+	for (size_t x = 0; x < VGA_WIDTH; x++) {
+		int offset = (bottom_line * VGA_WIDTH) + x;
+		current_tty->framebuffer[offset] =
+		    (vga_entry){.character = 0x00, .mode = current_tty->mode};
+	}
 }
 
-void tty_framebuffer_write(char c) {
+void tty_framebuffer_write(char c)
+{
 	if (!current_tty || !current_tty->framebuffer)
 		return;
+	if (current_tty->history.status)
+		tty_history_disable();
 	uint8_t real_y = (uint8_t)current_tty->top_line_index + (uint8_t)current_tty->cursor.y;
-    int offset = (real_y * VGA_WIDTH) + current_tty->cursor.x;
+	int     offset = (real_y * VGA_WIDTH) + current_tty->cursor.x;
 	current_tty->framebuffer[offset] = (vga_entry){c, current_tty->mode};
 }
 
@@ -103,7 +148,8 @@ void tty_init(TTY *tty)
 	tty->top_line_index        = 0;
 	tty->cursor                = (struct s_cursor){0, 1};
 	tty->history.status        = false;
-	tty->history.watching_line = 0;
+	tty->history.top_line_save = 0;
+	tty->history.stop_scroll   = true;
 	tty->mode                  = VGA_DEFAULT_MODE;
 	tty->framebuffer_size      = (VGA_WIDTH * TTY_HIST_SIZE) * sizeof(vga_entry);
 	tty->framebuffer           = NULL;
