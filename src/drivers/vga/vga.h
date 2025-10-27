@@ -49,5 +49,4 @@
 // ============================================================================
 
 void vga_enable_cursor(uint8_t cursor_start, uint8_t cursor_end);
-void vga_set_char(int x, int y, char c);
 void vga_scroll_down(void);

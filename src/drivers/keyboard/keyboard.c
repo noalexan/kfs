@@ -1,8 +1,7 @@
 #include "keyboard.h"
+#include "drivers/tty.h"
 #include "layout.h"
 
-TTY               *current_tty;
-TTY                ttys[12];
 Layout             current_layout_type = QWERTY;
 scancode_routine_t current_layout[256] = {0};
 
@@ -80,8 +79,15 @@ static key_handler_t keyboard_get_control_handler(uint8_t state)
 
 static void keyboard_navigation_handler(keyboard_key_t key)
 {
-	if (!*(key.state_ptr))
-		tty_switch_color(key.value);
+	if (key.value == COLOR_PGUP || (key.value == COLOR_UP && left_ctrl))
+		tty_history_enable();
+	if (current_tty->history.status) {
+		if (key.value == COLOR_PGUP || key.value == COLOR_UP)
+			tty_history_scroll_up();
+		else if (key.value == COLOR_PGDN || key.value == COLOR_DOWN)
+			tty_history_scroll_down();
+	} else if (!*(key.state_ptr))
+		tty_framebuffer_switch_color(key.value);
 	else
 		keyboard_printable_handler(key);
 }
@@ -92,12 +98,7 @@ static void keyboard_navigation_handler(keyboard_key_t key)
 /////////////////////////////////////////////////////////////////////////////////////////////
 // Function Group
 
-static void keyboard_function_handler(keyboard_key_t key)
-{
-	tty_save(current_tty);
-	current_tty = ttys + key.value;
-	tty_load(current_tty);
-}
+static void keyboard_function_handler(keyboard_key_t key) { tty_switch(ttys + key.value); }
 
 // Function Group
 /////////////////////////////////////////////////////////////////////////////////////////////
@@ -126,19 +127,21 @@ static void keyboard_backspace_handler(keyboard_key_t key)
 	if (len) {
 		current_tty->cli[len - 1] = 0;
 
-		if (g_cursor.x == 0) {
-			if (g_cursor.y > 0) {
-				g_cursor.x = VGA_WIDTH - 1;
-				g_cursor.y--;
+		if (current_tty->cursor.x == 0) {
+			if (current_tty->cursor.y > 0) {
+				current_tty->cursor.x = VGA_WIDTH - 1;
+				current_tty->cursor.y--;
 			}
 		}
 
 		else {
-			g_cursor.x--;
+			current_tty->cursor.x--;
 		}
 
-		vga_set_cursor_position(g_cursor.x, g_cursor.y);
-		VGA_ENTRY(g_cursor.x, g_cursor.y)->character = 0;
+		vga_set_cursor_position(current_tty->cursor.x, current_tty->cursor.y);
+		uint8_t real_y = (uint8_t)current_tty->top_line_index + (uint8_t)current_tty->cursor.y;
+		int     offset = (real_y * VGA_WIDTH) + current_tty->cursor.x;
+		current_tty->framebuffer[offset].character = 0;
 	}
 }
 
@@ -251,6 +254,7 @@ void keyboard_handle()
 			current_layout[keycode].handler(key);
 		}
 	}
+	vga_refresh_screen();
 }
 
 void keyboard_init(void)

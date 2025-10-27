@@ -9,23 +9,6 @@
 
 void kernel_main()
 {
-	keyboard_init();
-	buddy_init();
-	slab_init();
-	vmalloc_init();
-
-	// void *test = vmalloc(127 * MiB_SIZE);
-	// vga_printf("test size : %d\n", vsize(test));
-	// vfree(test);
-	// *(char*)test = 1;
-	// vga_printf("test size : %d\n", vsize(test));
-
-	// boot_allocator_print_allocations();
-	// buddy_print_summary();
-	// slab_print_summary();
-	// run_memory_tests();
-	// debug_buddy();
-
 	while (true) // hang
 		__asm__ volatile("hlt");
 	;
