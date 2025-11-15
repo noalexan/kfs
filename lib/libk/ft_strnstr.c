@@ -10,7 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include <stddef.h>
+#include <types.h>
 
 char	*ft_strnstr(const char *str, const char *seg, size_t len)
 {
