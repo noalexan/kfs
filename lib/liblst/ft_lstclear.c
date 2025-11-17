@@ -1,38 +1,34 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   ft_lstnew.c                                        :+:      :+:    :+:   */
+/*   ft_lstclear.c                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: jbettini <jbettini@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2021/10/18 18:08:51 by jbettini          #+#    #+#             */
-/*   Updated: 2024/03/28 05:17:56 by jbettini         ###   ########.fr       */
+/*   Created: 2021/10/18 16:33:01 by jbettini          #+#    #+#             */
+/*   Updated: 2024/03/25 06:16:38 by jbettini         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "libft.h"
+#include "liblst.h"
 
-t_list	*ft_lstnew(void *content)
+void	ft_lstclear(t_list **alst, void (*del)(void *))
 {
 	t_list	*li;
 
-	li = malloc(sizeof(t_list));
-	if (!li)
-		return (NULL);
-	li->content = content;
-	li->next = NULL;
-	li->prev = NULL;
-	return (li);
-}
-
-t_list  *ft_lstnew_prev(void *content, t_list *prev) {
-    	t_list	*li;
-
-	li = malloc(sizeof(t_list));
-	if (!li)
-		return (NULL);
-	li->content = content;
-	li->next = NULL;
-    li->prev = prev;
-	return (li);
+	li = *alst;
+	if (alst)
+	{
+		if (*alst)
+		{
+			while (li)
+			{
+				li = li->next;
+				(*del)((*alst)->content);
+				kfree((void *)*alst);
+				*alst = 0;
+				*alst = li;
+			}
+		}
+	}
 }
