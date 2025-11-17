@@ -10,7 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "libft.h"
+#include "libutils.h"
 
 static int	intlen(long long n)
 {
@@ -66,7 +66,7 @@ char	*ft_itoa(int n)
 	long long	res;
 
 	res = n;
-	str = malloc(sizeof(char) * intlen(res) + 1);
+	str = kmalloc(sizeof(char) * intlen(res) + 1, GFP_KERNEL);
 	if (!str)
 		return (NULL);
 	str = makeit(res, str);

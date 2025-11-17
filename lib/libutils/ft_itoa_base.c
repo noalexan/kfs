@@ -10,9 +10,20 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "libft.h"
+#include "libutils.h"
+#include <types.h>
 
-size_t	ft_countlen(unsigned long long nb, char *base)
+static size_t	ft_strlen(const char *s)
+{
+	size_t	i;
+
+	i = 0;
+	while (s[i])
+		i++;
+	return (i);
+}
+
+static size_t	ft_countlen(unsigned long long nb, char *base)
 {
 	size_t	i;
 
@@ -51,7 +62,7 @@ char	*ft_itoa_base(unsigned long long nb, char *base)
 {
 	char	*str;
 
-	str = malloc(sizeof(char) * ft_countlen(nb, base) + 1);
+	str = kmalloc(sizeof(char) * ft_countlen(nb, base) + 1, GFP_KERNEL);
 	if (!str)
 		return (NULL);
 	str = makebase(nb, base, str);

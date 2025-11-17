@@ -1,24 +1,25 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   ft_free_split.c                                    :+:      :+:    :+:   */
+/*   ft_calloc.c                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jbettini <jbettini@student.42.fr>          +#+  +:+       +#+        */
+/*   By: jbettini <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2021/12/16 16:39:41 by jbettini          #+#    #+#             */
-/*   Updated: 2024/03/22 22:51:47 by jbettini         ###   ########.fr       */
+/*   Created: 2021/10/18 16:21:36 by jbettini          #+#    #+#             */
+/*   Updated: 2021/10/21 17:08:41 by jbettini         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "libutils.h"
 
-void	ft_free_strs(char **tab)
+void	*ft_calloc(size_t count, size_t size)
 {
+	void	*res;
 	size_t	i;
 
-	i = -1;
-	while (tab[++i])
-		kfree(tab[i]);
-	kfree(tab);
-	tab = 0;
+	i = 0;
+	res = kmalloc(count * size, GFP_KERNEL | GFP_ZERO);
+	if (!res)
+		return (NULL);
+	return (res);
 }

@@ -10,7 +10,17 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "libft.h"
+#include "libutils.h"
+
+static size_t	ft_strlen(const char *s)
+{
+	size_t	i;
+
+	i = 0;
+	while (s[i])
+		i++;
+	return (i);
+}
 
 char	*ft_strmapi(char const *s, char (*f)(unsigned int, char))
 {
@@ -20,7 +30,7 @@ char	*ft_strmapi(char const *s, char (*f)(unsigned int, char))
 	if (!s)
 		return (NULL);
 	i = -1;
-	str = malloc(sizeof(char) * ft_strlen(s) + 1);
+	str = kmalloc(sizeof(char) * ft_strlen(s) + 1, GFP_KERNEL);
 	if (!str)
 		return (NULL);
 	while (s[++i])

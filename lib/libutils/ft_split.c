@@ -10,7 +10,17 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "libft.h"
+#include "libutils.h"
+
+static size_t	ft_strlen(const char *s)
+{
+	size_t	i;
+
+	i = 0;
+	while (s[i])
+		i++;
+	return (i);
+}
 
 static char	*ft_strndup(char const *s, size_t n)
 {
@@ -18,7 +28,7 @@ static char	*ft_strndup(char const *s, size_t n)
 	size_t	i;
 
 	i = 0;
-	dest = (char *)malloc(n + 1);
+	dest = (char *)kmalloc(n + 1, GFP_KERNEL);
 	if (dest == NULL)
 		return (NULL);
 	while (i < n)

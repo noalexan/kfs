@@ -10,7 +10,17 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "libft.h"
+#include "libutils.h"
+
+static size_t	ft_strlen(const char *s)
+{
+	size_t	i;
+
+	i = 0;
+	while (s[i])
+		i++;
+	return (i);
+}
 
 char	*ft_join_and_free(char *s1, char *s2)
 {
@@ -26,7 +36,7 @@ char	*ft_join_and_free(char *s1, char *s2)
 	}
 	if (!s2)
 		return (NULL);
-	join = malloc(sizeof(char) * ft_strlen(s1) + ft_strlen(s2) + 1);
+	join = kmalloc(sizeof(char) * ft_strlen(s1) + ft_strlen(s2) + 1, GFP_KERNEL);
 	if (!join)
 		return (NULL);
 	i = -1;

@@ -10,7 +10,17 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "libft.h"
+#include "libutils.h"
+
+static size_t	ft_strlen(const char *s)
+{
+	size_t	i;
+
+	i = 0;
+	while (s[i])
+		i++;
+	return (i);
+}
 
 static	int	is_sep(char c, const char *charset)
 {
@@ -56,7 +66,7 @@ char	*ft_strtrim(char const *s, char const *charset)
 		i++;
 	if (i == j)
 		k = 0;
-	str = malloc(sizeof(char) * (j - (k + i)) + 1);
+	str = kmalloc(sizeof(char) * (j - (k + i)) + 1, GFP_KERNEL);
 	if (!str)
 		return (NULL);
 	j = 0;

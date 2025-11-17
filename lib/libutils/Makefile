@@ -1,56 +1,38 @@
-# **************************************************************************** #
-#                                                                              #
-#                                                         :::      ::::::::    #
-#    Makefile                                           :+:      :+:    :+:    #
-#                                                     +:+ +:+         +:+      #
-#    By: jbettini <jbettini@student.42.fr>          +#+  +:+       +#+         #
-#                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2024/03/21 05:04:25 by jbettini          #+#    #+#              #
-#    Updated: 2024/04/16 03:11:23 by jbettini         ###   ########.fr        #
-#                                                                              #
-# **************************************************************************** #
+NAME=libutils.a
 
-# > /dev/null 2>&1
-NAME = libft.a
+ROOT_DIR=../..
 
-SRCS = ${wildcard *.c}
+KERNEL_INCLUDE_DIR = -I$(ROOT_DIR)/include
 
-OBJS = ${SRCS:.c=.o}
+CFLAGS ?=-ffreestanding -fno-builtin -fno-exceptions -fno-stack-protector -Wall -Wextra -Werror $(KERNEL_INCLUDE_DIR)
 
-CC = clang
-RM = rm -f
-AR = ar rcs
-CFLAGS = -Wall -Wextra -Werror -g -fPIE -O
+OBJ=\
+	ft_free_strs.o		\
+	ft_join_and_free.o	\
+	ft_strjoin.o		\
+	ft_substr.o			\
+	ft_itoa_base.o		\
+	ft_split.o  		\
+	ft_strmapi.o		\
+	ft_itoa.o			\
+	ft_strdup.o  		\
+	ft_strtrim.o		
 
-TXT_RED = "\033[1;31m"
-TXT_GREEN = "\033[1;32m"
-TXT_YELLOW = "\033[1;33m"
-TXT_BLUE = "\033[1;34m"
-TXT_MAGENTA = "\033[1;35m"
-FANCY_RESET = "\033[0m"
+.PHONY: all
+all: $(NAME)
 
-%.o: %.c
-	@printf  $(TXT_GREEN)"\rCompilation des fichiers source de la libft : "$(TXT_BLUE)" $<         "$(FANCY_RESET)
-	@${CC} ${CFLAGS} -o $@ -c $< 
+$(NAME): $(OBJ)
+	$(AR) rcs $@ $(OBJ)
 
-${NAME}: ${OBJS}
-	@echo $(TXT_GREEN)
-	@echo "Création de l'archive ${NAME} ..."
-	@${AR} ${NAME} ${OBJS} 
-	@echo "Archive ${NAME} crée."
-	@echo $(FANCY_RESET)
-
-all:	${NAME} 
-
+.PHONY: clean
 clean:
-	@printf  $(TXT_RED)"Suppression des fichiers compilés de la libft\n"$(FANCY_RESET)
-	@${RM} ${OBJS} > /dev/null 2>&1
+	@$(RM) -v $(OBJ)
 
-fclean:	clean
-		@printf  $(TXT_RED)"Archive libft.a supprimé\n"$(FANCY_RESET)
-		@${RM} ${NAME} > /dev/null 2>&1
+.PHONY: fclean
+fclean: clean
+	@$(RM) -v $(NAME)
 
-re:	fclean all
+.PHONY: re
+re: fclean all
 
-.PHONY: all clean fclean re
-
+.NOTPARALLEL: re fclean

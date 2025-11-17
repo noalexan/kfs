@@ -10,7 +10,17 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "libft.h"
+#include "libutils.h"
+
+static size_t	ft_strlen(const char *s)
+{
+	size_t	i;
+
+	i = 0;
+	while (s[i])
+		i++;
+	return (i);
+}
 
 char	*ft_strdup(const char *src)
 {
@@ -18,7 +28,7 @@ char	*ft_strdup(const char *src)
 	size_t	i;
 
 	i = 0;
-	str = malloc(sizeof(char) * ft_strlen(src) + 1);
+	str = kmalloc(sizeof(char) * ft_strlen(src) + 1, GFP_KERNEL);
 	if (!str)
 		return (NULL);
 	while (src[i])
