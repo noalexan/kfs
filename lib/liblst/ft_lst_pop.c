@@ -1,13 +1,13 @@
 #include "liblst.h"
 
-// Fix this
-void ft_lst_pop(t_list **list)
+t_list *ft_lst_pop(t_list **list)
 {
     if (*list == NULL)
-        return;
+        return NULL;
 
     t_list *first = *list;
     *list = first->next;
+    first->next = NULL;
 
-    kfree(first);
+    return first;
 }

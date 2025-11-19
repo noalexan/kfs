@@ -15,10 +15,8 @@
 void	*ft_calloc(size_t count, size_t size)
 {
 	void	*res;
-	size_t	i;
 
-	i = 0;
-	res = kmalloc(count * size, GFP_KERNEL | GFP_ZERO);
+	res = kmalloc(count * size, GFP_KERNEL | __GFP_ZERO);
 	if (!res)
 		return (NULL);
 	return (res);

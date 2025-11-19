@@ -21,18 +21,5 @@ t_list	*ft_lstnew(void *content)
 		return (NULL);
 	li->content = content;
 	li->next = NULL;
-	li->prev = NULL;
-	return (li);
-}
-
-t_list  *ft_lstnew_prev(void *content, t_list *prev) {
-    	t_list	*li;
-
-	li = kmalloc(sizeof(t_list), GFP_KERNEL);
-	if (!li)
-		return (NULL);
-	li->content = content;
-	li->next = NULL;
-    li->prev = prev;
 	return (li);
 }
