@@ -4,9 +4,11 @@ ROOT_DIR=../..
 
 KERNEL_INCLUDE_DIR = -I$(ROOT_DIR)/include
 
-CFLAGS ?=-ffreestanding -fno-builtin -fno-exceptions -fno-stack-protector -Wall -Wextra -Werror $(KERNEL_INCLUDE_DIR)
+CFLAGS ?= -ffreestanding -fno-builtin -fno-exceptions -fno-stack-protector -Wall -Wextra -Werror
+CFLAGS += $(KERNEL_INCLUDE_DIR)
 
 OBJ=\
+	ft_calloc.o			\
 	ft_free_strs.o		\
 	ft_join_and_free.o	\
 	ft_strjoin.o		\

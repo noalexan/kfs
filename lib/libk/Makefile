@@ -4,7 +4,8 @@ ROOT_DIR=../..
 
 KERNEL_INCLUDE_DIR = -I$(ROOT_DIR)/include
 
-CFLAGS ?=-ffreestanding -fno-builtin -fno-exceptions -fno-stack-protector -Wall -Wextra -Werror $(KERNEL_INCLUDE_DIR)
+CFLAGS ?= -ffreestanding -fno-builtin -fno-exceptions -fno-stack-protector -Wall -Wextra -Werror
+CFLAGS += $(KERNEL_INCLUDE_DIR)
 
 OBJ=\
 	ft_atoi.o 		\
