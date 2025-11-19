@@ -4,6 +4,7 @@
 *.bin
 *.elf
 *.iso
+*.a
 
 # Doxygen
 docs/
