@@ -3,7 +3,7 @@
 #include <drivers/vga.h>
 #include <io.h>
 #include <kernel/panic.h>
-#include <libft.h>
+#include <libk.h>
 #include <memory/memory.h>
 #include <types.h>
 #include <x86.h>

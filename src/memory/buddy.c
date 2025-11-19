@@ -1,7 +1,7 @@
 #include <acpi.h>
 #include <drivers/vga.h>
 #include <kernel/panic.h>
-#include <libft.h>
+#include <libk.h>
 #include <memory/boot_allocator.h>
 #include <memory/buddy.h>
 #include <memory/page.h>
