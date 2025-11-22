@@ -35,7 +35,7 @@ ifeq ($(MAKEBUILDTYPE),Release)
 LDFLAGS+=-s
 endif
 
-LDLIBS=-L./lib/libk -L./lib/liblst -L./lib/libutils -lk -llst -lutils
+LDLIBS=-L./lib/libk -lk -L./lib/liblst -llst -L./lib/libutils -lutils
 
 QEMU=qemu-system-i386
 QEMUFLAGS=-m 4G -smp 4 -cpu host -enable-kvm -net nic -net user -s -daemonize
