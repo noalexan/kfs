@@ -3,7 +3,7 @@
 // ============================================================================
 
 #include <kernel/panic.h>
-#include <libft.h>
+#include <libk.h>
 #include <memory/buddy.h>
 #include <memory/kmalloc.h>
 #include <memory/memory.h>

@@ -24,7 +24,7 @@ ifeq ($(MAKEBUILDTYPE),Release)
 CFLAGS+=-Werror -DNDEBUG
 endif
 
-CFLAGS+=-I./include -I./lib/libft
+CFLAGS+=-I./include -I./lib/libk -I./lib/liblst -I./lib/libutils
 
 AR=i686-linux-gnu-ar
 
@@ -35,7 +35,7 @@ ifeq ($(MAKEBUILDTYPE),Release)
 LDFLAGS+=-s
 endif
 
-LDLIBS=-L./lib/libft -lft
+LDLIBS=-L./lib/libk -lk -L./lib/liblst -llst -L./lib/libutils -lutils
 
 QEMU=qemu-system-i386
 QEMUFLAGS=-m 4G -smp 4 -cpu host -enable-kvm -net nic -net user -s -daemonize
@@ -44,13 +44,6 @@ DOCKERIMAGENAME=noalexan/cross-compiler
 DOCKERIMAGETAG=ubuntu
 
 OBJ=$(patsubst src/%,$(BINDIR)/%,$(shell find src -regex '.*\(\.c\|\.cpp\|\.s\)' | sed 's/\(\.c\|\.cpp\|\.s\)/.o/g'))
-
-LIBFT_OBJ=    \
-	ft_bzero.o  \
-	ft_memset.o \
-	ft_memcpy.o \
-	ft_memcmp.o \
-	ft_strlen.o
 
 $(BINDIR)/%.o: src/%.s
 	@mkdir -pv $(@D)
@@ -71,11 +64,14 @@ all: $(BUILDDIR)/boot.iso
 
 .PHONY: format
 format:
-	@clang-format --verbose --Werror -i $(shell find ./src ./include -regex '.*\.\(c\|h\|cpp\|hpp\)')
+	@clang-format --verbose --Werror -i $(shell find ./src ./include ./lib -regex '.*\.\(c\|h\|cpp\|hpp\)')
 
 .PHONY: clean
 clean:
 	$(RM) -r $(BUILDDIR)
+	@make -C lib/libk clean
+	@make -C lib/liblst clean
+	@make -C lib/libutils clean
 
 $(BUILDDIR)/boot.iso: $(ISODIR)/boot/kernel $(ISODIR)/boot/grub/grub.cfg
 	@mkdir -pv $(@D)
@@ -85,13 +81,15 @@ $(ISODIR)/boot/grub/grub.cfg: grub.cfg
 	@mkdir -pv $(@D)
 	cp grub.cfg $@
 
-$(ISODIR)/boot/kernel: $(OBJ) linker.ld | libft
+$(ISODIR)/boot/kernel: $(OBJ) linker.ld | libs
 	@mkdir -pv $(@D)
 	$(LD) -T linker.ld $(LDFLAGS) -o $@ $(OBJ) $(LDLIBS)
 
-.PHONY: libft
-libft:
-	@make -C lib/libft CC=$(CC) AR=$(AR) OBJ="$(LIBFT_OBJ)"
+.PHONY: libs
+libs:
+	@make -C lib/libk CC=$(CC) AR=$(AR)
+	@make -C lib/liblst CC=$(CC) AR=$(AR)
+	@make -C lib/libutils CC=$(CC) AR=$(AR)
 
 else
 

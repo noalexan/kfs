@@ -9,7 +9,7 @@
 #include <drivers/tty.h>
 #include <io.h>
 #include <kernel/panic.h>
-#include <libft.h>
+#include <libk.h>
 #include <types.h>
 #include <x86.h>
 
