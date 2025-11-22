@@ -13,9 +13,9 @@
 #include "libutils.h"
 #include <types.h>
 
-static size_t	ft_strlen(const char *s)
+static size_t ft_strlen(const char *s)
 {
-	size_t	i;
+	size_t i;
 
 	i = 0;
 	while (s[i])
@@ -23,33 +23,30 @@ static size_t	ft_strlen(const char *s)
 	return (i);
 }
 
-static size_t	ft_countlen(unsigned long long nb, char *base)
+static size_t ft_countlen(unsigned long long nb, char *base)
 {
-	size_t	i;
+	size_t i;
 
 	i = 0;
 	if (nb == 0)
 		return (1);
-	while (nb != 0)
-	{
+	while (nb != 0) {
 		nb /= ft_strlen(base);
 		i++;
 	}
 	return (i);
 }
 
-char	*makebase(unsigned long long nb, char *base, char *str)
+char *makebase(unsigned long long nb, char *base, char *str)
 {
-	size_t	i;
+	size_t i;
 
-	i = ft_countlen(nb, base);
+	i        = ft_countlen(nb, base);
 	str[i--] = 0;
 	if (nb == 0)
 		str[i] = 48;
-	else
-	{
-		while (nb != 0)
-		{
+	else {
+		while (nb != 0) {
 			str[i] = base[nb % ft_strlen(base)];
 			nb /= ft_strlen(base);
 			i--;
@@ -58,9 +55,9 @@ char	*makebase(unsigned long long nb, char *base, char *str)
 	return (str);
 }
 
-char	*ft_itoa_base(unsigned long long nb, char *base)
+char *ft_itoa_base(unsigned long long nb, char *base)
 {
-	char	*str;
+	char *str;
 
 	str = kmalloc(sizeof(char) * ft_countlen(nb, base) + 1, GFP_KERNEL);
 	if (!str)

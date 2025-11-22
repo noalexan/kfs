@@ -12,9 +12,9 @@
 
 #include "libutils.h"
 
-static size_t	ft_strlen(const char *s)
+static size_t ft_strlen(const char *s)
 {
-	size_t	i;
+	size_t i;
 
 	i = 0;
 	while (s[i])
@@ -22,14 +22,13 @@ static size_t	ft_strlen(const char *s)
 	return (i);
 }
 
-char	*ft_join_and_free(char *s1, char *s2)
+char *ft_join_and_free(char *s1, char *s2)
 {
-	size_t	i;
-	size_t	j;
-	char	*join;
+	size_t i;
+	size_t j;
+	char  *join;
 
-	if (!s1)
-	{
+	if (!s1) {
 		s1 = ft_calloc(1, 1);
 		if (!s1)
 			return (NULL);

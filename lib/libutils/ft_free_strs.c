@@ -12,9 +12,9 @@
 
 #include "libutils.h"
 
-void	ft_free_strs(char **tab)
+void ft_free_strs(char **tab)
 {
-	size_t	i;
+	size_t i;
 
 	i = -1;
 	while (tab[++i])

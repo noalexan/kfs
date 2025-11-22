@@ -12,9 +12,9 @@
 
 #include "libutils.h"
 
-static size_t	ft_strlen(const char *s)
+static size_t ft_strlen(const char *s)
 {
-	size_t	i;
+	size_t i;
 
 	i = 0;
 	while (s[i])
@@ -22,40 +22,38 @@ static size_t	ft_strlen(const char *s)
 	return (i);
 }
 
-static	int	is_sep(char c, const char *charset)
+static int is_sep(char c, const char *charset)
 {
-	size_t	i;
+	size_t i;
 
 	i = 0;
-	while (charset[i])
-	{
+	while (charset[i]) {
 		if (c == charset[i++])
 			return (1);
 	}
 	return (0);
 }
 
-static size_t	end_charset(char const *s, const char *charset)
+static size_t end_charset(char const *s, const char *charset)
 {
-	size_t	j;
-	size_t	i;
+	size_t j;
+	size_t i;
 
 	i = 0;
 	j = ft_strlen(s) - 1;
-	while (is_sep(s[j], charset))
-	{
+	while (is_sep(s[j], charset)) {
 		j--;
 		i++;
 	}
 	return (i);
 }
 
-char	*ft_strtrim(char const *s, char const *charset)
+char *ft_strtrim(char const *s, char const *charset)
 {
-	size_t	i;
-	size_t	j;
-	size_t	k;
-	char	*str;
+	size_t i;
+	size_t j;
+	size_t k;
+	char  *str;
 
 	if (!s)
 		return (NULL);

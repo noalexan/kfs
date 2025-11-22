@@ -12,20 +12,17 @@
 
 #include "liblst.h"
 
-t_list	*ft_lstmap(t_list *lst, void *(*f)(void *), void (*del)(void *))
+t_list *ft_lstmap(t_list *lst, void *(*f)(void *), void (*del)(void *))
 {
-	t_list	*li;
-	t_list	*tmp;
+	t_list *li;
+	t_list *tmp;
 
 	tmp = NULL;
-	li = NULL;
-	if (lst)
-	{
-		while (lst)
-		{
+	li  = NULL;
+	if (lst) {
+		while (lst) {
 			tmp = ft_lstnew((*f)(lst->content));
-			if (!tmp)
-			{
+			if (!tmp) {
 				ft_lstclear(&li, del);
 				ft_lstclear(&tmp, del);
 				return (NULL);
@@ -33,8 +30,7 @@ t_list	*ft_lstmap(t_list *lst, void *(*f)(void *), void (*del)(void *))
 			ft_lstadd_back(&li, tmp);
 			lst = lst->next;
 		}
-	}
-	else
+	} else
 		return (NULL);
 	return (li);
 }

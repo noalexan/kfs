@@ -1,6 +1,6 @@
-#include <libutils.h>
 #include <drivers/keyboard.h>
 #include <drivers/vga.h>
+#include <libutils.h>
 #include <memory/buddy.h>
 #include <memory/kmalloc.h>
 #include <memory/memory.h>

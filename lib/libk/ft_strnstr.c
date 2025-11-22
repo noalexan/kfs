@@ -12,25 +12,22 @@
 
 #include <types.h>
 
-char	*ft_strnstr(const char *str, const char *seg, size_t len)
+char *ft_strnstr(const char *str, const char *seg, size_t len)
 {
-	size_t	i;
-	size_t	l;
+	size_t i;
+	size_t l;
 
 	i = 0;
 	if (seg[0] == 0)
-		return ((char *) str);
-	if (len)
-	{
-		while (str[i] && i < len)
-		{
+		return ((char *)str);
+	if (len) {
+		while (str[i] && i < len) {
 			l = 0;
-			while (seg[l] && str[i + l] == seg[l] && i + l < len)
-			{
+			while (seg[l] && str[i + l] == seg[l] && i + l < len) {
 				l++;
 			}
 			if (seg[l] == 0)
-				return ((char *) &str[i]);
+				return ((char *)&str[i]);
 			i++;
 		}
 	}

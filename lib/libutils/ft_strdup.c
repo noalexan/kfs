@@ -12,9 +12,9 @@
 
 #include "libutils.h"
 
-static size_t	ft_strlen(const char *s)
+static size_t ft_strlen(const char *s)
 {
-	size_t	i;
+	size_t i;
 
 	i = 0;
 	while (s[i])
@@ -22,17 +22,16 @@ static size_t	ft_strlen(const char *s)
 	return (i);
 }
 
-char	*ft_strdup(const char *src)
+char *ft_strdup(const char *src)
 {
-	char	*str;
-	size_t	i;
+	char  *str;
+	size_t i;
 
-	i = 0;
+	i   = 0;
 	str = kmalloc(sizeof(char) * ft_strlen(src) + 1, GFP_KERNEL);
 	if (!str)
 		return (NULL);
-	while (src[i])
-	{
+	while (src[i]) {
 		str[i] = src[i];
 		i++;
 	}

@@ -12,17 +12,14 @@
 
 #include "liblst.h"
 
-void	ft_lstclear(t_list **alst, void (*del)(void *))
+void ft_lstclear(t_list **alst, void (*del)(void *))
 {
-	t_list	*li;
+	t_list *li;
 
 	li = *alst;
-	if (alst)
-	{
-		if (*alst)
-		{
-			while (li)
-			{
+	if (alst) {
+		if (*alst) {
+			while (li) {
 				li = li->next;
 				(*del)((*alst)->content);
 				kfree((void *)*alst);

@@ -12,47 +12,42 @@
 
 #include "libutils.h"
 
-static int	intlen(long long n)
+static int intlen(long long n)
 {
-	int	i;
-	int	neg;
+	int i;
+	int neg;
 
-	i = 0;
+	i   = 0;
 	neg = 0;
 	if (n == 0)
 		return (1);
-	else if (n < 0)
-	{
+	else if (n < 0) {
 		neg += 1;
 		n *= -1;
 	}
-	while (n != 0)
-	{
+	while (n != 0) {
 		i++;
 		n /= 10;
 	}
 	return (i + neg);
 }
 
-static char	*makeit(long long n, char *str)
+static char *makeit(long long n, char *str)
 {
-	size_t	neg;
-	size_t	i;
+	size_t neg;
+	size_t i;
 
-	neg = 0;
-	i = intlen(n);
+	neg    = 0;
+	i      = intlen(n);
 	str[i] = 0;
 	i -= 1;
-	if (n < 0)
-	{
+	if (n < 0) {
 		n *= -1;
 		neg += 1;
 		str[0] = '-';
-	}
-	else if (n == 0)
+	} else if (n == 0)
 		str[0] = 48;
-	while (n != 0 && i >= neg)
-	{
+	while (n != 0 && i >= neg) {
 		str[i] = (n % 10) + 48;
 		n /= 10;
 		i--;
@@ -60,10 +55,10 @@ static char	*makeit(long long n, char *str)
 	return (str);
 }
 
-char	*ft_itoa(int n)
+char *ft_itoa(int n)
 {
-	char		*str;
-	long long	res;
+	char     *str;
+	long long res;
 
 	res = n;
 	str = kmalloc(sizeof(char) * intlen(res) + 1, GFP_KERNEL);

@@ -12,12 +12,12 @@
 
 #include <types.h>
 
-size_t	ft_strlcat(char *dst, const char *src, size_t dsize)
+size_t ft_strlcat(char *dst, const char *src, size_t dsize)
 {
-	size_t	i;
-	size_t	j;
-	size_t	dst_len;
-	size_t	src_len;
+	size_t i;
+	size_t j;
+	size_t dst_len;
+	size_t src_len;
 
 	dst_len = 0;
 	src_len = 0;

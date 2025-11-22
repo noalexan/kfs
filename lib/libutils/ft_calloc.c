@@ -12,9 +12,9 @@
 
 #include "libutils.h"
 
-void	*ft_calloc(size_t count, size_t size)
+void *ft_calloc(size_t count, size_t size)
 {
-	void	*res;
+	void *res;
 
 	res = kmalloc(count * size, GFP_KERNEL | __GFP_ZERO);
 	if (!res)

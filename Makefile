@@ -64,7 +64,7 @@ all: $(BUILDDIR)/boot.iso
 
 .PHONY: format
 format:
-	@clang-format --verbose --Werror -i $(shell find ./src ./include -regex '.*\.\(c\|h\|cpp\|hpp\)')
+	@clang-format --verbose --Werror -i $(shell find ./src ./include ./lib -regex '.*\.\(c\|h\|cpp\|hpp\)')
 
 .PHONY: clean
 clean:

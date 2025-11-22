@@ -12,14 +12,14 @@
 
 #include "liblst.h"
 
-t_list	*ft_lstnew(void *content)
+t_list *ft_lstnew(void *content)
 {
-	t_list	*li;
+	t_list *li;
 
 	li = kmalloc(sizeof(t_list), GFP_KERNEL);
 	if (!li)
 		return (NULL);
 	li->content = content;
-	li->next = NULL;
+	li->next    = NULL;
 	return (li);
 }
