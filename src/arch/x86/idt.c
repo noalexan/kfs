@@ -33,7 +33,6 @@ enum IDTTypeAttributes {
 
 typedef void (*syscallHandler)(REGISTERS registers);
 
-#define IDT_BASE        0x00000000 + KERNEL_VADDR_BASE
 #define IDT_SIZE        256
 #define IDT_ENTRY(indx) (idt_entries + (indx))
 
@@ -112,8 +111,8 @@ extern void irq_128(void);
 
 extern void syscall_dispatcher(REGISTERS, int, int);
 
-idt_entry *const idt_entries = (idt_entry *)IDT_BASE;
-idtr_t           idtr = {.limit = sizeof(idt_entry) * IDT_SIZE - 1, .base = (uint32_t)idt_entries};
+idt_entry idt_entries[IDT_SIZE];
+idtr_t    idtr = {.limit = sizeof(idt_entry) * IDT_SIZE - 1, .base = (uint32_t)&idt_entries};
 
 irqHandler interrupt_handlers[256] = {
     [0x80] = syscall_dispatcher,
@@ -193,8 +192,7 @@ const idtr_t *idtr_getter(void) { return &idtr; }
 void idt_init(void)
 {
 	init_pic();
-
-	ft_bzero((void *)IDT_BASE, sizeof(idt_entry) * IDT_SIZE);
+	ft_bzero((void *)&idt_entries, sizeof(idt_entry) * IDT_SIZE);
 
 	idt_set_entry(IDT_ENTRY(0x00), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)isr_0);
 	idt_set_entry(IDT_ENTRY(0x01), 0x08, PresentBit | IntGate_32 | CPU_Ring0, (uint32_t)isr_1);
