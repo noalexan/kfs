@@ -69,26 +69,6 @@ void vmm_finalize(void)
 	if (!pt_pool_phys)
 		kpanic("Failed PT pool alloc");
 
-	/*-----------------------------------------------------------
-	    -   In pure higher half kernel this part is not needed but actually i dont know
-	        why commnt the following code create an triple fault
-	    -   Maybe timer interrupt or something else
-	    - ??>????ZD?SD?S?gfdvasd?fbasd?fb fUCK
-	*/
-	uintptr_t identity_pt_phys =
-	    (uintptr_t)boot_alloc_at(PAGE_SIZE, DMA_ZONE, TO_KEEP, 0x0, MiB_SIZE * 4, PAGE_SIZE);
-	if (!identity_pt_phys)
-		kpanic("Failed identity PT alloc");
-
-	page_dir_ptr[0]           = identity_pt_phys | PDE_PRESENT_BIT | PDE_RW_BIT;
-	uint32_t *identity_pt_ptr = (uint32_t *)identity_pt_phys;
-	ft_bzero(identity_pt_ptr, PAGE_SIZE);
-	for (int k = 0; k < 1024; k++) {
-		identity_pt_ptr[k] = (k * PAGE_SIZE) | PTE_PRESENT_BIT | PTE_RW_BIT;
-	}
-
-	//-----------------------------------------------------------
-
 	for (uint32_t i = 0; i < pt_count; i++) {
 		uint32_t pde_idx = 768 + i;
 

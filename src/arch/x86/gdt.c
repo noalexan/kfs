@@ -7,7 +7,6 @@
 // Structs & Defines
 
 #define GDT_MAX_ENTRIES 7
-#define GDT_ADDR        0x00000800 + KERNEL_VADDR_BASE
 #define GDT_ENTRY(indx) (gdt_entries + (indx))
 #define GDT_FLAGS       (SEGMENT_SIZE_BIT | GRANULARITY_BIT)
 
@@ -44,8 +43,8 @@ typedef struct segment_descriptor {
 ///////////////////////////////////
 // Code
 
-gdt_ptr_t             gdtr;
-segment_descriptor_t *gdt_entries = (segment_descriptor_t *)GDT_ADDR;
+gdt_ptr_t            gdtr;
+segment_descriptor_t gdt_entries[GDT_MAX_ENTRIES];
 
 static inline void gdt_set_entry(segment_descriptor_t *gdt_entry, uint32_t base, uint32_t limit,
                                  uint8_t access, uint8_t flags)
