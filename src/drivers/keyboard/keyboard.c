@@ -1,5 +1,4 @@
 #include "keyboard.h"
-#include "drivers/tty.h"
 #include "layout.h"
 
 Layout             current_layout_type = QWERTY;

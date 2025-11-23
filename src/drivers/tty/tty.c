@@ -1,11 +1,17 @@
-#include "tty.h"
-#include "drivers/vga.h"
-#include "kernel/panic.h"
-#include "memory/kmalloc.h"
-#include "memory/memory.h"
+#include <arch/acpi.h>
+#include <drivers/keyboard.h>
+#include <drivers/tty.h>
+#include <drivers/vga.h>
+#include <kernel/panic.h>
+#include <libk.h>
+#include <memory/kmalloc.h>
+#include <memory/memory.h>
 
 TTY *current_tty;
 TTY  ttys[12];
+
+static bool ft_strequ(const char *s1, const char *s2);
+static void print_help(void);
 
 void tty_framebuffer_set_screen_mode(enum vga_color mode)
 {

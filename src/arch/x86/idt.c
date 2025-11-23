@@ -1,12 +1,12 @@
-#include <acpi.h>
+#include <arch/acpi.h>
+#include <arch/io.h>
+#include <arch/x86.h>
 #include <drivers/keyboard.h>
 #include <drivers/vga.h>
-#include <io.h>
 #include <kernel/panic.h>
 #include <libk.h>
 #include <memory/memory.h>
 #include <types.h>
-#include <x86.h>
 
 typedef struct __attribute__((packed)) {
 	uint16_t offset_1;

@@ -4,9 +4,9 @@
 // INCLUDES
 // ============================================================================
 
-#include <register.h>
+#include <arch/register.h>
 #include <types.h>
-#include <utils.h>
+#include <utils/macro.h>
 
 // ============================================================================
 // DEFINE AND MACRO
