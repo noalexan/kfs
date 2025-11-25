@@ -44,7 +44,7 @@ void id_manager_free(t_id_manager *mgr, size_t id)
 {
 	if (mgr) {
 		bitmap_unset(&mgr->bitmap, id);
-		if (id < mgr->next_free)
+		if ((ssize_t)id < mgr->next_free)
 			mgr->next_free = id;
 	}
 }
@@ -55,7 +55,7 @@ bool id_manager_reserve_id(t_id_manager *mgr, size_t id)
 		return false;
 	else {
 		bitmap_set(&mgr->bitmap, id);
-		if (id == mgr->next_free) {
+		if ((ssize_t)id == mgr->next_free) {
 			mgr->next_free =
 			    bitmap_find_next_zero_from(mgr->bitmap.nb_bits, mgr->bitmap.data, id + 1);
 			if (mgr->next_free == -1)
