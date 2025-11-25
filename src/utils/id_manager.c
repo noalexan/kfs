@@ -27,25 +27,40 @@ void id_manager_destroy(t_id_manager *mgr)
 
 ssize_t id_manager_alloc(t_id_manager *mgr)
 {
-	ssize_t ret = mgr->next_free;
-	if (ret == -1)
-		return ret;
-	size_t index = BITS_TO_BYTES(ret);
-	bitmap_set(&mgr->bitmap, ret);
-	if (mgr->bitmap.data[index] == 0xFF) {
-		mgr->next_free = bitmap_find_first_free(mgr->bitmap.nb_bits, &mgr->bitmap.data[index + 1]);
+	if (!mgr || mgr->next_free == -1)
+		return -1;
+	else {
+		ssize_t allocated = mgr->next_free;
+		bitmap_set(&mgr->bitmap, allocated);
+		mgr->next_free =
+		    bitmap_find_next_zero_from(mgr->bitmap.nb_bits, mgr->bitmap.data, allocated + 1);
 		if (mgr->next_free == -1)
-			mgr->next_free = bitmap_find_first_free(mgr->bitmap.nb_bits, &mgr->bitmap.data);
-	} else {
-		uint8_t bit = ret;
-		while (bit < 8) {
-			if (mgr->bitmap.data[index] >> bit & 1)
-				continue;
-			size_t new_value = index * 8 + bit;
-			if (new_value >= mgr->bitmap.nb_bits)
-				return -1;
-			mgr->next_free = new_value;
-		}
+			mgr->next_free = bitmap_find_next_zero(mgr->bitmap.nb_bits, mgr->bitmap.data);
+		return allocated;
 	}
-	return ret;
+}
+
+void id_manager_free(t_id_manager *mgr, size_t id)
+{
+	if (mgr) {
+		bitmap_unset(&mgr->bitmap, id);
+		if (id < mgr->next_free)
+			mgr->next_free = id;
+	}
+}
+
+bool id_manager_reserve_id(t_id_manager *mgr, size_t id)
+{
+	if (!mgr || bitmap_check(&mgr->bitmap, id) || id >= mgr->bitmap.nb_bits)
+		return false;
+	else {
+		bitmap_set(&mgr->bitmap, id);
+		if (id == mgr->next_free) {
+			mgr->next_free =
+			    bitmap_find_next_zero_from(mgr->bitmap.nb_bits, mgr->bitmap.data, id + 1);
+			if (mgr->next_free == -1)
+				mgr->next_free = bitmap_find_next_zero(mgr->bitmap.nb_bits, mgr->bitmap.data);
+		}
+		return true;
+	}
 }

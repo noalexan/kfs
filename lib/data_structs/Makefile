@@ -5,15 +5,19 @@ ROOT_DIR=../..
 KERNEL_INCLUDE_DIR = -I$(ROOT_DIR)/include
 
 CFLAGS ?= -ffreestanding -fno-builtin -fno-exceptions -fno-stack-protector -Wall -Wextra -Werror
-CFLAGS += $(KERNEL_INCLUDE_DIR)
+CFLAGS += $(KERNEL_INCLUDE_DIR) -I$(ROOT_DIR)/lib/libk
 
-OBJ= $(shell find . -name "*.o")
+SRC=$(shell find . -name "*.c")
+OBJ=$(SRC:.c=.o)
 
 .PHONY: all
 all: $(NAME)
 
 $(NAME): $(OBJ)
 	$(AR) rcs $@ $(OBJ)
+
+%.o: %.c
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 .PHONY: clean
 clean:
