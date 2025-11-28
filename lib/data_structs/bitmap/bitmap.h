@@ -1,7 +1,7 @@
 #pragma once
 
 #include <types.h>
-#include <utils/macro.h>
+#include <utils/kmacro.h>
 
 typedef struct s_bitmap {
 	size_t   nb_bits;

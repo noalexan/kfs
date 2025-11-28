@@ -6,7 +6,7 @@
 
 #include <arch/register.h>
 #include <types.h>
-#include <utils/macro.h>
+#include <utils/kmacro.h>
 
 // ============================================================================
 // DEFINE AND MACRO

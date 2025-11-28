@@ -6,7 +6,7 @@
 #include <memory/page.h>
 #include <memory/slab.h>
 #include <types.h>
-#include <utils/macro.h>
+#include <utils/kmacro.h>
 
 // ============================================================================
 // INCLUDES

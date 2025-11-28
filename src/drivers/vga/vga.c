@@ -4,7 +4,7 @@
 #include <drivers/vga.h>
 #include <libk.h>
 #include <stdarg.h>
-#include <utils/macro.h>
+#include <utils/kmacro.h>
 
 #define KERNEL_BANNER                                                                              \
 	"  /$$   /$$   /$$   /$$               /$$   /$$\n"                                            \

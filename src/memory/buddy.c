@@ -5,7 +5,7 @@
 #include <memory/boot_allocator.h>
 #include <memory/buddy.h>
 #include <memory/page.h>
-#include <utils/macro.h>
+#include <utils/kmacro.h>
 
 // Defines
 static const char *debug_buddy_zone_to_str(zone_type zone);

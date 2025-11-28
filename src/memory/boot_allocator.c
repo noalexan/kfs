@@ -4,7 +4,7 @@
 #include <memory/boot_allocator.h>
 #include <memory/memory.h>
 #include <types.h>
-#include <utils/macro.h>
+#include <utils/kmacro.h>
 
 #include <arch/x86.h>
 
