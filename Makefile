@@ -24,7 +24,7 @@ ifeq ($(MAKEBUILDTYPE),Release)
 CFLAGS+=-Werror -DNDEBUG
 endif
 
-CFLAGS+=-I./include -I./lib/libk -I./lib/liblst -I./lib/libutils
+CFLAGS+=-I./include -I./lib/libk -I./lib/data_structs -I./lib/libutils
 
 AR=i686-linux-gnu-ar
 
@@ -35,7 +35,7 @@ ifeq ($(MAKEBUILDTYPE),Release)
 LDFLAGS+=-s
 endif
 
-LDLIBS=-L./lib/libk -lk -L./lib/liblst -llst -L./lib/libutils -lutils
+LDLIBS=-L./lib/libk -lk -L./lib/data_structs -lds -L./lib/libutils -lutils
 
 QEMU=qemu-system-i386
 QEMUFLAGS=-m 4G -smp 4 -cpu host -enable-kvm -net nic -net user -s -daemonize
@@ -54,7 +54,7 @@ $(BINDIR)/%.o: src/%.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 define docker_run
-	docker run --rm -t -v .:/kfs -e IN_DOCKER=1 -e MAKEBUILDTYPE="$(MAKEBUILDTYPE)" $(DOCKERIMAGENAME):$(DOCKERIMAGETAG) $(1)
+	docker run --rm -t --user $(shell id -u):$(shell id -g) -v .:/kfs -e IN_DOCKER=1 -e MAKEBUILDTYPE="$(MAKEBUILDTYPE)" $(DOCKERIMAGENAME):$(DOCKERIMAGETAG) $(1)
 endef
 
 ifeq ($(IN_DOCKER),1)
@@ -70,7 +70,7 @@ format:
 clean:
 	$(RM) -r $(BUILDDIR)
 	@make -C lib/libk clean
-	@make -C lib/liblst clean
+	@make -C lib/data_structs clean
 	@make -C lib/libutils clean
 
 $(BUILDDIR)/boot.iso: $(ISODIR)/boot/kernel $(ISODIR)/boot/grub/grub.cfg
@@ -88,7 +88,7 @@ $(ISODIR)/boot/kernel: $(OBJ) linker.ld | libs
 .PHONY: libs
 libs:
 	@make -C lib/libk CC=$(CC) AR=$(AR)
-	@make -C lib/liblst CC=$(CC) AR=$(AR)
+	@make -C lib/data_structs CC=$(CC) AR=$(AR)
 	@make -C lib/libutils CC=$(CC) AR=$(AR)
 
 else

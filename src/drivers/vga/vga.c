@@ -1,5 +1,10 @@
-#include "vga.h"
 #include "drivers/keyboard.h"
+#include <arch/io.h>
+#include <drivers/tty.h>
+#include <drivers/vga.h>
+#include <libk.h>
+#include <stdarg.h>
+#include <utils/kmacro.h>
 
 #define KERNEL_BANNER                                                                              \
 	"  /$$   /$$   /$$   /$$               /$$   /$$\n"                                            \
@@ -11,7 +16,20 @@
 	" | $$ \\  $$ /$$$$$$|  $$$$/|  $$$$$$/| $$  \\ $$\n"                                          \
 	" |__/  \\__/|______/ \\___/   \\______/ |__/  |__/\n"
 
+#define KERN_EMERG   "0"
+#define KERN_ALERT   "1"
+#define KERN_CRIT    "2"
+#define KERN_ERR     "3"
+#define KERN_WARNING "4"
+#define KERN_NOTICE  "5"
+#define KERN_INFO    "6"
+#define KERN_DEBUG   "7"
+#define KERN_DEFAULT ""
+#define KERN_CONT    "c"
+
 #define VGA_ENTRY_SIZE (VGA_WIDTH * VGA_HEIGHT) * sizeof(vga_entry)
+
+void vga_enable_cursor(uint8_t cursor_start, uint8_t cursor_end);
 
 static int ft_putchar(char c)
 {

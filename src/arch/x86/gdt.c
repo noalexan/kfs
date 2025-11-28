@@ -1,7 +1,7 @@
+#include <arch/x86.h>
 #include <libk.h>
 #include <memory/memory.h>
 #include <types.h>
-#include <x86.h>
 
 /////////////////////////////
 // Structs & Defines

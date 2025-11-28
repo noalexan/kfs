@@ -1,4 +1,4 @@
-#include <acpi.h>
+#include <arch/acpi.h>
 #include <drivers/vga.h>
 #include <kernel/panic.h>
 #include <memory/boot_allocator.h>

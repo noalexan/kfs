@@ -31,5 +31,6 @@
 		const typeof(((type *)0)->member) *__mptr = (ptr);                                         \
 		(type *)((char *)__mptr - offsetof(type, member));                                         \
 	})
+#define BITS_TO_BYTES(nb_bits) DIV_ROUND_UP((nb_bits), 8)
 
 // Define

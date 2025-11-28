@@ -1,3 +1,4 @@
+#include <arch/x86.h>
 #include <drivers/keyboard.h>
 #include <drivers/tty.h>
 #include <kernel/mb2_info.h>
@@ -7,7 +8,6 @@
 #include <memory/slab.h>
 #include <memory/vmalloc.h>
 #include <memory/vmm.h>
-#include <x86.h>
 
 __attribute__((section(".stack"))) uint8_t kernel_stack[16 * 1024] __attribute__((aligned(16)));
 

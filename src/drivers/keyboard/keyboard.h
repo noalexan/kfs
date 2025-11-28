@@ -4,14 +4,14 @@
 // IMCLUDES
 // ============================================================================
 
-#include <acpi.h>
+#include <arch/acpi.h>
+#include <arch/io.h>
+#include <arch/x86.h>
 #include <drivers/keyboard.h>
 #include <drivers/tty.h>
-#include <io.h>
 #include <kernel/panic.h>
 #include <libk.h>
 #include <types.h>
-#include <x86.h>
 
 // ============================================================================
 // DEFINE AND MACRO
