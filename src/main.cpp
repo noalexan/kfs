@@ -212,8 +212,7 @@ extern "C" void kernel_main()
 				break;
 
 			case 0x1E:
-				current_tty->write(
-				    (caps_lock || left_shift || right_shift) ? "A" : "a", 1);
+				spinning_mushroom();
 				break;
 
 			case 0x1F:
@@ -479,7 +478,6 @@ extern "C" void kernel_main()
 				break;
 
 			case 0xc6:
-				spinning_mushroom();
 				break;
 
 			default:
