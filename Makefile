@@ -1,12 +1,12 @@
 BUILDDIR=./build
 
-AS=/tools/bin/i386-linux-gnu-as
+AS=i686-linux-gnu-as
 ASFLAGS=
 
-CC=/tools/bin/i386-linux-gnu-gcc
+CC=i686-linux-gnu-gcc
 CFLAGS=-fno-builtin -fno-exceptions -fno-stack-protector -O3 -Wall -Wextra -I./include -I./lib/libft
 
-CXX=/tools/bin/i386-linux-gnu-g++
+CXX=i686-linux-gnu-g++
 CXXFLAGS=-fno-builtin -fno-exceptions -fno-stack-protector -fno-rtti -O3 -Wall -Wextra -I./include -I./lib/libft
 
 LD=$(CXX)
@@ -16,8 +16,8 @@ LDLIBS=-L./lib/libft -lft
 QEMU=qemu-system-i386
 QEMUFLAGS=
 
-DOCKERIMAGENAME=noalexan/kfs-builder
-DOCKERIMAGETAG=24.04
+DOCKERIMAGENAME=noalexan/cross-compiler
+DOCKERIMAGETAG=ubuntu
 
 OBJ= $(addprefix $(BUILDDIR)/, \
 	boot.o \
@@ -54,7 +54,7 @@ $(BUILDDIR)/%.o: src/%.cpp | $(BUILDDIR)
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 $(BUILDDIR)/boot.iso: $(BUILDDIR)/iso/boot/kernel $(BUILDDIR)/iso/boot/grub/grub.cfg
-	/tools/bin/grub-mkrescue -o $@ $(BUILDDIR)/iso
+	grub-mkrescue -o $@ $(BUILDDIR)/iso
 
 $(BUILDDIR)/iso/boot/grub/grub.cfg: grub.cfg $(BUILDDIR)/iso/boot/grub
 	@cp -v grub.cfg $@
@@ -64,7 +64,7 @@ $(BUILDDIR)/iso/boot/kernel: $(OBJ) linker.ld | libft $(BUILDDIR)/iso/boot
 
 .PHONY: libft
 libft:
-	@make -C ./lib/libft CC=$(CC) OBJ="$(LIBFT_OBJ)" static
+	@make -C ./lib/libft CC=$(CC) OBJ="$(LIBFT_OBJ)" AR=i686-linux-gnu-ar static
 
 $(BUILDDIR) $(BUILDDIR)/iso $(BUILDDIR)/iso/boot $(BUILDDIR)/iso/boot/grub:
 	@mkdir -pv $@
